@@ -1,0 +1,46 @@
+name: Build CampusCoffeeConsumption
+
+# A pull request builds the merge of its branch into its base branch, and a push to main builds a change that
+# reaches main without a pull request. The pull-request trigger has no branch filter, so a pull request that
+# targets a branch other than main is built as well.
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+# The build executes third-party Gradle plugins and annotation processors; restrict the token to
+# read-only so a compromised dependency cannot push or modify the repository.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false # no step pushes back to the repository
+
+      # Installs Java 25 and Gradle 9.5 as mise.toml pins them.
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+
+      # Fail fast if the Gradle build version drifts from the latest CHANGELOG.md version.
+      - name: Check version is in sync with the changelog
+        run: ./scripts/check-version-sync.sh
+
+      # `gradle build` runs `check`: ktlint, detekt, and the tests. The integration, system, and acceptance
+      # tests start PostgreSQL in Docker through Testcontainers, and the runner provides Docker.
+      - name: Build with Gradle
+        run: gradle build
+
+      # Keep the test reports of a failed build for inspection.
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: test-reports
+          path: |
+            */build/reports/tests/
+            application/build/reports/cucumber/
+          if-no-files-found: warn
