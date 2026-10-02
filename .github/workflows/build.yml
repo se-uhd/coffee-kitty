@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false # no step pushes back to the repository
 
       # Installs Java 25 and Gradle 9.5 as mise.toml pins them.
-      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+      - uses: jdx/mise-action@9149ea85001c7435d5a66bb127d6a1b6227cb0a5 # v5.0.0
 
       # Fail fast if the Gradle build version drifts from the latest CHANGELOG.md version.
       - name: Check version is in sync with the changelog
