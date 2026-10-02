@@ -1,0 +1,5 @@
+spring:
+  jpa:
+    hibernate:
+      # Flyway owns the schema, and Hibernate only checks at startup that the entities match it.
+      ddl-auto: validate
