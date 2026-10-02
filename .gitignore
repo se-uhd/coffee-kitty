@@ -1,0 +1,48 @@
+######################
+# OS generated files #
+######################
+*~
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+#Icon?
+ehthumbs.db
+Thumbs.db
+
+##########################
+# Webstorm/IntelliJ IDEA #
+##########################
+.idea/
+*.iml
+# IntelliJ compile output
+out/
+
+######################
+# Visual Studio Code #
+######################
+.vscode/
+
+##########
+# Gradle #
+##########
+.gradle/
+build/
+# Kotlin compiler daemon session markers, written under the project root by every Gradle build.
+.kotlin/
+# Gradle is provisioned via mise, not a wrapper; ignore IDE-generated wrapper files.
+gradlew
+gradlew.bat
+gradle/wrapper/
+
+###############
+# Claude Code #
+###############
+.claude/
+
+########
+# Misc #
+########
+*.log
+*.log.*

@@ -1,0 +1,47 @@
+# Submits the resolved Gradle dependencies to GitHub's dependency graph, so Dependabot alerts and Dependabot security
+# updates cover the JVM dependencies. GitHub cannot read a Gradle build on its own, so without this workflow the graph
+# holds only the workflow actions. Dependabot's version updates do not need it, because they read
+# gradle/libs.versions.toml directly.
+#
+# GitHub's own automatic dependency submission runs `./gradlew help` or `gradle help`, and this project has no Gradle
+# wrapper (mise provides Gradle), so it fails. This workflow submits the graph instead.
+name: Dependency submission
+
+on:
+  # main only: A snapshot describes the dependencies of one ref, and alerts are raised against the default branch.
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: {} # allow manual runs
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # submitting a snapshot writes to the repository's dependency graph
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false # the snapshot is posted with the job token, not with git credentials
+
+      # Installs Java 25 as mise.toml pins it. The action below downloads its own Gradle.
+      - uses: jdx/mise-action@9149ea85001c7435d5a66bb127d6a1b6227cb0a5 # v5.0.0
+
+      # mise.toml pins the prefix "9.5", and the action below needs an exact release, so this step asks the Gradle
+      # that mise installed for its version.
+      - name: Resolve the exact Gradle version
+        id: gradle
+        run: echo "version=$(gradle --version | awk '/^Gradle /{print $2}')" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve and submit the dependency graph
+        uses: gradle/actions/dependency-submission@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          gradle-version: ${{ steps.gradle.outputs.version }}
+          # Only the boot jar's runtime classpath, so an alert concerns what runs. The application's runtimeClasspath
+          # holds :domain, :api, :data, and every transitive dependency. Without the project filter, build-logic's
+          # runtimeClasspath (the Kotlin Gradle plugin) would count too, and the anchored configuration name keeps
+          # testRuntimeClasspath out.
+          dependency-graph-include-projects: '^:application$'
+          dependency-graph-include-configurations: '^runtimeClasspath$'

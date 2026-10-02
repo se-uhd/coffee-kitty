@@ -1,0 +1,33 @@
+# Dependabot keeps the GitHub Actions and the Gradle (Kotlin/Java) dependencies current. Most versions are in
+# the gradle/libs.versions.toml catalog, which the gradle ecosystem updates (BOM-managed dependencies without an
+# explicit version follow the Spring Boot BOM and are not bumped here).
+# Docs: https://docs.github.com/code-security/dependabot/dependabot-version-updates
+version: 2
+updates:
+  # Workflow actions in .github/workflows/ (i.e., actions/checkout, actions/upload-artifact, and
+  # jdx/mise-action). Every action is pinned to a full commit SHA with its release in a `# vX.Y.Z` comment at the
+  # end of the line, which Dependabot updates together with the SHA.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  # Gradle dependencies and plugins, resolved from the version catalog (covers the root build and
+  # the build-logic convention plugins, which reference the same catalog).
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    ignore:
+      # Kotlin and detekt have to move together. A detekt 2.0 alpha refuses to run against any Kotlin other
+      # than the one it was compiled with ("detekt was compiled with Kotlin X but is currently running with
+      # Y"), so a lone Kotlin bump fails every detekt task and with it the whole build. Dependabot cannot
+      # pair them itself, because it does not offer detekt's prerelease-to-prerelease updates (alpha.5 to
+      # alpha.6 was never proposed even though it existed for days). Kotlin is therefore bumped by hand
+      # together with the detekt alpha built against it. detekt itself is deliberately NOT ignored. Once 2.0
+      # is stable, Dependabot will offer it, and that pull request is the prompt to do the paired bump and
+      # delete this rule.
+      - dependency-name: "org.jetbrains.kotlin:*"
+      # The Kotlin Gradle plugin is matched by its plugin id, which the wildcard above does not cover.
+      - dependency-name: "org.jetbrains.kotlin.jvm"
