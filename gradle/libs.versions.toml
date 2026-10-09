@@ -24,7 +24,7 @@ mockito-kotlin = "6.4.0"
 dependency-management = "1.1.7"
 # ktlint: the jlleitschuh Gradle plugin and the ktlint engine version it runs.
 ktlint-plugin = "12.1.2"
-ktlint-tool = "1.5.0"
+ktlint-tool = "1.8.0"
 # detekt static analysis. The 2.0 alpha is pinned to the Kotlin version that it was built against, and `check` runs it.
 detekt = "2.0.0-alpha.6"
 
