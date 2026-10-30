@@ -6,7 +6,7 @@
 java = "25"
 spring-boot = "4.1.1"
 junit = "6.1.3"
-springdoc = "3.1.1"
+springdoc = "3.2.0"
 mapstruct = "1.6.3"
 # kotlin-logging: idiomatic Kotlin logging over SLF4J. Log calls take a lambda (built only when the level
 # is enabled) and the logger derives its name from the enclosing class.
