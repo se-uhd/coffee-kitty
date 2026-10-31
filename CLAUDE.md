@@ -79,7 +79,7 @@ and their subtypes put the domain type first (`UserDtoMapper : DtoMapper<User, U
 
 ## Build and Run Commands
 
-Run Gradle in a shell with mise activated or as `mise exec -- gradle ...`, because Java 25 and Gradle 9.5 come from
+Run Gradle in a shell with mise activated or as `mise exec -- gradle ...`, because Java 25 and Gradle 9.8 come from
 `mise.toml` and there is no Gradle wrapper. The `java` entry in `gradle/libs.versions.toml` sets the toolchain and the
 Kotlin `jvmTarget`, and `mise.toml` pins the same major version by hand. The dev database and the Testcontainers tests
 need Docker.
@@ -107,10 +107,11 @@ every workflow `uses:` to a full commit SHA with a trailing `# vX.Y.Z` comment.
 
 The `check` task runs ktlint and detekt, so `gradle build` fails on any finding. The ktlint check applies the
 `ktlint_official` code style with the settings of the root `.editorconfig`, and detekt applies
-`config/detekt/detekt.yml` on top of its own defaults. Fix each finding rather than adding a detekt baseline. Bump
-Kotlin and detekt together, by hand, because detekt `2.0.0-alpha.6` runs only with Kotlin 2.4.10, the version that it
-was built against. A lone Kotlin bump fails every detekt task, and a Dependabot rule ignores the Kotlin coordinates for
-that reason.
+`config/detekt/detekt.yml` on top of its own defaults. Fix each finding rather than adding a detekt baseline. detekt
+and ktlint run on their own Kotlin compilers, the catalog's `detekt-kotlin` and `ktlint-kotlin`, independent of the
+project's `kotlin`, which Dependabot updates. Dependabot does not offer detekt's alpha-to-alpha updates, so bump detekt
+by hand and set `detekt-kotlin` to the compiler that the release names (detekt reports a mismatch as "detekt was
+compiled with Kotlin X").
 
 The KDoc rule set `campus-coffee-kdoc`, in `detekt-rules/src/main/kotlin/de/seuhd/campuscoffee/detekt/` and tested by
 `gradle :detekt-rules:test`, requires KDoc on every non-local class, interface, object, and enum class and on every

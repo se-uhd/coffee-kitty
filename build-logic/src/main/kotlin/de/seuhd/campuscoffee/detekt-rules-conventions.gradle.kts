@@ -33,6 +33,25 @@ configure<KtlintExtension> {
     version.set(libs.findVersion("ktlint-tool").get().requiredVersion)
 }
 
+// Run ktlint on the catalog's `ktlint-kotlin` compiler, as in kotlin-conventions.
+configurations.matching { it.name.startsWith("ktlint") }.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.jetbrains.kotlin") {
+            useVersion(libs.findVersion("ktlint-kotlin").get().requiredVersion)
+        }
+    }
+}
+
+// Run detekt on the catalog's `detekt-kotlin` compiler, as in kotlin-conventions: a detekt 2.0 alpha only runs on
+// the exact Kotlin it was built against.
+configurations.matching { it.name.startsWith("detekt") }.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.jetbrains.kotlin") {
+            useVersion(libs.findVersion("detekt-kotlin").get().requiredVersion)
+        }
+    }
+}
+
 detekt {
     buildUponDefaultConfig = true
     parallel = true

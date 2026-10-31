@@ -43,7 +43,7 @@ in detail, and `GLOSSARY.md` defines the vocabulary.
 
 ## Prerequisites
 
-- Java 25 and Gradle 9.5, provisioned by [mise](https://mise.jdx.dev/) from `mise.toml`. There is no Gradle wrapper.
+- Java 25 and Gradle 9.8, provisioned by [mise](https://mise.jdx.dev/) from `mise.toml`. There is no Gradle wrapper.
 - Docker, for the local PostgreSQL database and for the tests that use Testcontainers.
 
 ## Running locally
