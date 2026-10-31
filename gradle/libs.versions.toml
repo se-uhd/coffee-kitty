@@ -1,0 +1,98 @@
+# Version catalog for the Coffee Kitty Gradle build. Entries without a version get it from a BOM: the Spring Boot BOM
+# in the modules (imported in de.seuhd.campuscoffee.java-conventions), and junit-bom in the detekt-rules tests.
+[versions]
+# Java major version: the single source of truth for the toolchain. The convention plugins resolve
+# it for the Gradle toolchain and the Kotlin jvmTarget, and mise.toml pins the same major by hand.
+java = "25"
+spring-boot = "4.1.2"
+junit = "6.1.3"
+springdoc = "3.2.0"
+mapstruct = "1.6.3"
+# kotlin-logging: idiomatic Kotlin logging over SLF4J. Log calls take a lambda (built only when the level
+# is enabled) and the logger derives its name from the enclosing class.
+kotlin-logging = "8.0.4"
+cucumber = "8.0.4"
+archunit = "1.5.1"
+# Kotlin: >= 2.3.0 is required for jvmTarget 25, and it overrides the Boot 4 BOM's managed Kotlin stdlib. detekt and
+# ktlint run on their own compilers (`detekt-kotlin`, `ktlint-kotlin`), so this version is free to move.
+kotlin = "2.4.21"
+# Kotlin-friendly Mockito wrappers (whenever, reified any/mock); not managed by the Boot BOM.
+mockito-kotlin = "6.4.0"
+# Gradle plugins
+dependency-management = "1.1.7"
+# ktlint: the jlleitschuh Gradle plugin and the ktlint engine version it runs.
+ktlint-plugin = "14.2.0"
+ktlint-tool = "1.8.0"
+# The Kotlin compiler that ktlint runs on. ktlint 1.8.0 ships Kotlin 2.2.21, which prints JDK 25 sun.misc.Unsafe
+# warnings. On Kotlin 2.4.21, ktlint fails with "Extensions storage is not registered". It runs on 2.4.10
+# without either problem.
+ktlint-kotlin = "2.4.10"
+# detekt static analysis, which `check` runs. The 2.0 alpha runs on the `detekt-kotlin` compiler below.
+detekt = "2.0.0-alpha.6"
+# The Kotlin compiler that detekt runs on: a detekt 2.0 alpha only runs on the exact Kotlin it was built against,
+# so its configurations resolve their Kotlin artifacts to this version, independent of the `kotlin` entry.
+detekt-kotlin = "2.4.10"
+
+[libraries]
+# BOM-managed (version omitted on purpose)
+spring-boot-starter-webmvc = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
+spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+# Boot 4 split autoconfiguration into per-technology modules, and data-jpa does not bring Flyway's.
+spring-boot-flyway = { module = "org.springframework.boot:spring-boot-flyway" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-tx = { module = "org.springframework:spring-tx" }
+# The Spring Boot core without a starter, for the domain: It brings spring-context for @Service/@Component, and the
+# domain needs neither Bean Validation nor a logging backend. Version managed by the Boot BOM.
+spring-boot-core = { module = "org.springframework.boot:spring-boot" }
+postgresql = { module = "org.postgresql:postgresql" }
+flyway-core = { module = "org.flywaydb:flyway-core" }
+flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql" }
+# Jackson 3 (tools.jackson) Kotlin module for Spring MVC's DTO binding in api; version from the Jackson 3 BOM.
+jackson3-module-kotlin = { module = "tools.jackson.module:jackson-module-kotlin" }
+junit-platform-suite = { module = "org.junit.platform:junit-platform-suite" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+mockito-core = { module = "org.mockito:mockito-core" }
+# Testcontainers 2: version from the Boot BOM's testcontainers-bom.
+testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql" }
+
+# Explicitly versioned: libraries that no BOM manages, and junit-bom, which the detekt-rules tests import because that
+# subproject has no Spring Boot BOM.
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+kotlin-logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
+mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
+mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
+cucumber-java = { module = "io.cucumber:cucumber-java", version.ref = "cucumber" }
+cucumber-junit-platform-engine = { module = "io.cucumber:cucumber-junit-platform-engine", version.ref = "cucumber" }
+cucumber-spring = { module = "io.cucumber:cucumber-spring", version.ref = "cucumber" }
+archunit = { module = "com.tngtech.archunit:archunit", version.ref = "archunit" }
+
+# Plugin artifacts build-logic depends on so the convention plugins can apply them by id
+dependency-management-plugin = { module = "io.spring.gradle:dependency-management-plugin", version.ref = "dependency-management" }
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlin-allopen = { module = "org.jetbrains.kotlin:kotlin-allopen", version.ref = "kotlin" }
+kotlin-noarg = { module = "org.jetbrains.kotlin:kotlin-noarg", version.ref = "kotlin" }
+ktlint-gradle-plugin = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlint-plugin" }
+# Declared only so that Dependabot checks the `ktlint-tool` version, which is otherwise referenced by no entry.
+# No module depends on it, because the convention plugins pass that version to the ktlint Gradle plugin.
+ktlint-cli = { module = "com.pinterest.ktlint:ktlint-cli", version.ref = "ktlint-tool" }
+detekt-gradle-plugin = { module = "dev.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+
+# detekt rule-authoring API: the custom rules in :detekt-rules compile against detekt-api, and detekt-test-utils
+# compiles Kotlin snippets into the compiler's syntax tree (PSI) for their unit tests. Same version as the detekt
+# plugin. (We use detekt-test-utils rather than detekt-test because the latter's alpha metadata requires a detekt-api
+# test-fixtures variant that is not published.)
+detekt-api = { module = "dev.detekt:detekt-api", version.ref = "detekt" }
+detekt-test-utils = { module = "dev.detekt:detekt-test-utils", version.ref = "detekt" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+# Declared only for the root build script, which lists it with `apply false` so that one classloader provides the
+# Kotlin Gradle plugin to every subproject's convention plugins. The version tracks the `kotlin` entry above.
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+# Declared only so that Dependabot checks the `ktlint-plugin` version on the Gradle Plugin Portal. Dependabot looks up
+# the ktlint-gradle-plugin library above only on Maven Central, which does not publish the plugin.
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint-plugin" }

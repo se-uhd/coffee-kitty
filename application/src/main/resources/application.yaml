@@ -1,0 +1,70 @@
+spring:
+  application:
+    name: coffee-kitty
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      data-source-properties:
+        # A database error message names the violated constraint without the row's values.
+        logServerErrorDetail: false
+  jpa:
+    # Open Session in View, which holds a database connection for the whole request, is off. No JPA entity has a lazy
+    # association yet. An adapter for a JPA entity that gets one must read and map it inside a @Transactional method,
+    # because the read methods of CrudDataServiceImpl and of the adapters, except getByUserIdForUpdate, are not
+    # @Transactional, so for a caller without a transaction they map the JPA entity outside one.
+    open-in-view: false
+    hibernate:
+      # Flyway creates and migrates the schema, and Hibernate only checks at startup that the entities match it.
+      ddl-auto: validate
+    properties:
+      # The exception handler logs a database error once, when it maps it, so Hibernate does not log each SQL
+      # error itself.
+      hibernate.jdbc.log.errors: false
+  jackson:
+    deserialization:
+      # A JSON number with a fraction, such as a delta of 1.9, is a 400 instead of an integer cut to 1.
+      accept-float-as-int: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+# Custom properties. The KDoc of the @ConfigurationProperties class bound to each campus-coffee.* prefix documents
+# its keys (FixturesProperties for campus-coffee.fixtures.*), so a comment on a key here explains only why a profile
+# sets its value.
+campus-coffee:
+  fixtures:
+    load-on-startup: false
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    # Local dev reaches PostgreSQL on host port 5433, not the conventional 5432, so that it does not collide with a
+    # system PostgreSQL or another project's container. Override it with DB_PORT (e.g., DB_PORT=5432). The port
+    # inside the container stays 5432.
+    url: jdbc:postgresql://localhost:${DB_PORT:5433}/postgres
+    username: postgres
+    password: postgres
+server:
+  # Local dev serves on :8081 so that it does not collide with another app on the conventional :8080. Override it
+  # with SERVER_PORT. The system tests use a random port (WebEnvironment.RANDOM_PORT) and ignore this setting.
+  port: ${SERVER_PORT:8081}
+springdoc:
+  api-docs:
+    enabled: true
+    path: /api/api-docs
+  swagger-ui:
+    enabled: true
+    path: /api/swagger-ui.html
+campus-coffee:
+  fixtures:
+    load-on-startup: true
+    # dev: clear and reseed on every start, so that each run begins with the fixture users at a coffee count of zero
+    reset-on-startup: true
