@@ -5,6 +5,13 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Dependabot proposes a release only 7 days after it is published, and it bundles the updates of the GitHub Actions,
+  and the minor and patch updates of the Gradle dependencies, into one pull request each (`.github/dependabot.yml`).
+
 ## [0.1.1] - 2026-10-31
 
 ### Changed

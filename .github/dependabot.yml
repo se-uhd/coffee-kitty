@@ -2,15 +2,26 @@
 # the gradle/libs.versions.toml catalog, which the gradle ecosystem updates (BOM-managed dependencies without an
 # explicit version follow the Spring Boot BOM and are not bumped here).
 # Docs: https://docs.github.com/code-security/dependabot/dependabot-version-updates
+#
+# Dependabot proposes a release only 7 days after it is published (`cooldown` in each block). A hijacked release,
+# published from a maintainer's stolen account, is usually withdrawn within days, and a reviewer cannot tell it from
+# a genuine one by its version bump. Students build this project on their own machines, where such a release would
+# run. Security updates are not delayed.
 version: 2
 updates:
   # Workflow actions in .github/workflows/ (i.e., actions/checkout, actions/upload-artifact, and
   # jdx/mise-action). Every action is pinned to a full commit SHA with its release in a `# vX.Y.Z` comment at the
-  # end of the line, which Dependabot updates together with the SHA.
+  # end of the line, which Dependabot updates together with the SHA. One pull request bundles the updates of all
+  # actions.
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ["*"]
 
   # Gradle dependencies and plugins, resolved from the version catalog (covers the root build and
   # the build-logic convention plugins, which reference the same catalog).
@@ -18,4 +29,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 10
+    groups:
+      # Bundle minor and patch bumps into one PR; major upgrades get their own PR for careful review.
+      gradle-minor-and-patch:
+        update-types: ["minor", "patch"]
