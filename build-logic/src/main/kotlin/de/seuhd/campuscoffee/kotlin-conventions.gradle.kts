@@ -34,6 +34,28 @@ configure<KtlintExtension> {
     version.set(libs.findVersion("ktlint-tool").get().requiredVersion)
 }
 
+// Run ktlint on the Kotlin compiler named by the catalog's `ktlint-kotlin` entry, not on the Kotlin 2.2 compiler that
+// ktlint 1.8.0 ships (JDK 25 sun.misc.Unsafe warnings in every worker, JEP 498) nor on the build's Kotlin, which the
+// Spring dependency management would apply and which ktlint 1.8.0 cannot run on. Remove it once a ktlint release
+// ships with a Kotlin 2.4 compiler.
+configurations.matching { it.name.startsWith("ktlint") }.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.jetbrains.kotlin") {
+            useVersion(libs.findVersion("ktlint-kotlin").get().requiredVersion)
+        }
+    }
+}
+
+// A detekt 2.0 alpha only runs on the exact Kotlin it was built against. The Spring dependency management would
+// resolve detekt's Kotlin artifacts to the build's Kotlin, so pin them to the catalog's `detekt-kotlin` instead.
+configurations.matching { it.name.startsWith("detekt") }.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.jetbrains.kotlin") {
+            useVersion(libs.findVersion("detekt-kotlin").get().requiredVersion)
+        }
+    }
+}
+
 // Static analysis with detekt: the plugin wires its task into `check` and fails the build on findings by
 // default. buildUponDefaultConfig layers our config on detekt's defaults, and config/detekt/detekt.yml enables
 // the custom campus-coffee-kdoc rules. No module has a detekt-baseline.xml, the file of accepted findings that

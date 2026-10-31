@@ -27,10 +27,10 @@ jobs:
           persist-credentials: false # the snapshot is posted with the job token, not with git credentials
 
       # Installs Java 25 as mise.toml pins it. The action below downloads its own Gradle.
-      - uses: jdx/mise-action@9149ea85001c7435d5a66bb127d6a1b6227cb0a5 # v5.0.0
+      - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
 
-      # mise.toml pins the prefix "9.5", and the action below needs an exact release, so this step asks the Gradle
-      # that mise installed for its version.
+      # mise.toml pins a major.minor prefix of Gradle, and the action below needs an exact release, so this step
+      # asks the Gradle that mise installed for its version.
       - name: Resolve the exact Gradle version
         id: gradle
         run: echo "version=$(gradle --version | awk '/^Gradle /{print $2}')" >> "$GITHUB_OUTPUT"

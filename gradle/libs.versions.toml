@@ -4,29 +4,33 @@
 # Java major version: the single source of truth for the toolchain. The convention plugins resolve
 # it for the Gradle toolchain and the Kotlin jvmTarget, and mise.toml pins the same major by hand.
 java = "25"
-spring-boot = "4.1.1"
+spring-boot = "4.1.2"
 junit = "6.1.3"
-springdoc = "3.1.1"
+springdoc = "3.2.0"
 mapstruct = "1.6.3"
 # kotlin-logging: idiomatic Kotlin logging over SLF4J. Log calls take a lambda (built only when the level
 # is enabled) and the logger derives its name from the enclosing class.
 kotlin-logging = "8.0.4"
-cucumber = "8.0.3"
+cucumber = "8.0.4"
 archunit = "1.5.1"
-# Testcontainers is not managed by the Boot 4 BOM at these coordinates, so pin it explicitly.
-testcontainers = "1.21.4"
-# Kotlin: >= 2.3.0 is required for jvmTarget 25; overrides the Boot 4 BOM's managed Kotlin stdlib.
-# Pinned to 2.4.10 to match detekt 2.0.0-alpha.6, which requires the exact Kotlin version it was built against.
-kotlin = "2.4.10"
+# Kotlin: >= 2.3.0 is required for jvmTarget 25; overrides the Boot 4 BOM's managed Kotlin stdlib. detekt and ktlint
+# run on their own compilers (`detekt-kotlin`, `ktlint-kotlin`), so this version is free to move.
+kotlin = "2.4.21"
 # Kotlin-friendly Mockito wrappers (whenever, reified any/mock); not managed by the Boot BOM.
 mockito-kotlin = "6.4.0"
 # Gradle plugins
 dependency-management = "1.1.7"
 # ktlint: the jlleitschuh Gradle plugin and the ktlint engine version it runs.
-ktlint-plugin = "12.1.2"
-ktlint-tool = "1.5.0"
-# detekt static analysis. The 2.0 alpha is pinned to the Kotlin version that it was built against, and `check` runs it.
+ktlint-plugin = "14.2.0"
+ktlint-tool = "1.8.0"
+# The Kotlin compiler that ktlint runs on. ktlint 1.8.0 ships Kotlin 2.2.21, which prints JDK 25 sun.misc.Unsafe
+# warnings, and fails on 2.4.21 ("Extensions storage is not registered"). 2.4.10 runs without either problem.
+ktlint-kotlin = "2.4.10"
+# detekt static analysis, which `check` runs. The 2.0 alpha runs on the `detekt-kotlin` compiler below.
 detekt = "2.0.0-alpha.6"
+# The Kotlin compiler that detekt runs on: a detekt 2.0 alpha only runs on the exact Kotlin it was built against,
+# so its configurations resolve their Kotlin artifacts to this version, independent of the `kotlin` entry.
+detekt-kotlin = "2.4.10"
 
 [libraries]
 # BOM-managed (version omitted on purpose)
@@ -50,6 +54,8 @@ assertj-core = { module = "org.assertj:assertj-core" }
 junit-platform-suite = { module = "org.junit.platform:junit-platform-suite" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 mockito-core = { module = "org.mockito:mockito-core" }
+# Testcontainers 2: version from the Boot BOM's testcontainers-bom.
+testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql" }
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
 
 # Explicitly versioned (not in the BOMs)
@@ -61,7 +67,6 @@ cucumber-java = { module = "io.cucumber:cucumber-java", version.ref = "cucumber"
 cucumber-junit-platform-engine = { module = "io.cucumber:cucumber-junit-platform-engine", version.ref = "cucumber" }
 cucumber-spring = { module = "io.cucumber:cucumber-spring", version.ref = "cucumber" }
 archunit = { module = "com.tngtech.archunit:archunit", version.ref = "archunit" }
-testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
 
 # Plugin artifacts build-logic depends on so the convention plugins can apply them by id
 spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "spring-boot" }

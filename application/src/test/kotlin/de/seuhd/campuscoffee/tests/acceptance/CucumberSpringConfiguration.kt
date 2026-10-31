@@ -13,7 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.postgresql.PostgreSQLContainer
 
 /**
  * Single Spring and Cucumber configuration shared by all acceptance step definitions. Cucumber allows
@@ -44,7 +44,7 @@ class CucumberSpringConfiguration(
 
     companion object {
         // share one testcontainers instance across all acceptance tests
-        private val postgresContainer: PostgreSQLContainer<*> = getPostgresContainer().apply { start() }
+        private val postgresContainer: PostgreSQLContainer = getPostgresContainer().apply { start() }
 
         @JvmStatic
         @DynamicPropertySource

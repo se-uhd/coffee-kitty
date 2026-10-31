@@ -22,6 +22,8 @@ val javaVersion = libs.findVersion("java").get().requiredVersion
 // Align the Kotlin stdlib/reflect with the Kotlin plugin version (Boot 4 manages an older stdlib;
 // the plugin needs >= 2.3 for jvmTarget 25).
 extra["kotlin.version"] = libs.findVersion("kotlin").get().requiredVersion
+// The Boot BOM also pins JUnit (junit-jupiter.version) over the catalog's junit-bom platform. Use the catalog's JUnit.
+extra["junit-jupiter.version"] = libs.findVersion("junit").get().requiredVersion
 
 java {
     toolchain {
@@ -80,7 +82,10 @@ tasks.withType<Test>().configureEach {
         "--sun-misc-unsafe-memory-access=allow",
         "--enable-native-access=ALL-UNNAMED",
     )
+    // The provider uses a local file collection instead of the script's `mockitoAgent`, because a reference to
+    // the script would keep the configuration cache from storing the task.
+    val agentJar = files(mockitoAgent)
     jvmArgumentProviders.add(CommandLineArgumentProvider {
-        listOf("-javaagent:${mockitoAgent.singleFile.absolutePath}")
+        listOf("-javaagent:${agentJar.singleFile.absolutePath}")
     })
 }

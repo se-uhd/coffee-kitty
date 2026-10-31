@@ -4,7 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.web.servlet.client.RestTestClient
 import org.springframework.test.web.servlet.client.returnResult
-import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 
 /**
@@ -25,13 +25,12 @@ object SystemTestUtils {
     // Creates a PostgreSQL testcontainer. The container is AutoCloseable but deliberately not closed here:
     // Callers keep it open for the whole test run, and Testcontainers stops it on JVM shutdown.
     @Suppress("resource")
-    fun getPostgresContainer(): PostgreSQLContainer<*> =
-        PostgreSQLContainer<Nothing>(DockerImageName.parse("postgres:18-alpine"))
+    fun getPostgresContainer(): PostgreSQLContainer = PostgreSQLContainer(DockerImageName.parse("postgres:18-alpine"))
 
     /** Points the Spring datasource at the given PostgreSQL testcontainer. */
     fun configurePostgresContainers(
         registry: DynamicPropertyRegistry,
-        postgresContainer: PostgreSQLContainer<*>
+        postgresContainer: PostgreSQLContainer
     ) {
         registry.add("spring.datasource.url", postgresContainer::getJdbcUrl)
         registry.add("spring.datasource.username", postgresContainer::getUsername)

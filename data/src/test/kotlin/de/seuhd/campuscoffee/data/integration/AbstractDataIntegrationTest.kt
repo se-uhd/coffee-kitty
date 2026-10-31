@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 
 /**
@@ -32,7 +32,7 @@ abstract class AbstractDataIntegrationTest {
     }
 
     companion object {
-        private val postgresContainer = PostgreSQLContainer<Nothing>(DockerImageName.parse("postgres:18-alpine"))
+        private val postgresContainer = PostgreSQLContainer(DockerImageName.parse("postgres:18-alpine"))
 
         init {
             postgresContainer.start()
