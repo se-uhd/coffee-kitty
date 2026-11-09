@@ -1,8 +1,8 @@
 plugins {
-    id("de.seuhd.campuscoffee.java-conventions")
-    id("de.seuhd.campuscoffee.kotlin-conventions")
-    id("de.seuhd.campuscoffee.kotlin-jpa-conventions")
-    id("de.seuhd.campuscoffee.kotlin-kapt-conventions")
+    id("de.seuhd.coffeekitty.java-conventions")
+    id("de.seuhd.coffeekitty.kotlin-conventions")
+    id("de.seuhd.coffeekitty.kotlin-jpa-conventions")
+    id("de.seuhd.coffeekitty.kotlin-kapt-conventions")
 }
 
 dependencies {

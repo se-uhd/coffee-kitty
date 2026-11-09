@@ -14,7 +14,7 @@ vocabulary. Use its terms in code, messages, and docs.
 
 The project is a multi-module Gradle build with Kotlin build scripts and a hexagonal (ports-and-adapters) architecture.
 The included build `build-logic/` holds the convention plugins, which the subprojects apply by the id
-`de.seuhd.campuscoffee.<name>`, and `gradle/libs.versions.toml` is the version catalog of the root build and of
+`de.seuhd.coffeekitty.<name>`, and `gradle/libs.versions.toml` is the version catalog of the root build and of
 `build-logic/`. `doc/adr/001-multi-module-gradle-build-with-convention-plugins.md` records why the build has this
 structure. The `detekt-rules` subproject holds the custom detekt rules. `settings.gradle.kts` and
 `build-logic/settings.gradle.kts` declare every Maven repository of the build, and `FAIL_ON_PROJECT_REPOS` fails the
@@ -35,10 +35,10 @@ build when a build script declares its own.
 
 ### Layer Rules (Enforced by ArchUnit)
 
-`ArchitectureTests` (in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/architecture/`) allows only application
+`ArchitectureTests` (in `application/src/test/kotlin/de/seuhd/coffeekitty/tests/architecture/`) allows only application
 to access api and data, and only api, data, and application to access domain. It also requires the production packages
 to be free of cycles. Every class, test classes included, must lie in a layer: `api..`, `domain..`, `data..`, or the
-application packages, which are the root package `de.seuhd.campuscoffee`, `configuration..`, and `tests..`. A class in a
+application packages, which are the root package `de.seuhd.coffeekitty`, `configuration..`, and `tests..`. A class in a
 new package of the application module fails the layer test until the package is added to
 `APPLICATION_PRODUCTION_PACKAGES`. Further rules forbid the production classes of api and application to depend on the
 data ports or on `domain/.../implementation/`, and api classes to depend on the internal ports or on `TestFixtures` in
@@ -47,7 +47,7 @@ no class in the controller package may be a plain `@Controller`.
 
 ### Ports and Adapters
 
-The ports are in `domain/src/main/kotlin/de/seuhd/campuscoffee/domain/ports/`:
+The ports are in `domain/src/main/kotlin/de/seuhd/coffeekitty/domain/ports/`:
 
 - API ports (`ports/api/`), which the controllers call, such as `UserService`.
 - Data ports (`ports/data/`), which the data module implements: the generic `CrudDataService<DOMAIN, ID>` and, for each
@@ -100,7 +100,7 @@ gradle build                                                 # compile, ktlint, 
 gradle ktlintFormat                                          # apply the formatting fixes before a commit
 gradle :domain:test --tests "CoffeeConsumptionServiceTest"   # one test class
 gradle :application:test --tests "ArchitectureTests"         # the layer rules only, which need no Docker
-docker run -d --name campus-coffee-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p ${DB_PORT:-5433}:5432 postgres:18-alpine
+docker run -d --name coffee-kitty-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p ${DB_PORT:-5433}:5432 postgres:18-alpine
 gradle :application:bootRun --args='--spring.profiles.active=dev'
 ```
 
@@ -128,7 +128,7 @@ compilers, the catalog's `detekt-kotlin` and `ktlint-kotlin`, independent of the
 detekt, set `detekt-kotlin` to the compiler that the release names (detekt reports a mismatch as "detekt was compiled
 with Kotlin X").
 
-The KDoc rule set `campus-coffee-kdoc`, in `detekt-rules/src/main/kotlin/de/seuhd/campuscoffee/detekt/` and tested by
+The KDoc rule set `coffee-kitty-kdoc`, in `detekt-rules/src/main/kotlin/de/seuhd/coffeekitty/detekt/` and tested by
 `gradle :detekt-rules:test`, requires KDoc on every non-local class, interface, object, and enum class and on every
 non-local, non-override function. A public, non-override function needs an `@param` for every parameter, and a
 non-private enum constructor property needs an `@property` or `@param`. detekt checks only `src/main`, so no detekt
@@ -190,7 +190,7 @@ it runs, not at startup.
 - Never edit a migration that others have applied, such as one that is pushed or released. Flyway compares the
   checksum of every applied migration at startup, so any change to an applied file, even to a comment, stops the
   application from starting. Add a new migration instead. You may still edit a new migration that only your own dev
-  database has applied, but then remove that database with `docker rm -f -v campus-coffee-db` and start a new container
+  database has applied, but then remove that database with `docker rm -f -v coffee-kitty-db` and start a new container
   with the `docker run` command above.
 - Once the app runs in a rolling deployment, which replaces the running instances one at a time, keep each migration
   compatible with the previous release, because the previous release keeps serving while the next release migrates
@@ -205,12 +205,12 @@ it runs, not at startup.
   `data/src/test/kotlin/`, on `AbstractDataIntegrationTest` and `DataTestApplication`, against PostgreSQL in
   Testcontainers. `ConstraintMappingRegistryIntegrationTest` fails when a unique constraint or unique index has no
   `ConstraintMapping.REGISTRY` entry.
-- System tests: classes such as `UserSystemTests` in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/system/`,
+- System tests: classes such as `UserSystemTests` in `application/src/test/kotlin/de/seuhd/coffeekitty/tests/system/`,
   extending `AbstractSystemTest`, with Spring's `RestTestClient` and the PostgreSQL container from Testcontainers that
   `SystemTestUtils` shares with the acceptance tests.
 - Acceptance tests: Cucumber scenarios for behavior-driven development (BDD) in
-  `application/src/test/kotlin/de/seuhd/campuscoffee/tests/acceptance/`, with the feature files, such as
-  `consumption.feature`, in `application/src/test/resources/de/seuhd/campuscoffee/tests/acceptance/`.
+  `application/src/test/kotlin/de/seuhd/coffeekitty/tests/acceptance/`, with the feature files, such as
+  `consumption.feature`, in `application/src/test/resources/de/seuhd/coffeekitty/tests/acceptance/`.
 - Architecture tests: `ArchitectureTests` (see Layer Rules).
 
 ### Test Naming
@@ -229,7 +229,7 @@ keep camelCase names.
 - MapStruct via kapt (the Kotlin annotation processing tool), Bean Validation in the controllers, and springdoc for
   the OpenAPI definition and Swagger UI.
 - JUnit, Mockito with mockito-kotlin, AssertJ, Testcontainers, Cucumber, and ArchUnit for the tests.
-- ktlint for the formatting, and detekt with the `campus-coffee-kdoc` rule set for the static analysis.
+- ktlint for the formatting, and detekt with the `coffee-kitty-kdoc` rule set for the static analysis.
 
 ## REST API Endpoints
 
@@ -240,8 +240,8 @@ runnable curl command, and Swagger UI in the dev profile shows the full contract
 ## Configuration
 
 `application/src/main/resources/application.yaml` has a default block and a `dev` block. `FixturesProperties` binds
-the fixture flags, both on in dev. `campus-coffee.fixtures.load-on-startup` registers `FixtureStartupLoader`, which
-seeds the fixture users into a database without users, and `campus-coffee.fixtures.reset-on-startup` makes the loader
+the fixture flags, both on in dev. `coffee-kitty.fixtures.load-on-startup` registers `FixtureStartupLoader`, which
+seeds the fixture users into a database without users, and `coffee-kitty.fixtures.reset-on-startup` makes the loader
 clear the data first. The `dev` block also sets the datasource on `localhost:${DB_PORT:5433}`, the port
 `${SERVER_PORT:8081}`, and the springdoc paths, so the API is at `http://localhost:8081/api` and Swagger UI at
 `http://localhost:8081/api/swagger-ui.html`. Outside dev, springdoc is off.

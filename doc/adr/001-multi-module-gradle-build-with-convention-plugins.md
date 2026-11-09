@@ -58,7 +58,7 @@ cannot do. Each module names the conventions that it applies in its own `plugins
 block would configure the module from the root script, with nothing in the module's own build file to show it. Unlike
 the Maven option, the build stays on Gradle, the build tool that the lecture teaches.
 
-`build-logic/` holds these convention plugins, each applied by the id `de.seuhd.campuscoffee.<name>`:
+`build-logic/` holds these convention plugins, each applied by the id `de.seuhd.coffeekitty.<name>`:
 
 * `java-conventions`: the Java toolchain, the Spring Boot BOM, the shared test dependencies, and the test JVM
   arguments.

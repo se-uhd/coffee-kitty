@@ -72,14 +72,14 @@ If mise is not activated in your shell, prefix each `gradle` command with `mise 
 Start PostgreSQL 18:
 
 ```shell
-docker run -d --name campus-coffee-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p ${DB_PORT:-5433}:5432 postgres:18-alpine
+docker run -d --name coffee-kitty-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p ${DB_PORT:-5433}:5432 postgres:18-alpine
 ```
 
 Docker keeps the container after it stops. To start it again later, for example after a reboot, run the following
 command, because running `docker run` again fails on the taken container name:
 
 ```shell
-docker start campus-coffee-db
+docker start coffee-kitty-db
 ```
 
 Run the application in the `dev` profile:
@@ -115,7 +115,7 @@ the local installation in step 2, and it may create the wrapper files `gradlew`,
 On every start, the `dev` profile clears the data and seeds five users, each with a coffee count of zero. Their login
 names are `jane_doe`, `maxmustermann`, `student2023`, `lisa_lee`, and `olivia_lee`. The app assigns random ids, which
 change with every restart, and `GET /api/users` lists the current ids. The system and acceptance tests seed the same
-users, which `domain/src/main/kotlin/de/seuhd/campuscoffee/domain/tests/TestFixtures.kt` defines.
+users, which `domain/src/main/kotlin/de/seuhd/coffeekitty/domain/tests/TestFixtures.kt` defines.
 
 ## REST API
 

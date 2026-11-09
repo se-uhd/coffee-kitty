@@ -1,5 +1,5 @@
 plugins {
-    id("de.seuhd.campuscoffee.detekt-rules-conventions")
+    id("de.seuhd.coffeekitty.detekt-rules-conventions")
 }
 
 dependencies {

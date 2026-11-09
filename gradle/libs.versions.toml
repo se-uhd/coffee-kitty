@@ -1,5 +1,5 @@
 # Version catalog for the Coffee Kitty Gradle build. Entries without a version get it from a BOM: the Spring Boot BOM
-# in the modules (imported in de.seuhd.campuscoffee.java-conventions), and junit-bom in the detekt-rules tests.
+# in the modules (imported in de.seuhd.coffeekitty.java-conventions), and junit-bom in the detekt-rules tests.
 [versions]
 # Java major version: the single source of truth for the toolchain. The convention plugins resolve
 # it for the Gradle toolchain and the Kotlin jvmTarget, and mise.toml pins the same major by hand.

@@ -34,7 +34,7 @@ avoid.
   Avoid: single-step change.
 - **fixture user**: One of the five users that the dev profile seeds on every start and the system and acceptance
   tests seed before each test, each with a coffee count of zero.
-  Code: `TestFixtures`, `FixtureStartupLoader`, `campus-coffee.fixtures.*`.
+  Code: `TestFixtures`, `FixtureStartupLoader`, `coffee-kitty.fixtures.*`.
   Avoid: seeded user.
 
 ## Architecture
@@ -44,7 +44,7 @@ avoid.
 - **convention plugin**: A Gradle plugin in the included build `build-logic/` that holds one part of the build setup,
   such as the Java toolchain, the Kotlin options with ktlint and detekt, or the Kotlin JPA plugin that only `data`
   needs.
-  A subproject applies it by the id `de.seuhd.campuscoffee.<name>`.
+  A subproject applies it by the id `de.seuhd.coffeekitty.<name>`.
   Code: `java-conventions.gradle.kts`, `kotlin-conventions.gradle.kts`.
 - **port**: An interface in `domain/.../ports/` that connects the domain to the rest of the app. The controllers call
   the API ports in `ports/api/`, and the data module implements the data ports in `ports/data/`. The fixture loader
@@ -80,7 +80,7 @@ avoid.
   fixture loader runs it under `reset-on-startup`, and the tests run it before each test. No endpoint offers it.
   Code: `DataResetService.clearAll`.
 - **fixture loader**: The component that creates the fixture users through `UserService.create` on startup when
-  `campus-coffee.fixtures.load-on-startup` is true. When `campus-coffee.fixtures.reset-on-startup` is also true, as in
+  `coffee-kitty.fixtures.load-on-startup` is true. When `coffee-kitty.fixtures.reset-on-startup` is also true, as in
   the dev profile, it first runs a data reset. Otherwise, it creates the fixture users only in a database without
   users.
   Code: `FixtureStartupLoader`, `FixturesProperties`.

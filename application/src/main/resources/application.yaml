@@ -33,10 +33,10 @@ springdoc:
     enabled: false
   swagger-ui:
     enabled: false
-# Custom properties. The KDoc of the @ConfigurationProperties class bound to each campus-coffee.* prefix documents
-# its keys (FixturesProperties for campus-coffee.fixtures.*), so a comment on a key here explains only why a profile
+# Custom properties. The KDoc of the @ConfigurationProperties class bound to each coffee-kitty.* prefix documents
+# its keys (FixturesProperties for coffee-kitty.fixtures.*), so a comment on a key here explains only why a profile
 # sets its value.
-campus-coffee:
+coffee-kitty:
   fixtures:
     load-on-startup: false
 
@@ -63,7 +63,7 @@ springdoc:
   swagger-ui:
     enabled: true
     path: /api/swagger-ui.html
-campus-coffee:
+coffee-kitty:
   fixtures:
     load-on-startup: true
     # dev: clear and reseed on every start, so that each run begins with the fixture users at a coffee count of zero

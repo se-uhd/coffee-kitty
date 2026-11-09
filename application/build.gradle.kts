@@ -1,6 +1,6 @@
 plugins {
-    id("de.seuhd.campuscoffee.java-conventions")
-    id("de.seuhd.campuscoffee.kotlin-conventions")
+    id("de.seuhd.coffeekitty.java-conventions")
+    id("de.seuhd.coffeekitty.kotlin-conventions")
     alias(libs.plugins.spring.boot)
 }
 

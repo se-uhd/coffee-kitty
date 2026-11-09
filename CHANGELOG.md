@@ -12,6 +12,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The README describes how the group buys coffee beans from the kitty and how members declare their own coffee
   purchases as expenses, says that students first see the app in the lectures on agentic software engineering, and
   explains how to set up IntelliJ IDEA.
+- The code uses the name Coffee Kitty instead of CampusCoffee. The package, the Gradle group, and the IDs of the
+  convention plugins are `de.seuhd.coffeekitty` instead of `de.seuhd.campuscoffee`. The configuration properties start
+  with `coffee-kitty.` instead of `campus-coffee.`, the KDoc rule set for detekt is `coffee-kitty-kdoc`, and the README
+  names the database container `coffee-kitty-db`.
 
 ### Fixed
 
