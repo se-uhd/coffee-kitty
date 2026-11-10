@@ -12,6 +12,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The README describes how the group buys coffee beans from the kitty and how members declare their own coffee
   purchases as expenses, says that students first see the app in the lectures on agentic software engineering, and
   explains how to set up IntelliJ IDEA.
+- The README no longer tells readers to clone the repository, which they have already done when they read the README
+  in IntelliJ IDEA. It runs `mise trust` before `mise install`, one command per block.
 
 ### Fixed
 
