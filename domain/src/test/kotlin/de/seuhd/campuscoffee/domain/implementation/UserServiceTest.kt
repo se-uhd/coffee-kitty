@@ -84,7 +84,7 @@ class UserServiceTest {
     }
 
     @Test
-    fun `create stores the normalized user without client id and timestamps and then a consumption at zero`() {
+    fun `create stores the normalized user without client id and timestamps and then a consumption with count 0`() {
         stubUpserts()
         val clientTime = LocalDateTime.of(2000, 1, 1, 0, 0)
 

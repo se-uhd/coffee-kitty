@@ -12,8 +12,8 @@ import java.util.UUID
 
 /**
  * Domain implementation of [UserService]. Creating a user normalizes the email address, checks the login name, the
- * normalized address, and the names (see [create]), stores the user, and then creates the user's consumption at zero,
- * all in one transaction.
+ * normalized address, and the names (see [create]), stores the user, and then creates the user's consumption with a
+ * coffee count of zero, all in one transaction.
  */
 @Service
 class UserServiceImpl(

@@ -7,7 +7,8 @@ import java.util.UUID
 
 /**
  * API port for the consumptions, implemented in the domain module and called by the controllers: reading a user's
- * coffee count and adding a coffee. [UserService.create] creates each consumption at zero together with its user.
+ * coffee count and adding a coffee. [UserService.create] creates each consumption, with a coffee count of zero,
+ * together with its user.
  */
 interface CoffeeConsumptionService {
     /**

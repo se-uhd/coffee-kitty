@@ -70,7 +70,7 @@ class ConstraintMapping<D : DomainModel<*>>(
          * Hibernate's PostgreSQL dialect reads the name from the English server message, so a server that reports its
          * messages in another language yields null, and the violation becomes a 500.
          *
-         * @param exception the data integrity violation whose cause chain is inspected
+         * @param exception the data integrity violation to inspect
          */
         fun constraintNameOf(exception: DataIntegrityViolationException): String? {
             var cause: Throwable? = exception
