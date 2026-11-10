@@ -19,8 +19,8 @@ import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as ApiRequestBody
 
 /**
- * Controller for a user's coffee count under `/users/{userId}/consumption`. It reads the count and adds a coffee to
- * it, and both operations return the user's login name and coffee count as a [ConsumptionDto].
+ * Controller under `/api/users/{userId}/consumption` that reads the coffee count of a user and adds a coffee. Both
+ * endpoints return the login name and the coffee count of the user as a [ConsumptionDto].
  */
 @Tag(name = "Consumption", description = "Reading a user's coffee count and adding a coffee.")
 @RestController
@@ -32,7 +32,7 @@ class ConsumptionController(
     /**
      * Returns the coffee count of the user with [userId].
      *
-     * @param userId the id of the user whose coffee count to read
+     * @param userId the id of the user
      */
     @Operation(summary = "Get a user's coffee count.")
     @GetMapping("")
@@ -43,12 +43,12 @@ class ConsumptionController(
         ResponseEntity.ok(consumptionDtoMapper.toDto(coffeeConsumptionService.getByUserId(userId)))
 
     /**
-     * Applies the delta in [dto] to the coffee count of the user with [userId] and returns the new count. The domain
-     * accepts only a delta of `+1`, which adds a coffee, and rejects any other integer with a `ValidationException`
+     * Adds the delta in [dto] to the coffee count of the user with [userId] and returns the new coffee count. The
+     * domain accepts a delta of `+1`, which adds a coffee, and rejects any other integer with a `ValidationException`
      * (400).
      *
-     * @param userId the id of the user whose coffee count to change
-     * @param dto    the delta to apply, which must be `+1`
+     * @param userId the id of the user
+     * @param dto    the request body with the delta, which must be `+1`
      */
     @Operation(summary = "Add a coffee to a user's coffee count (a delta of +1).")
     @PostMapping("")

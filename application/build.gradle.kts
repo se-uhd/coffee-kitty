@@ -7,16 +7,17 @@ plugins {
 dependencies {
     implementation(project(":domain"))
     implementation(project(":api"))
-    // Compile scope rather than runtimeOnly, so that the IDE resolves in application.yaml the keys of a
-    // `@ConfigurationProperties` class in the data module. The data module declares none yet.
+    // No source in this module imports the data module. The data module is still a compile dependency, because
+    // IntelliJ resolves the keys of a `@ConfigurationProperties` class in application.yaml only from compile
+    // dependencies. The data module does not declare such a class yet.
     implementation(project(":data"))
 
     implementation(libs.spring.boot.starter.webmvc)
-    // The fixture loader logs via KotlinLogging.logger {} (a Kotlin facade over SLF4J).
+    // FixtureStartupLoader logs through kotlin-logging, which wraps SLF4J in a Kotlin API.
     implementation(libs.kotlin.logging)
 
-    // On the compile classpath, although no source imports it, because IntelliJ looks up the driver-class-name in
-    // application.yaml only in compile dependencies.
+    // No source imports the PostgreSQL driver. The driver is still a compile dependency, because IntelliJ resolves
+    // the driver-class-name in application.yaml only from compile dependencies.
     implementation(libs.postgresql)
 
     testImplementation(libs.testcontainers.postgresql)
@@ -28,14 +29,15 @@ dependencies {
 }
 
 springBoot {
-    // Write META-INF/build-info.properties so that a BuildProperties bean exposes the version to OpenApiConfig. Omit
-    // the build time, which would change the file, and with it the inputs of the tests, on every build.
+    // Writes META-INF/build-info.properties. Spring Boot reads the file into a BuildProperties bean, and
+    // OpenApiConfig takes the API version from that bean. The file leaves out the build time. A build time would
+    // change the file on every build, and Gradle would then rerun the tests even when no code changed.
     buildInfo {
         excludes.add("time")
     }
 }
 
-// Only the executable bootJar is used, so drop the plain library jar.
+// Disables the plain jar, because only the executable jar that bootJar builds is used.
 tasks.named("jar") {
     enabled = false
 }

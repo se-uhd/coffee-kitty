@@ -1,9 +1,9 @@
 package de.seuhd.campuscoffee.domain.ports.internal
 
 /**
- * Internal port for deleting all data, in an order that the foreign keys allow. The fixture loader's reset on
- * startup and the test setups call it. The architecture tests keep every api class off this port, so that no
- * endpoint can offer it.
+ * Internal port for the data reset, which deletes the data of every entity in an order that the foreign keys allow.
+ * The fixture loader and the tests call it. An architecture test fails if a class in the api module uses this port,
+ * because no endpoint may offer a data reset.
  */
 interface DataResetService {
     /** Deletes the data of every entity. */

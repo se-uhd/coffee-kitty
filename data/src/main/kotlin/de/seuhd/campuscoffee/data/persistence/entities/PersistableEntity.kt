@@ -10,16 +10,17 @@ import org.springframework.data.domain.Persistable
 import java.util.UUID
 
 /**
- * Base for the JPA entities with a [UUID] id that the application assigns instead of the database. Because the id has
- * no `@GeneratedValue`, Spring Data cannot tell a new row from an existing one by a null id, so the entity implements
- * [Persistable]: [isNew] stays true until the row is loaded or persisted (tracked by a transient flag). That lets
- * `repository.save()` insert a freshly built entity without first running a SELECT to check whether it already exists.
+ * Base class of the JPA entities with a [UUID] id that the application assigns, not the database. By default, Spring
+ * Data treats an entity with an id as stored, and `repository.save()` calls `merge`, which first runs a SELECT for the
+ * row. This class implements [Persistable], and [isNew] returns true until JPA loads or inserts the row. `save()`
+ * therefore inserts a new entity without the SELECT.
  *
- * The id is held in a private field and exposed through `getId()`/`setId()` because a Kotlin property named
- * `id` would compile to the same `getId()` as the [Persistable] override and clash with it. Callers still
- * write `entity.id`, since Kotlin exposes the Java `getId()`/`setId()` pair as a property.
+ * The private field `entityId` holds the id, and the functions `getId()` and `setId()` read and write it. A Kotlin
+ * property named `id` would generate a second `getId()` next to the override of [Persistable.getId], and the two would
+ * clash. Kotlin code still writes `entity.id`. Because `getId()` overrides a getter of the Java interface
+ * [Persistable], Kotlin treats `getId()` and `setId()` as the property `id`.
  *
- * The timestamped [Entity] extends this base, and every table's entity extends [Entity].
+ * [Entity] extends this class with timestamps, and every JPA entity extends [Entity].
  */
 @MappedSuperclass
 abstract class PersistableEntity : Persistable<UUID> {
@@ -33,9 +34,9 @@ abstract class PersistableEntity : Persistable<UUID> {
     override fun getId(): UUID? = entityId
 
     /**
-     * Assigns the entity's id (exposed as the `id` property in Kotlin).
+     * Sets the id. Kotlin code writes `entity.id = value` to call this function.
      *
-     * @param value the id to assign
+     * @param value the new id
      */
     fun setId(value: UUID?) {
         entityId = value
@@ -43,7 +44,7 @@ abstract class PersistableEntity : Persistable<UUID> {
 
     override fun isNew(): Boolean = !persisted
 
-    /** Marks the entity as persisted after its row is loaded or inserted, so that [isNew] returns false. */
+    /** Sets `persisted` after JPA loads or inserts the row. [isNew] returns false from then on. */
     @PostLoad
     @PostPersist
     private fun markPersisted() {

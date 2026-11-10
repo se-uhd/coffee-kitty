@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 
 /**
- * Reports every non-local class, interface, object, and enum class that has no KDoc. Local types
- * (declared inside a function body), enum entries, anonymous objects, and companion objects are exempt.
+ * Reports every class, interface, object, and enum class without a KDoc. The rule skips enum entries, anonymous
+ * objects, companion objects, and local types (types declared in a function body).
  */
 class UndocumentedNonLocalClass(
     config: Config
@@ -22,7 +22,7 @@ class UndocumentedNonLocalClass(
     }
 
     override fun visitObjectDeclaration(declaration: KtObjectDeclaration) {
-        // A companion object is part of its enclosing class, not a standalone type.
+        // A companion object is part of the enclosing class and needs no KDoc of its own.
         if (!declaration.isCompanion()) {
             reportIfUndocumented(declaration)
         }
@@ -30,8 +30,8 @@ class UndocumentedNonLocalClass(
     }
 
     /**
-     * Reports [element] when it is a non-local class or object that has no KDoc. Enum entries and
-     * anonymous objects are skipped.
+     * Reports [element] when it has no KDoc. Skips enum entries, local types, and anonymous objects. An anonymous
+     * object has no name identifier.
      */
     private fun reportIfUndocumented(element: KtClassOrObject) {
         if (element is KtEnumEntry || element.isLocal || element.nameIdentifier == null) return

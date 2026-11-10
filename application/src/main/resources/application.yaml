@@ -5,25 +5,29 @@ spring:
     driver-class-name: org.postgresql.Driver
     hikari:
       data-source-properties:
-        # A database error message names the violated constraint without the row's values.
+        # Keeps the values of the affected row, such as an email address, out of the message of a database error. The
+        # message still names the violated constraint.
         logServerErrorDetail: false
   jpa:
-    # Open Session in View, which holds a database connection for the whole request, is off. No JPA entity has a lazy
-    # association yet. An adapter for a JPA entity that gets one must read and map the entity inside a @Transactional
-    # method. The read methods of CrudDataServiceImpl and of the adapters, except getByUserIdForUpdate, are not
-    # @Transactional, so for a caller without a transaction, they map the entity outside any transaction, where a lazy
-    # association cannot load.
+    # Turns off Open Session in View, which holds a database connection for the whole request. Without Open Session
+    # in View, a lazy association can load only inside a transaction. No JPA entity has a lazy association yet. The
+    # read methods of CrudDataServiceImpl and of the data adapters, except getByUserIdForUpdate, are not
+    # @Transactional. When the caller has no transaction, these methods map the JPA entity outside any transaction. A
+    # data adapter for a JPA entity with a lazy association must therefore read and map the entity inside a
+    # @Transactional method.
     open-in-view: false
     hibernate:
-      # Flyway creates and migrates the schema, and Hibernate only checks at startup that the entities match it.
+      # Flyway creates and migrates the schema. Hibernate checks at startup that the JPA entities match the schema
+      # and does not change the schema.
       ddl-auto: validate
     properties:
-      # The exception handler logs a database error once, when it maps it, so Hibernate does not log each SQL
-      # error itself.
+      # Turns off the logging of SQL errors by Hibernate. The exception handler already logs each database error that a
+      # request causes, and Hibernate would log the same error a second time.
       hibernate.jdbc.log.errors: false
   jackson:
     deserialization:
-      # A JSON number with a fraction, such as a delta of 1.9, is a 400 instead of an integer cut to 1.
+      # Jackson rejects a JSON number with a fraction for an integer field, and the request gets a 400. With the
+      # default true, Jackson would truncate a delta of 1.9 to 1, and the request would add a coffee.
       accept-float-as-int: false
   flyway:
     enabled: true
@@ -34,9 +38,9 @@ springdoc:
     enabled: false
   swagger-ui:
     enabled: false
-# Custom properties. The KDoc of the @ConfigurationProperties class bound to each campus-coffee.* prefix documents
-# its keys (FixturesProperties for campus-coffee.fixtures.*), so a comment on a key here explains only why a profile
-# sets its value.
+# Custom properties. The KDoc of a @ConfigurationProperties class documents the keys under its prefix. For
+# campus-coffee.fixtures, this class is FixturesProperties. A comment on a key in this file says only why a profile
+# sets the value.
 campus-coffee:
   fixtures:
     load-on-startup: false
@@ -47,15 +51,16 @@ spring:
     activate:
       on-profile: dev
   datasource:
-    # Local dev reaches PostgreSQL on host port 5433, not the conventional 5432, so that it does not collide with a
-    # system PostgreSQL or another project's container. Override it with DB_PORT (e.g., DB_PORT=5432). The port
-    # inside the container stays 5432.
+    # Connects to PostgreSQL on host port 5433 instead of the default 5432, to avoid a conflict with a PostgreSQL
+    # installed on the system or with a container of another project. DB_PORT overrides the host port, as in
+    # DB_PORT=5432. Inside the container, PostgreSQL still listens on port 5432.
     url: jdbc:postgresql://localhost:${DB_PORT:5433}/postgres
     username: postgres
     password: postgres
 server:
-  # Local dev serves on :8081 so that it does not collide with another app on the conventional :8080. Override it
-  # with SERVER_PORT. The system tests use a random port (WebEnvironment.RANDOM_PORT) and ignore this setting.
+  # Serves the API on port 8081 instead of the default 8080, to avoid a conflict with another app on port 8080.
+  # SERVER_PORT overrides the port. The system and acceptance tests run without the dev profile on a random port
+  # (WebEnvironment.RANDOM_PORT).
   port: ${SERVER_PORT:8081}
 springdoc:
   api-docs:
@@ -67,5 +72,5 @@ springdoc:
 campus-coffee:
   fixtures:
     load-on-startup: true
-    # dev: clear and reseed on every start, so that each run begins with the fixture users at a coffee count of zero
+    # Runs a data reset on every start. Each run then begins with only the fixture users at a coffee count of zero.
     reset-on-startup: true

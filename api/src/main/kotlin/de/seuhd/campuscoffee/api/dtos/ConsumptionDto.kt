@@ -1,9 +1,8 @@
 package de.seuhd.campuscoffee.api.dtos
 
 /**
- * Response DTO for a user's coffee count: the user's [loginName] and their running [count] of coffees. Both
- * endpoints under `/api/users/{userId}/consumption` return it. It does not implement [Dto], because it carries no
- * entity id.
+ * Response body of both endpoints under `/api/users/{userId}/consumption`, with the [loginName] of the user and the
+ * coffee [count]. The class does not implement [Dto], because it has no id.
  */
 data class ConsumptionDto(
     val loginName: String,

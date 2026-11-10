@@ -1,7 +1,6 @@
-# Project detekt configuration, layered on top of detekt's defaults (buildUponDefaultConfig = true,
-# set in the kotlin-conventions plugin). It enables the custom KDoc rule set provided by the
-# :detekt-rules subproject and loaded via detektPlugins. The rules default to inactive, so they are turned
-# on here. See detekt-rules/src/main/kotlin/de/seuhd/campuscoffee/detekt/.
+# detekt configuration of the project. kotlin-conventions and detekt-rules-conventions set buildUponDefaultConfig, which
+# applies this file on top of the default configuration of detekt. The rules of the custom KDoc rule set in
+# detekt-rules/src/main/kotlin/de/seuhd/campuscoffee/detekt/ are inactive by default, and this file enables them.
 campus-coffee-kdoc:
   active: true
   # Every non-local class, interface, object (except a companion object), and enum class needs KDoc.
@@ -10,9 +9,9 @@ campus-coffee-kdoc:
   # Every non-local, non-override function needs KDoc, regardless of visibility.
   UndocumentedFunction:
     active: true
-  # A public, non-override function must document every parameter with @param.
+  # A public, non-override function with a KDoc must document every parameter with @param.
   UndocumentedFunctionParameter:
     active: true
-  # Non-private enum constructor properties need @property or @param.
+  # Each non-private property in the primary constructor of an enum class needs an @property or @param tag.
   UndocumentedEnumConstructorProperty:
     active: true

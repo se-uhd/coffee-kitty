@@ -14,10 +14,10 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 
 /**
- * Single Spring and Cucumber configuration shared by all acceptance step definitions. Cucumber allows
- * only one [CucumberContextConfiguration], so the step classes hold step definitions only and rely on the
- * context and the hooks defined here. The context uses the PostgreSQL container that the system tests share.
- * Each scenario starts from the fixture users, each with a coffee count of zero.
+ * The Spring context and the hooks for every acceptance scenario. Cucumber accepts only one class with
+ * [CucumberContextConfiguration], and the step classes therefore contain only step definitions. The Spring context
+ * uses the same PostgreSQL container as the system tests. Before each scenario, [beforeEach] runs a data reset and
+ * creates the fixture users at a coffee count of zero.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @CucumberContextConfiguration

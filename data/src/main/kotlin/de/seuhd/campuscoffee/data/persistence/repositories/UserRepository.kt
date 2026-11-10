@@ -5,15 +5,15 @@ import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID
 
 /**
- * Spring Data JPA repository for [UserEntity]. Spring Data implements the interface at runtime and derives the query of
- * each declared method from its name.
+ * Spring Data JPA repository for [UserEntity]. Spring Data implements this interface at runtime and derives the query
+ * of each method declared here from the method name.
  */
 interface UserRepository : JpaRepository<UserEntity, UUID> {
-    /** Returns all users ordered by login name ascending. */
+    /** Returns every user, ordered by login name. */
     fun findAllByOrderByLoginNameAsc(): List<UserEntity>
 
     /**
-     * Returns the user with the given login name, or null if none matches.
+     * Returns the user with [loginName], or null.
      *
      * @param loginName the login name to look up
      */

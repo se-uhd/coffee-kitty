@@ -5,27 +5,25 @@ import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
 import java.util.UUID
 
 /**
- * Data port for the consumptions, implemented by `CoffeeConsumptionDataServiceImpl` in the data module. It
- * adds two lookups by user to the operations of [CrudDataService]. Its [getAll] returns the consumptions in the order
+ * Data port for the consumptions, with two lookups by user in addition to the operations of [CrudDataService].
+ * `CoffeeConsumptionDataServiceImpl` in the data module implements it. [getAll] returns the consumptions in the order
  * in which they were created.
  */
 interface CoffeeConsumptionDataService : CrudDataService<CoffeeConsumption, UUID> {
     /**
-     * Retrieves the consumption of the user with [userId]. Each user has exactly one.
+     * Returns the consumption of the user with [userId].
      *
-     * @param userId the id of the owning user
-     * @return that user's consumption
+     * @param userId the id of the user
      * @throws NotFoundException if no user has [userId]
      */
     fun getByUserId(userId: UUID): CoffeeConsumption
 
     /**
-     * Retrieves the consumption of the user with [userId], as [getByUserId] does, and locks it until the caller's
-     * transaction ends. A concurrent call for the same user waits until then, so two concurrent changes cannot both
-     * start from the same count. Call it only inside a transaction.
+     * Returns the consumption of the user with [userId] and locks the consumption row until the current transaction
+     * ends. A concurrent call for the same user waits for the lock and then reads the current count. Call this method
+     * only inside a transaction. Outside a transaction, the data adapter throws an `IllegalTransactionStateException`.
      *
-     * @param userId the id of the owning user
-     * @return that user's consumption
+     * @param userId the id of the user
      * @throws NotFoundException if no user has [userId]
      */
     fun getByUserIdForUpdate(userId: UUID): CoffeeConsumption

@@ -5,11 +5,11 @@ import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
-// Kotlin configuration for the modules: the Java toolchain and target, the Spring all-open plugin
-// (so @Component/@Transactional classes can be proxied), ktlint formatting and linting, detekt with the custom
-// campus-coffee-kdoc rules, and the Kotlin reflection library that Spring requires at runtime. The Java major version
-// is sourced from the version catalog (libs `java`), the same entry the Java toolchain uses, so the two cannot
-// diverge.
+// Kotlin configuration of the modules: the Java toolchain and the JVM target, the Spring all-open plugin, ktlint,
+// detekt with the custom KDoc rules of campus-coffee-kdoc, and the Kotlin reflection library that Spring needs at
+// runtime. The all-open plugin opens the classes annotated with @Component or @Transactional, which lets Spring create
+// proxies of these classes. The toolchain and the JVM target use the `java` version from gradle/libs.versions.toml.
+// java-conventions reads the same entry.
 plugins {
     kotlin("jvm")
     kotlin("plugin.spring")
@@ -24,22 +24,22 @@ kotlin {
     jvmToolchain(javaVersion.toInt())
     compilerOptions {
         jvmTarget.set(JvmTarget.fromTarget(javaVersion))
-        // retain parameter names for Spring's @PathVariable/@RequestParam binding, as -parameters does for Java
+        // Write the parameter names into the class files (for Java, the javac flag -parameters does the same). Spring
+        // binds @PathVariable and @RequestParam parameters by these names.
         javaParameters.set(true)
     }
 }
 
-// Formatting follows ktlint's own `ktlint_official` code style (not IntelliJ's Kotlin coding conventions), which the
-// root .editorconfig selects together with the line length. The plugin wires ktlintCheck into `check`, so a
+// ktlint checks the code against the code style `ktlint_official` (not the Kotlin coding conventions of IntelliJ) and
+// the line length, which the root .editorconfig sets. The ktlint plugin makes `check` depend on ktlintCheck, and a
 // formatting violation fails the build.
 configure<KtlintExtension> {
     version.set(libs.findVersion("ktlint-tool").get().requiredVersion)
 }
 
-// Run ktlint on the catalog's `ktlint-kotlin` compiler (gradle/libs.versions.toml explains the version). Without this
-// block, the Spring dependency management would resolve ktlint's Kotlin artifacts to the build's Kotlin, which
-// ktlint 1.8.0 cannot run on. Remove the block once ktlint runs on the build's `kotlin`, that is, once
-// `gradle ktlintCheck` passes without it.
+// Run ktlint on the `ktlint-kotlin` compiler from gradle/libs.versions.toml, which explains the version. Without this
+// block, the Spring dependency management would resolve the Kotlin artifacts of ktlint to the `kotlin` version of the
+// build, and ktlint 1.8.0 fails on that version. Remove the block when `gradle ktlintCheck` passes without it.
 configurations.matching { it.name.startsWith("ktlint") }.configureEach {
     resolutionStrategy.eachDependency {
         if (requested.group == "org.jetbrains.kotlin") {
@@ -48,8 +48,9 @@ configurations.matching { it.name.startsWith("ktlint") }.configureEach {
     }
 }
 
-// A detekt 2.0 alpha only runs on the exact Kotlin it was built against. The Spring dependency management would
-// resolve detekt's Kotlin artifacts to the build's Kotlin, so pin them to the catalog's `detekt-kotlin` instead.
+// Run detekt on the `detekt-kotlin` compiler from gradle/libs.versions.toml. A detekt 2.0 alpha runs only on the Kotlin
+// version that it was built with. Without this block, the Spring dependency management would resolve the Kotlin
+// artifacts of detekt to the `kotlin` version of the build.
 configurations.matching { it.name.startsWith("detekt") }.configureEach {
     resolutionStrategy.eachDependency {
         if (requested.group == "org.jetbrains.kotlin") {
@@ -58,24 +59,23 @@ configurations.matching { it.name.startsWith("detekt") }.configureEach {
     }
 }
 
-// Static analysis with detekt: The plugin wires its task into `check` and fails the build on findings by
-// default. buildUponDefaultConfig layers our config on detekt's defaults, and config/detekt/detekt.yml enables
-// the custom campus-coffee-kdoc rules. No module has a detekt-baseline.xml, the file of accepted findings that
-// detekt reads by default, so every finding fails the build.
+// The detekt plugin makes `check` depend on the `detekt` task, which fails the build on any finding. detekt would skip
+// the findings listed in a detekt-baseline.xml, but no module has this file. buildUponDefaultConfig applies
+// config/detekt/detekt.yml on top of the default configuration of detekt. That file enables the custom KDoc rules.
 detekt {
     buildUponDefaultConfig = true
     parallel = true
     config.from(rootProject.file("config/detekt/detekt.yml"))
 }
 
-// The `detekt` task scans main and test sources by default. Restrict it to the main source set, so that the KDoc rules
-// skip the test sources. No detekt rule then checks the test sources.
+// The `detekt` task checks the main and the test sources by default. Restrict the task to src/main/kotlin, so that the
+// test sources need no KDoc. No other detekt rule checks the test sources either.
 tasks.named<Detekt>("detekt") {
     setSource(files("src/main/kotlin"))
 }
 
 dependencies {
     implementation(kotlin("reflect"))
-    // The custom KDoc rules, which config/detekt/detekt.yml activates.
+    // The custom KDoc rules, which config/detekt/detekt.yml enables.
     detektPlugins(project(":detekt-rules"))
 }

@@ -14,16 +14,17 @@ import org.testcontainers.utility.DockerImageName
 object SystemTestUtils {
     private lateinit var client: RestTestClient
 
-    /** Binds the shared [RestTestClient] to the running server on the given port. */
+    /** Binds the shared [RestTestClient] to the server on [port]. */
     fun configureClient(port: Int) {
         client = RestTestClient.bindToServer().baseUrl("http://localhost:$port").build()
     }
 
-    /** The client bound to the running server. */
+    /** Returns the shared [RestTestClient], which [configureClient] has bound to the server. */
     fun client(): RestTestClient = client
 
-    // One PostgreSQL container for every system and acceptance test of the test JVM, started on first use. The
-    // container is AutoCloseable but deliberately not closed here, because Testcontainers stops it on JVM shutdown.
+    // One PostgreSQL container for all system and acceptance tests in the test JVM. The container starts on first
+    // use, and Testcontainers stops it when the JVM shuts down. The tests therefore never close the container,
+    // although PostgreSQLContainer is AutoCloseable.
     @Suppress("resource")
     private val postgresContainer: PostgreSQLContainer by lazy {
         PostgreSQLContainer(DockerImageName.parse("postgres:18-alpine")).apply { start() }
@@ -36,12 +37,12 @@ object SystemTestUtils {
         registry.add("spring.datasource.password", postgresContainer::getPassword)
     }
 
-    /** The status code of a response, without asserting it. */
+    /** Returns the status code of the response without asserting it. */
     fun RestTestClient.ResponseSpec.statusCode(): Int = returnResult<ByteArray>().status.value()
 
     /**
-     * Asserts that the server answered a setup request with the status [expected], so that a failed setup step stops
-     * the test before a later assertion can pass for the wrong reason.
+     * Asserts that a setup request returned the status [expected]. A failed setup step then stops the test before a
+     * later assertion can pass for the wrong reason.
      *
      * @param expected the status code of a successful setup request
      */

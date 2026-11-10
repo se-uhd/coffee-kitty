@@ -7,8 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
 
 /**
- * Compares [ConstraintMapping.REGISTRY] with the unique constraints and unique indexes of the migrated schema, so that
- * a duplicate value of a new unique key gets a 409 rather than a generic 500.
+ * Checks that [ConstraintMapping.REGISTRY] lists exactly the unique constraints and unique indexes of the migrated
+ * schema. The test fails when a migration adds a unique constraint without an entry in the registry. Without the
+ * entry, a duplicate value for that constraint leads to a 500 instead of a 409.
  */
 class ConstraintMappingRegistryIntegrationTest : AbstractDataIntegrationTest() {
     @Autowired
@@ -16,7 +17,7 @@ class ConstraintMappingRegistryIntegrationTest : AbstractDataIntegrationTest() {
 
     @Test
     fun `the constraint registry lists each non-primary unique index of the app's tables once and nothing else`() {
-        // Flyway's own history table is the only table that the app does not map
+        // The query skips flyway_schema_history, because it is the only table without a JPA entity
         val uniqueIndexes =
             jdbcTemplate.queryForList(
                 "SELECT c.relname FROM pg_index i " +

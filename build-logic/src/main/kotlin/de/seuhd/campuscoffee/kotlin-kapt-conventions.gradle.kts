@@ -1,14 +1,14 @@
 package de.seuhd.campuscoffee
 
-// kapt for the MapStruct annotation processor on the Kotlin mappers. Applied to the api and data
-// modules, which add the processor via the `kapt(...)` configuration.
+// kapt runs the MapStruct annotation processor on the Kotlin mappers. The api and data modules apply this convention
+// plugin and add the processor to the `kapt` configuration.
 plugins {
     kotlin("kapt")
 }
 
-// Fail the build on a mapper target property that has neither a source nor `ignore = true`. MapStruct's default is
-// only a warning, so a nullable property added to a domain model but not to its DTO would be set to null without
-// notice, and an update would then store that null.
+// Fail the build when a target property of a mapper has neither a source nor `ignore = true`. By default, MapStruct
+// only warns. With that default, a nullable property added to a domain model but not to its DTO would be set to null
+// without notice, and an update would store that null.
 configure<org.jetbrains.kotlin.gradle.plugin.KaptExtension> {
     arguments {
         arg("mapstruct.unmappedTargetPolicy", "ERROR")

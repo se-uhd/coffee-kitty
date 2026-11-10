@@ -17,10 +17,12 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 /**
- * System tests for the user endpoints under `/api/users`, which list, get, and create users.
+ * System tests for listing, reading, and creating users through `/api/users`.
  */
 class UserSystemTests : AbstractSystemTest() {
-    /** The request body of a new user with the given login name, email address, and first name. */
+    /**
+     * Returns the request body for a new user with [loginName], [emailAddress], [firstName], and the last name `User`.
+     */
     private fun newUser(
         loginName: String = "new_user",
         emailAddress: String = "new.user@se.uni-heidelberg.de",

@@ -4,12 +4,12 @@ import de.seuhd.campuscoffee.api.dtos.Dto
 import de.seuhd.campuscoffee.domain.model.DomainModel
 
 /**
- * Generic mapper between a domain model and its DTO, in both directions, so that the domain model needs no API
- * annotations. A mapper that maps only from the domain does not extend it and names its method `toDto`, as
- * [ConsumptionDtoMapper] does.
+ * Generic mapper that converts between a domain object and its DTO in both directions. With separate DTOs, the domain
+ * models do not need API annotations, such as `@NotNull` or `@Schema`. A mapper for one direction, such as
+ * [ConsumptionDtoMapper], does not extend [DtoMapper] and names its method `toDto`.
  *
- * @param DOMAIN the domain model type
- * @param DTO    the data transfer object type
+ * @param DOMAIN the type of the domain model
+ * @param DTO    the type of the DTO
  */
 interface DtoMapper<DOMAIN : DomainModel<*>, DTO : Dto<*>> {
     /**

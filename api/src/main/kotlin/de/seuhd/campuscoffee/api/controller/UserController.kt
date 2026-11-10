@@ -24,8 +24,8 @@ import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as ApiRequestBody
 
 /**
- * Controller for the users. It lists all users, reads one by id, and creates a user. For each new user, the domain
- * also creates a consumption with a coffee count of zero, which [ConsumptionController] serves.
+ * Controller under `/api/users` that lists all users, reads a user by id, and creates a user. For each new user, the
+ * domain creates a consumption with a coffee count of zero, which [ConsumptionController] serves.
  */
 @Tag(name = "Users", description = "Listing, reading, and creating users.")
 @RestController
@@ -35,8 +35,8 @@ class UserController(
     private val userDtoMapper: UserDtoMapper
 ) {
     /**
-     * Returns every user, ordered by login name. The list is not paged, because a coffee group is small enough to
-     * list at once.
+     * Returns every user, ordered by login name. The endpoint does not split the list into pages, because a coffee
+     * group has few users.
      */
     @Operation(summary = "Get all users.")
     @GetMapping("")
@@ -44,9 +44,9 @@ class UserController(
         ResponseEntity.ok(userService.getAll().map { userDtoMapper.fromDomain(it) })
 
     /**
-     * Retrieves one user by id.
+     * Returns the user with [id].
      *
-     * @param id the id of the user to retrieve
+     * @param id the id of the user
      */
     @Operation(summary = "Get a user by ID.")
     @GetMapping("/{id}")
@@ -56,13 +56,14 @@ class UserController(
     ): ResponseEntity<UserDto> = ResponseEntity.ok(userDtoMapper.fromDomain(userService.getById(id)))
 
     /**
-     * Creates a user and answers 201 Created with the new user's URL in the `Location` header. In the same
-     * transaction, the domain creates the user's consumption with a coffee count of zero. `ResponseEntity.created`
-     * sets the status, and
-     * `@ResponseStatus` only makes the OpenAPI definition document the 201 instead of a 200.
+     * Creates a user and returns 201 Created with the URL of the new user in the `Location` header. In the same
+     * transaction, the domain creates the consumption of the user with a coffee count of zero.
+     *
+     * `ResponseEntity.created` sets the status of the response. springdoc reads `@ResponseStatus` and documents the
+     * status 201 instead of 200 in the OpenAPI definition.
      *
      * @param dto the user to create, without an id
-     * @throws ValidationException if the body carries an id
+     * @throws ValidationException if the body contains an id
      */
     @Operation(summary = "Create a user.")
     @ResponseStatus(HttpStatus.CREATED)
@@ -80,10 +81,10 @@ class UserController(
     }
 
     /**
-     * The location of a newly created user for the 201 response: the collection URL of the current request, without
-     * its query string, followed by the new id.
+     * Returns the URL for the `Location` header of a new user: the URL of the current request without its query
+     * string, followed by `/` and [id]. `UserSystemTests` checks that the query string is left out.
      *
-     * @param id the new user's id
+     * @param id the id of the new user
      */
     private fun locationOf(id: UUID): URI =
         ServletUriComponentsBuilder

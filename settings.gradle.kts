@@ -6,10 +6,10 @@ pluginManagement {
     }
 }
 
-// The only declaration of the subprojects' repositories. IntelliJ flags `repositoriesMode` and `repositories` as
-// unstable, because Gradle marks them @Incubating, and there is no stable alternative for declaring repositories
-// centrally. FAIL_ON_PROJECT_REPOS fails the build when a project declares its own repositories,
-// which would otherwise replace these.
+// The repositories of all subprojects, declared here and nowhere else. FAIL_ON_PROJECT_REPOS fails the build when a
+// build script declares repositories, because Gradle would use those in place of the repositories below. IntelliJ
+// marks `repositoriesMode` and `repositories` as unstable, because Gradle annotates them with @Incubating. Gradle has
+// no stable alternative.
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -17,9 +17,10 @@ dependencyResolutionManagement {
     }
 }
 
-// gradle/gradle-daemon-jvm.properties requires JDK 25 for the Gradle daemon. Gradle does not detect JDKs
-// installed by mise, so if Gradle is started with another JDK, for example by IntelliJ, this plugin lets
-// Gradle download a JDK 25 instead of failing.
+// gradle/gradle-daemon-jvm.properties requires JDK 25 for the Gradle daemon. Gradle does not detect a JDK that mise
+// installed. When IntelliJ starts Gradle with another JDK, Gradle may not find a JDK 25. It then downloads a JDK 25
+// from the URLs in that file. `gradle updateDaemonJvm` needs this plugin to write the URLs, and the Java toolchain
+// needs the plugin to download a missing JDK.
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }

@@ -6,16 +6,17 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
 /**
- * MapStruct mapper from a [CoffeeConsumption] domain object to its response DTO, flattening the user to their login
- * name. The request that adds a coffee carries only a delta (`ConsumptionDeltaDto`), which the controller passes to
- * the domain as a number, so the mapper has no reverse direction and does not extend [DtoMapper].
+ * MapStruct mapper from a [CoffeeConsumption] to a [ConsumptionDto]. The mapper converts in one direction and does
+ * not extend [DtoMapper]. The opposite direction is not needed, because the controller passes the delta from the
+ * request body (`ConsumptionDeltaDto`) to the domain as a number.
  */
 @Mapper(componentModel = "spring")
 interface ConsumptionDtoMapper {
     /**
-     * Maps a consumption to its response DTO.
+     * Converts [consumption] to a [ConsumptionDto]. The `@Mapping` copies the login name from the user of the
+     * consumption.
      *
-     * @param consumption the consumption to map
+     * @param consumption the consumption to convert
      */
     @Mapping(target = "loginName", source = "user.loginName")
     fun toDto(consumption: CoffeeConsumption): ConsumptionDto

@@ -10,14 +10,14 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 
 /**
- * Loads the fixture users on startup when `campus-coffee.fixtures.load-on-startup` is true (declared by
- * [FixturesProperties]). Creating a user through [UserService.create] also creates the user's consumption with a coffee
- * count of zero. The KDoc of the method [loadOnStartup] says when the loader clears the data first and when it loads
- * nothing.
+ * Creates the fixture users on startup when `campus-coffee.fixtures.load-on-startup` is true (see
+ * [FixturesProperties]). [UserService.create] creates each fixture user and a consumption for that user with a coffee
+ * count of zero. The KDoc of [loadOnStartup] describes when the fixture loader runs a data reset first and when it
+ * creates no users.
  *
- * As a [SmartInitializingSingleton], the loader runs at the end of singleton initialization, when Flyway has migrated
- * the schema and every bean is ready. In a servlet application, this moment comes before the embedded web server
- * accepts requests, so the API is never served before its data is loaded.
+ * Spring calls [afterSingletonsInstantiated] after it has created every singleton bean. At that point, Flyway has
+ * migrated the schema, and the embedded web server does not accept requests yet. The app therefore serves no request
+ * before the fixture users exist.
  */
 @Component
 @ConditionalOnProperty("campus-coffee.fixtures.load-on-startup", havingValue = "true")
@@ -29,9 +29,9 @@ class FixtureStartupLoader(
     override fun afterSingletonsInstantiated() = loadOnStartup()
 
     /**
-     * Loads the fixture users. When `reset-on-startup` is set, as in the dev profile, the loader first clears all
-     * data and then creates the fixture users, so each run starts with them at a coffee count of zero. Otherwise, the
-     * loader creates the fixture users only when the database has no users yet.
+     * Creates the fixture users. When `reset-on-startup` is true, as in the dev profile, the fixture loader first runs
+     * a data reset, and every run starts with the fixture users at a coffee count of zero. Otherwise, the fixture
+     * loader creates the fixture users only in a database without users.
      */
     fun loadOnStartup() {
         if (fixturesProperties.resetOnStartup) {

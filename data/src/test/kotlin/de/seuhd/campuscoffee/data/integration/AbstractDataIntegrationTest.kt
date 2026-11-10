@@ -11,10 +11,10 @@ import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 
 /**
- * Base class for data layer integration tests. Boots the data layer against a real PostgreSQL container with the
- * Flyway-managed schema and clears all data through [DataResetService] before each test, as the system tests do. At
- * startup, Hibernate checks that the entities match that schema (`ddl-auto: validate` in the test
- * `application.yaml`).
+ * Base class of the integration tests of the data module. Each test runs in the Spring context of
+ * [DataTestApplication], with a PostgreSQL database in a Docker container from Testcontainers. At startup, Flyway
+ * applies the migrations, and Hibernate then checks that the JPA entities match the schema (`ddl-auto: validate` in
+ * the test `application.yaml`). Before each test, [clearDatabase] runs a data reset through [DataResetService].
  */
 @SpringBootTest(classes = [DataTestApplication::class], webEnvironment = SpringBootTest.WebEnvironment.NONE)
 abstract class AbstractDataIntegrationTest {

@@ -5,21 +5,24 @@ plugins {
 }
 
 dependencies {
-    // api re-exposes domain types in its public signatures (e.g., `DtoMapper<User, UserDto>`).
+    // Public signatures in this module contain domain types, such as `DtoMapper<User, UserDto>`. api() puts the
+    // domain module on the compile classpath of every module that depends on the api module.
     api(project(":domain"))
 
     implementation(libs.spring.boot.starter.webmvc)
-    // The exception handler logs via KotlinLogging.logger {} (a Kotlin facade over SLF4J).
+    // KotlinLogging wraps SLF4J for Kotlin. GlobalExceptionHandler creates its logger with KotlinLogging.logger {}.
     implementation(libs.kotlin.logging)
-    // Swagger UI and the OpenAPI definition, which the dev profile serves.
+    // springdoc generates the OpenAPI definition from the controllers and serves it with Swagger UI.
+    // application.yaml turns both off, and the dev profile turns them on.
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
     implementation(libs.spring.boot.starter.validation)
-    // Jackson 3 Kotlin module: Spring MVC in Boot 4 reads and writes the DTOs with Jackson 3 (`tools.jackson`), and
-    // Jackson 3 needs this module for the Kotlin data classes (e.g., constructor binding, nullability, and defaults).
-    // Spring Boot registers the module automatically.
+    // Spring MVC in Spring Boot 4 converts the DTOs from and to JSON with Jackson 3 (package `tools.jackson`).
+    // Jackson 3 needs this Kotlin module to create a DTO through its constructor and to handle nullable types and
+    // default values. Spring Boot finds the module on the classpath and registers it.
     implementation(libs.jackson3.module.kotlin)
 
-    // MapStruct is compile-only for the Kotlin mappers. kapt runs the processor that generates the implementations.
+    // The mappers need the MapStruct annotations only at compile time. kapt runs the MapStruct processor, which
+    // generates the implementations of the mappers.
     compileOnly(libs.mapstruct)
     kapt(libs.mapstruct.processor)
 }

@@ -1,15 +1,15 @@
 name: Build Coffee Kitty
 
-# A pull request builds the merge of its branch into its base branch, and a push to main builds a change that
-# reaches main without a pull request. The pull-request trigger has no branch filter, so a pull request that
-# targets a branch other than main is built as well.
+# For a pull request, the workflow builds the merge of the pull request branch into the base branch. The
+# `pull_request` trigger has no branch filter, and the workflow also builds pull requests into branches other than
+# main. The `push` trigger builds changes that reach main without a pull request.
 on:
   push:
     branches: [ "main" ]
   pull_request:
 
-# The build executes third-party Gradle plugins and annotation processors, so the token is read-only and a
-# compromised dependency cannot push or modify the repository.
+# The build runs third-party Gradle plugins and annotation processors. A read-only token prevents a compromised
+# dependency from changing the repository.
 permissions:
   contents: read
 
@@ -22,15 +22,15 @@ jobs:
         with:
           persist-credentials: false # no step pushes back to the repository
 
-      # Installs Java 25 and Gradle as mise.toml pins them.
+      # Install the Java and Gradle versions that mise.toml pins.
       - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
 
-      # Fail fast if the Gradle build version drifts from the latest CHANGELOG.md version.
+      # Fail before the build when the version in gradle.properties differs from the latest release in CHANGELOG.md.
       - name: Check version is in sync with the changelog
         run: ./scripts/check-version-sync.sh
 
-      # `gradle build` runs `check`: ktlint, detekt, and the tests. The integration, system, and acceptance
-      # tests start PostgreSQL in Docker through Testcontainers, and the runner provides Docker.
+      # `gradle build` runs `check`, which runs ktlint, detekt, and the tests. The integration, system, and acceptance
+      # tests start PostgreSQL in Docker through Testcontainers. The ubuntu-latest runner has Docker installed.
       - name: Build with Gradle
         run: gradle build
 

@@ -11,9 +11,9 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 /**
- * Domain implementation of [UserService]. Creating a user normalizes the email address, checks the login name, the
- * normalized address, and the names (see [create]), stores the user, and then creates the user's consumption with a
- * coffee count of zero, all in one transaction.
+ * Domain implementation of [UserService]. [create] checks every new user, including the fixture users, which do not
+ * pass through a DTO or Bean Validation. [create] stores the user and the user's consumption in one transaction. If
+ * storing the consumption fails, the rollback removes the user too.
  */
 @Service
 class UserServiceImpl(
@@ -26,29 +26,30 @@ class UserServiceImpl(
 
     @Transactional
     override fun create(user: User): User {
-        // normalize the email address, so that the case-sensitive UNIQUE constraint treats Jane@x and jane@x as
-        // the same address, because two users for one person would split their coffee count
+        // store the email address trimmed and in lowercase, because the UNIQUE constraint is case-sensitive and
+        // would otherwise allow a user with Jane@x next to a user with jane@x
         val emailAddress = user.emailAddress.trim().lowercase()
         requireValidLoginName(user.loginName)
         requireValidEmailAddress(emailAddress)
         requireValidName("first name", user.firstName)
         requireValidName("last name", user.lastName)
-        // a new user: drop any id and timestamps from the client, so that the data layer assigns them
+        // drop any id from the client, because upsert would update the stored user with that id, and drop the
+        // timestamps, which the data module sets
         val created =
             userDataService.upsert(
                 user.copy(id = null, createdAt = null, updatedAt = null, emailAddress = emailAddress)
             )
-        // the consumption is created after the user so its user_id foreign key resolves
+        // create the consumption after the user, because coffee_consumptions.user_id must reference a stored user
         coffeeConsumptionDataService.upsert(CoffeeConsumption(user = created, count = 0))
         return created
     }
 
     /**
-     * Refuses a login name unless it has at most [User.MAX_LOGIN_NAME_LENGTH] characters that match
+     * Checks that [loginName] has at most [User.MAX_LOGIN_NAME_LENGTH] characters and matches
      * [User.LOGIN_NAME_PATTERN].
      *
-     * @param loginName the requested login name
-     * @throws ValidationException if the login name is malformed
+     * @param loginName the login name of the new user
+     * @throws ValidationException if the login name fails the check
      */
     private fun requireValidLoginName(loginName: String) {
         if (loginName.length > User.MAX_LOGIN_NAME_LENGTH || !LOGIN_NAME_REGEX.matches(loginName)) {
@@ -60,12 +61,11 @@ class UserServiceImpl(
     }
 
     /**
-     * Refuses an email address over [User.MAX_EMAIL_LENGTH] characters or not matching [User.EMAIL_ADDRESS_PATTERN],
-     * which also refuses an address shorter than [User.MIN_EMAIL_LENGTH]. The check also covers the fixture users,
-     * which bypass the DTO.
+     * Checks that [emailAddress] has at most [User.MAX_EMAIL_LENGTH] characters and matches
+     * [User.EMAIL_ADDRESS_PATTERN]. The pattern requires at least [User.MIN_EMAIL_LENGTH] characters.
      *
-     * @param emailAddress the normalized email address
-     * @throws ValidationException if the address breaks the rule
+     * @param emailAddress the email address of the new user, trimmed and in lowercase
+     * @throws ValidationException if the email address fails the check
      */
     private fun requireValidEmailAddress(emailAddress: String) {
         if (emailAddress.length > User.MAX_EMAIL_LENGTH || !EMAIL_ADDRESS_REGEX.matches(emailAddress)) {
@@ -77,13 +77,12 @@ class UserServiceImpl(
     }
 
     /**
-     * Refuses a first or a last name that is blank, longer than [User.MAX_NAME_LENGTH] characters, or holds a control
-     * character (e.g., NUL, which PostgreSQL cannot store in a text column). The check also covers the fixture users,
-     * which bypass the DTO.
+     * Checks that [name] is not blank, has at most [User.MAX_NAME_LENGTH] characters, and contains no control
+     * character. The control characters include NUL, which PostgreSQL cannot store in a `varchar` column.
      *
-     * @param field the name of the field in words, such as "first name"
-     * @param name the requested name
-     * @throws ValidationException if the name breaks the rule
+     * @param field the name of the field in words for the error message, such as "first name"
+     * @param name the first or the last name of the new user
+     * @throws ValidationException if the name fails the check
      */
     private fun requireValidName(
         field: String,

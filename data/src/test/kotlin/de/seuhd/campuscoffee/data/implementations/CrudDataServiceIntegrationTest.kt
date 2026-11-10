@@ -21,10 +21,12 @@ import java.util.concurrent.TimeoutException
 
 /**
  * Integration tests of the data adapters [UserDataServiceImpl] and [CoffeeConsumptionDataServiceImpl] and their base
- * [CrudDataServiceImpl] against a real database. They check that storing an object assigns its id and timestamps and
- * that an update keeps the stored creation time. They also check the [DuplicationException] of each unique
- * constraint, the cascade from a user to their consumption, the [NotFoundException] of an unknown id, login name, or
- * user, and the lock that `getByUserIdForUpdate` takes until the transaction ends.
+ * class [CrudDataServiceImpl] against PostgreSQL. The tests check that [CrudDataServiceImpl.upsert] assigns the id and
+ * the timestamps and that an update keeps the creation time. Other tests check the [DuplicationException] for each
+ * unique constraint and the [NotFoundException] for an unknown id, login name, or user. Further tests check that
+ * deleting a user deletes the consumption of that user and that `getAll` keeps the creation order after an update.
+ * The lock tests check that `getByUserIdForUpdate` makes a second transaction wait until the first transaction ends
+ * and that a call outside a transaction fails.
  */
 class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     @Autowired
@@ -48,7 +50,7 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
         )
 
     /**
-     * Stores a user with the given login name and a consumption with a coffee count of zero, and returns the user's id.
+     * Stores a user with [loginName] and a consumption with a coffee count of zero, and returns the id of the user.
      */
     private fun storeUserWithConsumption(loginName: String): UUID {
         val user = userDataService.upsert(user(loginName))
@@ -232,10 +234,10 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     private companion object {
-        /** How long the lock test waits before it treats the second transaction as blocked by the row lock. */
+        /** Milliseconds during which the second transaction of the lock test must stay blocked by the row lock. */
         const val WAIT_MILLIS = 500L
 
-        /** How long the lock test waits for a step that must complete. */
+        /** Maximum number of seconds that the lock test waits for a step that must finish. */
         const val TIMEOUT_SECONDS = 10L
     }
 }

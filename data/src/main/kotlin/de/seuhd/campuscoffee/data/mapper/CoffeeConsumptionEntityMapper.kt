@@ -8,10 +8,10 @@ import org.mapstruct.MappingTarget
 
 /**
  * MapStruct mapper between [CoffeeConsumption] domain objects and [CoffeeConsumptionEntity] JPA entities. [toEntity]
- * and [updateEntity] set the [CoffeeConsumptionEntity.user] association to the stored user with the id of
- * [CoffeeConsumption.user] through the [EntityReferenceResolver], so saving a consumption sets only the foreign key and
- * never rewrites the referenced user row. [fromEntity] maps the user in full through the [UserEntityMapper]. As in the
- * [UserEntityMapper], [updateEntity] does not copy the id or the timestamps.
+ * and [updateEntity] set [CoffeeConsumptionEntity.user] to the stored user, which [EntityReferenceResolver] loads by
+ * the id of [CoffeeConsumption.user]. Saving a consumption then leaves the user row unchanged (see
+ * [EntityReferenceResolver]). [fromEntity] maps the user with all fields through [UserEntityMapper]. [updateEntity]
+ * does not copy the id or the timestamps (see [EntityMapper.updateEntity]).
  */
 @Mapper(componentModel = "spring", uses = [UserEntityMapper::class, EntityReferenceResolver::class])
 interface CoffeeConsumptionEntityMapper : EntityMapper<CoffeeConsumption, CoffeeConsumptionEntity> {
