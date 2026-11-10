@@ -19,8 +19,8 @@ dependencyResolutionManagement {
 
 // gradle/gradle-daemon-jvm.properties requires JDK 25 for the Gradle daemon. Gradle does not detect a JDK that mise
 // installed. When IntelliJ starts Gradle with another JDK, Gradle may not find a JDK 25. It then downloads a JDK 25
-// from the URLs in that file. `gradle updateDaemonJvm` needs this plugin to write the URLs, and the Java toolchain
-// needs the plugin to download a missing JDK.
+// from the URLs in that file. `gradle updateDaemonJvm` needs this plugin to write the URLs and fails without it. The
+// build itself does not use the plugin, because Gradle uses the daemon JDK as the Java toolchain.
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
