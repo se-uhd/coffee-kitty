@@ -7,7 +7,7 @@ Group at Heidelberg University. The package prefix `de.seuhd` stands for the gro
 of a software engineering lecture, and students extend it over the semester. A user has a login name, an email address,
 and a first and a last name. Each user has exactly one consumption, which holds a coffee count that starts at zero. The
 REST API lists, creates, and reads users, reads a coffee count, and adds one coffee at a time. Every endpoint is open,
-because the app has no authentication. There is no frontend, and in the dev profile, Swagger UI documents the API.
+because the app has no authentication. The app has no frontend. In the dev profile, Swagger UI documents the API.
 `GLOSSARY.md` defines one term for each concept. Use these terms in code, messages, and documentation.
 
 ## Architecture
@@ -192,8 +192,8 @@ the harness instructions.
 The app stores its data in PostgreSQL through Spring Data JPA, and Flyway applies the migrations in
 `data/src/main/resources/db/migration/`. At startup, Hibernate checks that every mapped table and column exists with a
 compatible type (`ddl-auto: validate`), and it never changes the schema. The check ignores the NOT NULL, CHECK, and
-unique constraints and every column that no JPA entity maps. An INSERT or UPDATE that conflicts with them, such as a
-null in a NOT NULL column, passes the startup check and fails when it runs.
+unique constraints and every column that no JPA entity maps. An INSERT or UPDATE that violates one of these
+constraints, such as a null in a NOT NULL column, passes the startup check and fails when it runs.
 
 - Write the migrations in plain DDL (data definition language) without comments. Explain a column or a constraint in
   the KDoc of its JPA entity.
@@ -276,8 +276,8 @@ profile, springdoc is off.
   also resolves the keys of a `*Properties` class in the data module.
 - Ids and timestamps: `PersistableEntity` implements `Persistable<UUID>`, which lets the repository insert a new JPA
   entity with the id from `upsert` without a preceding SELECT. `Entity` sets the timestamps in `@PrePersist` and
-  `@PreUpdate` and truncates them to microseconds, the precision of a PostgreSQL `timestamp` column. A timestamp that
-  `upsert` returns then equals the timestamp that a later query reads.
+  `@PreUpdate` and truncates them to microseconds, because a PostgreSQL `timestamp` column stores microseconds. A
+  timestamp that `upsert` returns then equals the timestamp that a later query reads.
 - Time: Every timestamp in the database, the code, and the API is in UTC, and the API serves timestamps without an
   offset. Read the clock only with `LocalDateTime.now(ZoneOffset.UTC)`, never in the system time zone. A client
   converts a timestamp to a local time zone only for display.
