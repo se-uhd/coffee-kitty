@@ -59,11 +59,15 @@ even if mise has installed JDK 25. `gradle updateDaemonJvm --jvm-version=25` reg
 
 ## Running locally
 
-Clone the repository and install the tools:
+In the repository directory, allow mise to use `mise.toml`:
 
 ```shell
-git clone https://github.com/se-uhd/coffee-kitty.git
-cd coffee-kitty
+mise trust
+```
+
+Then install the tools:
+
+```shell
 mise install
 ```
 
