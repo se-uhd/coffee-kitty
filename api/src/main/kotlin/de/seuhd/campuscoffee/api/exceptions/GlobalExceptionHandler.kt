@@ -64,8 +64,8 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     /**
-     * Fallback handler for unexpected exceptions, returning HTTP 500. The exceptions that the invariant guards throw
-     * (`IllegalArgumentException` and `IllegalStateException` from Kotlin's `require` and `check`) reach this handler.
+     * Fallback handler for unexpected exceptions, returning HTTP 500. An `IllegalArgumentException` or
+     * `IllegalStateException` from a `require` or `check` guard reaches this handler.
      * The response message is the fixed "An unexpected error occurred.", so no internal detail leaks, and the
      * full exception is logged at ERROR with the request's method and path.
      *

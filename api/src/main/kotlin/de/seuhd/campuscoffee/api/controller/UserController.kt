@@ -24,8 +24,8 @@ import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as ApiRequestBody
 
 /**
- * Controller for the users. It lists all users, reads one by id, and creates a user. The domain creates the
- * consumption of a new user at zero, and [ConsumptionController] serves its coffee count.
+ * Controller for the users. It lists all users, reads one by id, and creates a user. For each new user, the domain
+ * also creates a consumption with a coffee count of zero, which [ConsumptionController] serves.
  */
 @Tag(name = "Users", description = "Listing, reading, and creating users.")
 @RestController
@@ -56,8 +56,9 @@ class UserController(
     ): ResponseEntity<UserDto> = ResponseEntity.ok(userDtoMapper.fromDomain(userService.getById(id)))
 
     /**
-     * Creates a user and answers 201 Created with the new user's URL in the `Location` header. The domain creates the
-     * user's consumption at zero in the same transaction. `ResponseEntity.created` sets the status, and
+     * Creates a user and answers 201 Created with the new user's URL in the `Location` header. In the same
+     * transaction, the domain creates the user's consumption with a coffee count of zero. `ResponseEntity.created`
+     * sets the status, and
      * `@ResponseStatus` only makes the OpenAPI definition document the 201 instead of a 200.
      *
      * @param dto the user to create, without an id

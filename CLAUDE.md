@@ -56,10 +56,10 @@ The ports are in `domain/src/main/kotlin/de/seuhd/campuscoffee/domain/ports/`:
 
 The implementations of the API and internal ports are in `domain/.../implementation/`. `UserServiceImpl.create`
 normalizes the email address, checks the new user against the limits on `User`, and stores the user and then its
-consumption at zero in one transaction. The fixture loader and the test setup create the fixture users through
-`UserService.create`. `CoffeeConsumptionServiceImpl.applyDelta` accepts only `+1`. It reads the consumption with
-`getByUserIdForUpdate`, which locks the row until the transaction ends. A second request that adds a coffee for the same
-user at the same time then waits, so that both coffees count.
+consumption with a coffee count of zero in one transaction. The fixture loader and the test setup create the fixture
+users through `UserService.create`. `CoffeeConsumptionServiceImpl.applyDelta` accepts only `+1`. It reads the
+consumption with `getByUserIdForUpdate`, which locks the row until the transaction ends. A second request that adds a
+coffee for the same user at the same time then waits, so that both coffees count.
 
 ### Generic Base Classes
 

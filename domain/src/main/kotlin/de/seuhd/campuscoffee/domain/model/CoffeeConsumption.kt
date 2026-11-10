@@ -4,9 +4,9 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 /**
- * Immutable consumption domain model: the record that holds the coffee [count] of one [user]. There is exactly one
- * consumption per user, created at zero together with the user. Adding a coffee stores a copy with the raised
- * [count].
+ * Immutable consumption domain model: the record that holds the coffee [count] of one [user]. Each user has exactly
+ * one consumption, created with a [count] of zero together with the user. Adding a coffee stores a copy with the
+ * raised [count].
  */
 data class CoffeeConsumption(
     override val id: UUID? = null,
