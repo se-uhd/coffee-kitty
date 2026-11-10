@@ -10,10 +10,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import java.nio.charset.StandardCharsets
 
 /**
- * Web MVC configuration for the REST API: centralizes the base path and keeps responses JSON-only.
- *
- * Every controller in the `api.controller` package is served under [API_BASE_PATH], so the prefix is
- * declared once here instead of repeated on each `@RequestMapping`.
+ * Spring MVC configuration of the REST API. It adds the prefix [API_BASE_PATH] to the path of every controller in the
+ * package `api.controller`, and the controllers leave the prefix out of their `@RequestMapping`.
+ * [configureMessageConverters] restricts the responses to JSON in UTF-8.
  */
 @Configuration
 class ApiWebConfig : WebMvcConfigurer {
@@ -25,16 +24,17 @@ class ApiWebConfig : WebMvcConfigurer {
     }
 
     /**
-     * Keeps the REST API JSON-only and its charset explicit.
+     * Removes every XML message converter and adds the charset UTF-8 to the media types of every JSON message
+     * converter.
      *
-     * It drops every XML message converter, so that a client's `Accept` header cannot switch responses to XML.
-     * Hibernate puts JAXB on the runtime classpath, so Spring registers its JAXB XML converter, which the method
-     * drops along with any XML converter that a later dependency adds.
+     * Without an XML message converter, a client cannot get an XML response by sending `Accept: application/xml`.
+     * Spring registers a JAXB message converter for XML, because Hibernate puts JAXB on the runtime classpath. This
+     * method removes the JAXB message converter and any XML message converter that a later dependency adds.
      *
-     * Spring no longer adds a `charset` to JSON responses (RFC 8259 requires UTF-8 and defines no charset parameter),
-     * so the `Content-Type` is a bare `application/json`. Clients that fall back to ISO-8859-1 when no charset is
-     * declared then garble non-ASCII text (e.g., `Müller` renders as `MÃ¼ller`). The method therefore pins the charset
-     * back onto the JSON converters, so that responses advertise `application/json;charset=UTF-8`.
+     * Spring sends JSON as `application/json` without a `charset` parameter, because RFC 8259 requires UTF-8 for JSON
+     * and does not define a charset parameter. A client that assumes ISO-8859-1 when the charset is missing decodes
+     * non-ASCII text wrongly, for example `Müller` as `MÃ¼ller`. With the charset on the JSON message converters,
+     * every JSON response has the content type `application/json;charset=UTF-8`, which `UserSystemTests` checks.
      */
     override fun configureMessageConverters(builder: HttpMessageConverters.ServerBuilder) {
         builder.configureMessageConvertersList { converters ->

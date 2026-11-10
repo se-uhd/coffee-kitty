@@ -17,15 +17,16 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 /**
- * Unit tests for the fixture loader: It creates the fixture users only when the database has no users yet, and with
- * `reset-on-startup` it first clears the data and then creates them whatever the database holds.
+ * Unit tests for [FixtureStartupLoader] with mocked ports. Without `reset-on-startup`, the fixture loader creates the
+ * fixture users only in a database without users. With `reset-on-startup`, the fixture loader runs a data reset and
+ * then creates the fixture users, even in a database with users.
  */
 class FixtureStartupLoaderTest {
     private val userService = mock<UserService>()
     private val dataResetService = mock<DataResetService>()
     private val fixtureLoginNames = TestFixtures.getUserFixtures().map { it.loginName }
 
-    /** A loader with `load-on-startup` set and the given `reset-on-startup` flag. */
+    /** Returns a fixture loader with `load-on-startup` true and `reset-on-startup` set to [resetOnStartup]. */
     private fun loader(resetOnStartup: Boolean = false) =
         FixtureStartupLoader(
             userService,

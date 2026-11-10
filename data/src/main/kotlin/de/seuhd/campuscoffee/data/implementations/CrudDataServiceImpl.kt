@@ -15,18 +15,18 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 /**
- * Base of the data adapters. Each adapter reads, writes, and clears one table through its Spring Data
- * repository and maps between the domain model and the JPA entity with its [EntityMapper], a MapStruct mapper.
+ * Base class of the data adapters. Each data adapter reads, writes, and clears one table through a Spring Data
+ * repository and converts between domain objects and JPA entities with a MapStruct [EntityMapper].
  *
- * [upsert] and [delete] each run in a transaction and flush before they return, so that the database reports a
- * constraint violation inside the method rather than at the commit. [upsert] reports a
- * violated unique constraint of `ConstraintMapping.REGISTRY` as a [DuplicationException] (a 409) and lets any other
- * violation propagate.
+ * [upsert] and [delete] each run in a transaction and flush before they return. The database therefore reports a
+ * constraint violation inside these methods and not at the commit. [upsert] converts the violation of a unique
+ * constraint that `ConstraintMapping.REGISTRY` lists into a [DuplicationException], which the API reports as a 409.
+ * Any other violation reaches the caller unchanged.
  *
  * @param DOMAIN     the domain model type
  * @param ENTITY     the JPA entity type
- * @param REPOSITORY the repository type (a JpaRepository over the entity)
- * @param ID         the type of the unique identifier, which is [UUID] for every entity (see `PersistableEntity`)
+ * @param REPOSITORY the type of the Spring Data repository for [ENTITY]
+ * @param ID         the type of the id, which is [UUID] for every entity (see `PersistableEntity`)
  */
 abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, REPOSITORY, ID : Any>(
     protected val repository: REPOSITORY,
@@ -40,8 +40,8 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
     }
 
     /**
-     * Returns all objects in the order in which they were created, with the id deciding between equal timestamps, so
-     * that an update does not move an object in the list.
+     * Returns all objects ordered by creation time and then by id. An update keeps the position of an object in the
+     * list, because the update does not change the creation time.
      */
     override fun getAll(): List<DOMAIN> = repository.findAll(CREATION_ORDER).map { mapper.fromEntity(it) }
 
@@ -49,12 +49,12 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
 
     /**
      * Inserts an object without an id under a new random id, or updates the row of an object with an id. The
-     * lifecycle callbacks of [Entity] set the timestamps. The result is mapped from the flushed entity without a
-     * reload, because inside the transaction a reload would return the same managed instance.
+     * lifecycle callbacks of [Entity] set the timestamps. The method maps the result from the flushed entity and does
+     * not reload the row, because inside the transaction a reload would return the same managed instance.
      *
-     * @throws NotFoundException if the object has an id that no row has, or references a row that does not exist (see
-     *   `EntityReferenceResolver`)
-     * @throws DuplicationException if the object violates a unique constraint of `ConstraintMapping.REGISTRY`
+     * @throws NotFoundException if no row has the id of the object, or if the object references a row that does not
+     *   exist (see `EntityReferenceResolver`)
+     * @throws DuplicationException if the object violates a unique constraint that `ConstraintMapping.REGISTRY` lists
      */
     @Transactional
     override fun upsert(domain: DOMAIN): DOMAIN {
@@ -75,10 +75,10 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
     }
 
     /**
-     * Deletes the row with the given id. The database also deletes the rows of other tables that reference it with
-     * `ON DELETE CASCADE`.
+     * Deletes the row with [id]. With `ON DELETE CASCADE`, the database deletes the rows in other tables that reference
+     * the deleted row, such as the consumption of a deleted user.
      *
-     * @throws NotFoundException if no row has the id
+     * @throws NotFoundException if no row has [id]
      */
     @Transactional
     override fun delete(id: ID) {
@@ -87,11 +87,10 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
     }
 
     /**
-     * Maps the entity that [queryFunction] returns to the domain object, or throws a [NotFoundException] that names
-     * [fieldName] and [fieldValue] when it returns null. The data adapters use it to look up a row by a unique field
-     * other than the id.
+     * Maps the entity that [queryFunction] returns to its domain object. A data adapter calls this method to look up a
+     * row by a unique field other than the id, such as the login name.
      *
-     * @throws NotFoundException if no entity matches the query
+     * @throws NotFoundException with [fieldName] and [fieldValue] in the message if [queryFunction] returns null
      */
     protected fun findByFieldOrThrow(
         queryFunction: () -> ENTITY?,
@@ -100,11 +99,12 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
     ): DOMAIN =
         queryFunction()?.let { mapper.fromEntity(it) } ?: throw NotFoundException(domainClass, fieldName, fieldValue)
 
-    /** Loads the managed entity with the given id, or throws a [NotFoundException] when no row has it. */
+    /** Loads the managed entity with [id], or throws a [NotFoundException] if no row has that id. */
     private fun loadOrThrow(id: ID): ENTITY = repository.findByIdOrNull(id) ?: throw NotFoundException(domainClass, id)
 
     /**
-     * The [DuplicationException] for a violated unique constraint, or null when the violation is not a known one.
+     * Returns the [DuplicationException] for the unique constraint that [exception] reports. Returns null if Hibernate
+     * did not extract a constraint name or if `ConstraintMapping.REGISTRY` does not list the constraint.
      */
     private fun duplicationOrNull(
         exception: DataIntegrityViolationException,
@@ -116,7 +116,7 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
             ?.duplicationFor(domain)
 
     private companion object {
-        /** The order of [getAll]: by creation time, then by id. */
+        /** Sort order of [getAll] by creation time and then by id. */
         private val CREATION_ORDER = Sort.by("createdAt", "id")
     }
 }

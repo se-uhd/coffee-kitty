@@ -11,11 +11,15 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 /**
- * DTO for a user. Properties are nullable, so a request body that omits a field deserializes and is then rejected
- * by Bean Validation. The controller validates the DTO before it is mapped to a [User]. The server assigns [id],
- * [createdAt], and [updatedAt], so the OpenAPI definition marks them read-only. The timestamps are in UTC without an
- * offset. Each message of a field constraint follows the field name in the error response (e.g., "loginName must
- * have 1 to 255 characters").
+ * Request and response body for a user. The properties are nullable, because Bean Validation can reject a missing
+ * field only after Jackson has created the DTO from the request body. Validation runs before the controller maps the
+ * DTO to a [User].
+ *
+ * The OpenAPI definition marks [id], [createdAt], and [updatedAt] as read-only, because the server assigns them.
+ * `OpenApiSystemTests` checks that these three properties are read-only. The timestamps are in UTC without an offset.
+ *
+ * In the error response, the message of a failed field constraint follows the field name, as in "loginName must have 1
+ * to 255 characters".
  */
 data class UserDto(
     @field:Schema(accessMode = Schema.AccessMode.READ_ONLY)
@@ -33,8 +37,8 @@ data class UserDto(
     val loginName: String?,
     @field:NotNull
     @field:Email
-    // @Email accepts an empty string and an address longer than the 254-character column. @Size refuses both as a
-    // field error, before the domain's own check on the address.
+    // @Email accepts an empty string and an address longer than the column `users.email_address` (254 characters).
+    // @Size rejects both with a field error before the domain checks the address.
     @field:Size(
         min = User.MIN_EMAIL_LENGTH,
         max = User.MAX_EMAIL_LENGTH,

@@ -1,17 +1,18 @@
-# Dependabot keeps the GitHub Actions and the Gradle (Kotlin/Java) dependencies current. Most versions are in
-# the gradle/libs.versions.toml catalog, which the gradle ecosystem updates (BOM-managed dependencies without an
-# explicit version follow the Spring Boot BOM and are not updated here).
+# Dependabot opens pull requests that update the GitHub Actions and the Gradle dependencies. Most versions are in
+# gradle/libs.versions.toml, which the `gradle` entry below updates. A library without a version in that file gets the
+# version from a BOM, and Dependabot does not update the library.
 # Docs: https://docs.github.com/code-security/dependabot/dependabot-version-updates
 #
-# Dependabot proposes a release only 7 days after it is published (`cooldown` in each block). A hijacked release,
-# published from a maintainer's stolen account, is usually withdrawn within days, and a reviewer cannot tell it from
-# a genuine one by its version bump. Students build this project on their own machines, where such a release would
-# run. Security updates are not delayed.
+# With the `cooldown` of each entry, Dependabot proposes a release only 7 days after the release is published. A
+# release that an attacker publishes from the stolen account of a maintainer is usually withdrawn within days. A
+# reviewer cannot tell such a release from a genuine one, because the pull request shows only a new version number.
+# Students build this project on their own machines, where a malicious release would run. The cooldown does not delay
+# security updates.
 version: 2
 updates:
-  # The actions in .github/workflows/. Every action is pinned to a full commit SHA with its release in a `# vX.Y.Z`
-  # comment at the end of the line, which Dependabot updates together with the SHA. One pull request bundles the
-  # updates of all actions.
+  # The actions in .github/workflows/. A workflow pins each action to a full commit SHA and names the release in a
+  # `# vX.Y.Z` comment at the end of the line. Dependabot updates the comment together with the SHA. One pull request
+  # bundles the updates of all actions.
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -22,8 +23,8 @@ updates:
       github-actions:
         patterns: ["*"]
 
-  # Gradle dependencies and plugins, resolved from the version catalog (covers the root build and
-  # the build-logic convention plugins, which reference the same catalog).
+  # Gradle dependencies and plugins from gradle/libs.versions.toml. The root build and build-logic read the same
+  # catalog.
   - package-ecosystem: gradle
     directory: /
     schedule:
@@ -32,7 +33,7 @@ updates:
       default-days: 7
     open-pull-requests-limit: 10
     groups:
-      # One pull request bundles the minor and patch updates, and each major update gets its own pull request, so that
-      # it gets a careful review.
+      # One pull request bundles the minor and patch updates. Each major update gets a separate pull request for a
+      # careful review.
       gradle-minor-and-patch:
         update-types: ["minor", "patch"]

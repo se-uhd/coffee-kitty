@@ -16,9 +16,9 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 
 /**
- * Base class of the system tests. It sets up the Spring Boot test context on the shared PostgreSQL container,
- * creates the fixture users (each with a coffee count of zero) before each test, and binds the shared
- * RestTestClient.
+ * Base class of the system tests. The Spring Boot test context uses the shared PostgreSQL container and serves the API
+ * on a random port. Before each test, [beforeEach] runs a data reset, creates the fixture users at a coffee count of
+ * zero, and binds the shared RestTestClient to the server port. After each test, [afterEach] runs another data reset.
  */
 @SpringBootTest(
     classes = [Application::class],
@@ -34,13 +34,12 @@ abstract class AbstractSystemTest {
     @LocalServerPort
     private var port: Int = 0
 
-    /** The fixture users created before each test, available so a test can act on a specific one. */
+    /** The fixture users that [beforeEach] created for the current test. */
     protected lateinit var fixtureUsers: List<User>
 
     @BeforeEach
     fun beforeEach() {
         dataResetService.clearAll()
-        // create the fixture users, each with a coffee count of zero
         fixtureUsers = TestFixtures.createUserFixtures(userService)
         configureClient(port)
     }
@@ -50,7 +49,7 @@ abstract class AbstractSystemTest {
         dataResetService.clearAll()
     }
 
-    /** The fixture user with the given login name. */
+    /** Returns the fixture user with [loginName]. */
     protected fun fixtureUser(loginName: String): User = fixtureUsers.first { it.loginName == loginName }
 
     protected companion object {

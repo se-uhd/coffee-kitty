@@ -1,13 +1,12 @@
 package de.seuhd.campuscoffee.domain.exceptions
 
 /**
- * Thrown when no stored domain object matches a lookup (a 404). Its two constructors cover a failed lookup by id and
- * a failed lookup by a field value.
+ * Thrown when a lookup finds no stored domain object. The exception handler maps it to the status 404 Not Found.
  */
 class NotFoundException : RuntimeException {
     /**
-     * The message for the server log, without a looked-up field value, because the value can be a login name and a log
-     * line names a user only by id.
+     * The message for the server log. It leaves out a looked-up field value, such as a login name, because log lines
+     * identify users only by id.
      */
     val logMessage: String
 
@@ -26,7 +25,7 @@ class NotFoundException : RuntimeException {
      * Creates an exception for a failed lookup by a field value.
      *
      * @param domainClass the class of the domain object (e.g., `User::class.java`)
-     * @param fieldName   the field in words (e.g., "login name")
+     * @param fieldName   the name of the field in words (e.g., "login name")
      * @param fieldValue  the value that no object has
      */
     constructor(domainClass: Class<*>, fieldName: String, fieldValue: String) :

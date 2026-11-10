@@ -9,8 +9,8 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 /**
- * OpenAPI/Swagger configuration: the global API metadata. The version is set at runtime from the build (see
- * [apiVersionCustomizer]) rather than hard-coded in the annotation.
+ * Configuration of the OpenAPI definition. `@OpenAPIDefinition` sets the title and the description of the API, and
+ * [apiVersionCustomizer] sets the version at runtime from the build.
  */
 @Configuration
 @OpenAPIDefinition(
@@ -24,11 +24,11 @@ import org.springframework.context.annotation.Configuration
 )
 class OpenApiConfig {
     /**
-     * Sets the version of the OpenAPI definition from [BuildProperties], which Spring Boot reads from
-     * `META-INF/build-info.properties`, and falls back to "dev" when that file is absent. The Gradle build writes the
-     * file, so the version is kept in one place.
+     * Sets the version of the OpenAPI definition to the version in `META-INF/build-info.properties`, or to "dev" when
+     * the file does not exist. Spring Boot reads the file into [BuildProperties]. The Gradle build of the application
+     * module writes the file with the project version from `gradle.properties`.
      *
-     * @param buildProperties the build info provider, empty when the build info resource is absent
+     * @param buildProperties the provider of [BuildProperties], which is empty when the file does not exist
      */
     @Bean
     fun apiVersionCustomizer(buildProperties: ObjectProvider<BuildProperties>): OpenApiCustomizer =

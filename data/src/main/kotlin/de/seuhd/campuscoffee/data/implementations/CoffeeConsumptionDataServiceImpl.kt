@@ -13,10 +13,10 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 /**
- * The data adapter for the [CoffeeConsumptionDataService] port over the `coffee_consumptions` table. The business rules
- * are in the domain services. A lookup for an unknown user throws a [NotFoundException] for `User`, not for the
- * consumption, because every user has exactly one consumption. [upsert] reports a violation of the unique constraint on
- * `user_id` (one consumption per user) as a `DuplicationException` through `ConstraintMapping.REGISTRY`.
+ * Data adapter that implements the [CoffeeConsumptionDataService] port on the `coffee_consumptions` table. The business
+ * rules are in the domain services. Every user has exactly one consumption. A lookup that finds no consumption
+ * therefore throws a [NotFoundException] for the user. [upsert] throws a `DuplicationException` for a second
+ * consumption of a user (see [CrudDataServiceImpl]).
  */
 @Service
 class CoffeeConsumptionDataServiceImpl(
@@ -31,20 +31,21 @@ class CoffeeConsumptionDataServiceImpl(
     override fun getByUserId(userId: UUID): CoffeeConsumption = toDomainOrThrow(repository.findByUserId(userId), userId)
 
     /**
-     * Retrieves and locks the consumption of the user with the given id. With `MANDATORY`, a call outside a
-     * transaction throws an `IllegalTransactionStateException`, because there the lock would end with the query.
+     * Returns the consumption of the user with [userId] and locks the consumption row until the transaction ends.
+     * With propagation `MANDATORY`, a call outside a transaction throws an `IllegalTransactionStateException`. Without
+     * a transaction, the lock would already end with the query, and the caller would store the new count without the
+     * lock.
      *
-     * @throws NotFoundException if no user has the id
+     * @throws NotFoundException if no user has [userId]
      */
     @Transactional(propagation = Propagation.MANDATORY)
     override fun getByUserIdForUpdate(userId: UUID): CoffeeConsumption =
         toDomainOrThrow(repository.findForUpdateByUserId(userId), userId)
 
     /**
-     * Maps the found consumption, or reports an unknown user when none was found, because every user has exactly
-     * one consumption.
+     * Maps [entity] to its domain object.
      *
-     * @throws NotFoundException if [entity] is null
+     * @throws NotFoundException for the user with [userId] if [entity] is null
      */
     private fun toDomainOrThrow(
         entity: CoffeeConsumptionEntity?,

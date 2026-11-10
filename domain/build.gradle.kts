@@ -4,9 +4,9 @@ plugins {
 }
 
 dependencies {
-    // The Spring Boot core brings spring-context for @Service, and spring-tx brings @Transactional.
+    // @Service comes from spring-context, a dependency of spring-boot. @Transactional comes from spring-tx.
     implementation(libs.spring.boot.core)
     implementation(libs.spring.tx)
-    // DataResetServiceImpl logs via KotlinLogging.logger {} (a Kotlin facade over SLF4J).
+    // DataResetServiceImpl logs with kotlin-logging, which wraps SLF4J for Kotlin.
     implementation(libs.kotlin.logging)
 }

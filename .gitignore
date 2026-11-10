@@ -29,9 +29,9 @@ out/
 ##########
 .gradle/
 build/
-# Kotlin compiler daemon session markers, written under the project root by every Gradle build.
+# Every Gradle build writes session markers of the Kotlin daemon into this directory.
 .kotlin/
-# mise provides Gradle, so the repository has no wrapper. Ignore the wrapper files that IntelliJ generates.
+# The repository has no Gradle wrapper, because mise provides Gradle. Ignore the wrapper files that IntelliJ generates.
 gradlew
 gradlew.bat
 gradle/wrapper/

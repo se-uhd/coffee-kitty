@@ -5,7 +5,8 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.runApplication
 
 /**
- * Main class to start the Spring Boot application.
+ * The Spring Boot application class. `@ConfigurationPropertiesScan` registers every `@ConfigurationProperties` class
+ * in this package and its subpackages, such as `FixturesProperties`.
  */
 @SpringBootApplication
 @ConfigurationPropertiesScan
@@ -14,7 +15,7 @@ class Application
 /**
  * Starts the Spring Boot application.
  *
- * @param args the command line arguments passed to the Spring application
+ * @param args the command-line arguments, such as `--spring.profiles.active=dev`
  */
 fun main(args: Array<String>) {
     runApplication<Application>(*args)

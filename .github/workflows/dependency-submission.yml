@@ -1,14 +1,14 @@
-# Submits the resolved Gradle dependencies to GitHub's dependency graph, so Dependabot alerts and Dependabot security
-# updates cover the JVM dependencies. GitHub cannot read a Gradle build on its own, so without this workflow the graph
-# holds only the workflow actions. Dependabot's version updates do not need it, because they read
-# gradle/libs.versions.toml directly.
+# Submit the resolved Gradle dependencies to the dependency graph of GitHub, which Dependabot alerts and Dependabot
+# security updates read. GitHub cannot resolve a Gradle build by itself. Without this workflow, the graph lists only the
+# actions that the workflows use. Dependabot version updates read gradle/libs.versions.toml and do not need the graph.
 #
-# GitHub's own automatic dependency submission runs `./gradlew help` or `gradle help`, and this project has no Gradle
-# wrapper (mise provides Gradle), so it fails. This workflow submits the graph instead.
+# This workflow replaces the automatic dependency submission of GitHub. The automatic submission runs `./gradlew help`
+# or `gradle help` and fails on this project. The project has no Gradle wrapper, because mise provides Gradle.
 name: Dependency submission
 
 on:
-  # main only: A snapshot describes the dependencies of one ref, and alerts are raised against the default branch.
+  # Only for main. A snapshot describes the dependencies of one ref, and GitHub raises alerts against the default
+  # branch.
   push:
     branches: [ "main" ]
   workflow_dispatch: {} # allow manual runs
@@ -20,18 +20,18 @@ jobs:
   submit:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # submitting a snapshot writes to the repository's dependency graph
+      contents: write # needed to write the snapshot to the dependency graph
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          persist-credentials: false # the snapshot is posted with the job token, not with git credentials
+          persist-credentials: false # the action posts the snapshot with the job token and needs no Git credentials
 
-      # Installs Java 25 and Gradle as mise.toml pins them. The submission action below downloads its own copy of the
-      # same Gradle release.
+      # Install the Java and Gradle versions that mise.toml pins. The submission action below downloads a separate copy
+      # of the same Gradle release.
       - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
 
-      # mise.toml pins a major.minor prefix of Gradle, and the action below needs an exact release, so this step
-      # asks the Gradle that mise installed for its version.
+      # mise.toml pins Gradle to a major.minor prefix, but the action below needs an exact release. Read the exact
+      # version from the Gradle that mise installed.
       - name: Resolve the exact Gradle version
         id: gradle
         run: echo "version=$(gradle --version | awk '/^Gradle /{print $2}')" >> "$GITHUB_OUTPUT"
@@ -40,9 +40,9 @@ jobs:
         uses: gradle/actions/dependency-submission@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
           gradle-version: ${{ steps.gradle.outputs.version }}
-          # Only the boot jar's runtime classpath, so an alert concerns what runs. The application's runtimeClasspath
-          # holds :domain, :api, :data, and every transitive dependency. Without the project filter, build-logic's
-          # runtimeClasspath (the Kotlin Gradle plugin) would count too, and the anchored configuration name keeps
-          # testRuntimeClasspath out.
+          # Submit only the runtimeClasspath of :application, which holds :domain, :api, :data, and every transitive
+          # dependency of the boot jar. An alert then concerns only code that the application runs. Without the project
+          # filter, the runtimeClasspath of build-logic, with the Kotlin Gradle plugin, would count too. The anchors
+          # `^` and `$` in the configuration filter exclude testRuntimeClasspath.
           dependency-graph-include-projects: '^:application$'
           dependency-graph-include-configurations: '^runtimeClasspath$'

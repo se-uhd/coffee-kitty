@@ -7,25 +7,26 @@ import org.springframework.data.jpa.repository.Lock
 import java.util.UUID
 
 /**
- * Spring Data JPA repository for [CoffeeConsumptionEntity]. Spring Data implements the interface at runtime and derives
- * the query of each declared method from its name.
+ * Spring Data JPA repository for [CoffeeConsumptionEntity]. Spring Data implements this interface at runtime and
+ * derives the query of each method declared here from the method name.
  */
 interface CoffeeConsumptionRepository : JpaRepository<CoffeeConsumptionEntity, UUID> {
     /**
-     * Returns the consumption of the user with the given id, or null if none exists. Spring Data derives the query
-     * from the nested `user.id` path.
+     * Returns the consumption of the user with [userId], or null. Spring Data reads `UserId` in the method name as the
+     * property path `user.id`.
      *
-     * @param userId the id of the owning user
+     * @param userId the id of the user
      */
     fun findByUserId(userId: UUID): CoffeeConsumptionEntity?
 
     /**
-     * Returns the consumption of the user with the given id, or null if none exists, and locks its row until the
-     * transaction ends (`PESSIMISTIC_WRITE`, which Hibernate sends to PostgreSQL as `SELECT ... FOR NO KEY UPDATE`). A
-     * concurrent call for the same user waits for that transaction and then reads the count that it stored. Spring Data
-     * ignores the words between `find` and `By`, so the `@Lock` annotation, not the method name, takes the lock.
+     * Returns the consumption of the user with [userId], or null, and locks its row until the transaction ends.
+     * `@Lock(PESSIMISTIC_WRITE)` sets the lock, and Hibernate sends it to PostgreSQL as `SELECT ... FOR NO KEY UPDATE`.
+     * A concurrent call for the same user waits until the transaction ends and then reads the stored count. The word
+     * `ForUpdate` in the method name does not change the query, because Spring Data ignores the words between `find`
+     * and `By`.
      *
-     * @param userId the id of the owning user
+     * @param userId the id of the user
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     fun findForUpdateByUserId(userId: UUID): CoffeeConsumptionEntity?

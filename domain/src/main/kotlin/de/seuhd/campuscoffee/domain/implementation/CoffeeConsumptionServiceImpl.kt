@@ -9,10 +9,10 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 /**
- * Domain implementation of [CoffeeConsumptionService]. Adding a coffee ([applyDelta]) loads and locks the user's
- * consumption and stores a copy with the count raised by one, in one transaction. The lock makes a second request
- * that adds a coffee for the same user wait until this transaction ends, so that both coffees count. Without the
- * lock, both requests could read the same count.
+ * Domain implementation of [CoffeeConsumptionService]. [applyDelta] adds a coffee in one transaction. It loads and
+ * locks the consumption of the user and then stores a copy with the coffee count raised by one. A concurrent request
+ * for the same user waits until the transaction ends and then reads the raised count. Without the lock, two
+ * concurrent requests could both read a count of 2 and both store a count of 3.
  */
 @Service
 class CoffeeConsumptionServiceImpl(

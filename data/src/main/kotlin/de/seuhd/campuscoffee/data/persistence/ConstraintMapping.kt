@@ -10,18 +10,17 @@ import org.hibernate.exception.ConstraintViolationException
 import org.springframework.dao.DataIntegrityViolationException
 
 /**
- * Maps a unique constraint of a table to the domain type and the field that it guards, and reads the offending value
- * from the domain object that violated it, so that `CrudDataServiceImpl.upsert` reports the violation as a
- * [DuplicationException] (a 409). [REGISTRY] is the only list of these mappings, and every unique constraint or
- * unique index of a table needs an entry there, which `ConstraintMappingRegistryIntegrationTest` checks. A violation
- * of a constraint without an entry propagates as a `DataIntegrityViolationException`, which `GlobalExceptionHandler`
- * answers with a generic 500.
+ * Links a unique constraint to the domain model and the field that must be unique. `CrudDataServiceImpl.upsert` uses
+ * the mapping to convert a violation of the constraint into a [DuplicationException] (409) with the field and the
+ * duplicate value. Every unique constraint and unique index of a table needs an entry in [REGISTRY].
+ * `ConstraintMappingRegistryIntegrationTest` checks the entries against the schema. A violation of a constraint
+ * without an entry reaches `GlobalExceptionHandler` as a `DataIntegrityViolationException` and becomes a 500.
  *
- * @param D the domain type with the unique field
- * @property constraintName the constraint or unique index name, as the Flyway DDL declares it
+ * @param D the domain model with the unique field
+ * @property constraintName the name of the constraint or unique index, as the migration declares it
  * @property domainClass the class of [D]
- * @property fieldName the field in words, as the exception message names it
- * @param valueOf reads the value that the exception message shows from the domain object
+ * @property fieldName the name of the field in the exception message, such as "login name"
+ * @param valueOf reads the value of the unique field from a domain object for the exception message
  */
 class ConstraintMapping<D : DomainModel<*>>(
     val constraintName: String,
@@ -30,16 +29,16 @@ class ConstraintMapping<D : DomainModel<*>>(
     private val valueOf: (D) -> String
 ) {
     /**
-     * The exception for a violation of this constraint by the given domain object.
+     * Returns the [DuplicationException] for [domain] with the value of the unique field.
      *
-     * @param domain the domain object that violated the constraint on insert or update, an instance of [domainClass]
+     * @param domain the domain object that violated the constraint, which must be an instance of [domainClass]
      */
     fun duplicationFor(domain: DomainModel<*>): DuplicationException =
         DuplicationException(domainClass, fieldName, valueOf(domainClass.cast(domain)))
 
-    /** The registry of the tables' unique constraints, and the lookup of a violated constraint by its name. */
+    /** Holds [REGISTRY] and finds the mapping of a violated constraint by name. */
     companion object {
-        /** Every unique constraint and unique index of the tables. */
+        /** The mappings of all unique constraints and unique indexes of the tables. */
         val REGISTRY: List<ConstraintMapping<*>> =
             listOf(
                 ConstraintMapping(UserEntity.LOGIN_NAME_UNIQUE_CONSTRAINT, User::class.java, "login name") {
@@ -58,17 +57,19 @@ class ConstraintMapping<D : DomainModel<*>>(
         private val BY_NAME = REGISTRY.associateBy { it.constraintName.lowercase() }
 
         /**
-         * The mapping of a violated constraint, or null for a constraint without one.
+         * Returns the mapping of the constraint named [constraintName], or null if [REGISTRY] does not contain that
+         * name. The comparison ignores case.
          *
          * @param constraintName the name that the database reported
          */
         fun forConstraint(constraintName: String): ConstraintMapping<*>? = BY_NAME[constraintName.lowercase()]
 
         /**
-         * Returns the name of the violated constraint that Hibernate extracted from the database error, or null when
-         * the cause chain contains no Hibernate [ConstraintViolationException] or Hibernate extracted no name.
-         * Hibernate's PostgreSQL dialect reads the name from the English server message, so a server that reports its
-         * messages in another language yields null, and the violation becomes a 500.
+         * Returns the name of the violated constraint from the first Hibernate [ConstraintViolationException] in the
+         * cause chain of [exception]. Returns null if the chain does not contain a [ConstraintViolationException] or
+         * if Hibernate did not extract a name. The PostgreSQL dialect of Hibernate extracts the name from the English
+         * text of the error message. If the server writes its messages in another language, this method returns null,
+         * and the violation becomes a 500.
          *
          * @param exception the data integrity violation to inspect
          */

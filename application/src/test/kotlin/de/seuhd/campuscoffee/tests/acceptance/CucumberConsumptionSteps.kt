@@ -16,10 +16,10 @@ import tools.jackson.databind.ObjectMapper
 import java.util.UUID
 
 /**
- * Step definitions for the coffee consumption acceptance scenarios. The Given step looks up the user's id in the
- * user list (`GET /api/users`), and the When step records the latest response, so that the Then step can assert the
- * status and the returned count. Adding a coffee posts a delta of `+1` to `/api/users/{userId}/consumption`, which
- * returns the user's login name and coffee count.
+ * Step definitions for the acceptance scenarios in `consumption.feature`. The Given step finds the id of the user in
+ * the list from `GET /api/users`. The When step adds a coffee with a delta of +1 through
+ * `POST /api/users/{userId}/consumption` and keeps the latest response. The Then step checks the status and the coffee
+ * count of that response.
  */
 class CucumberConsumptionSteps(
     private val objectMapper: ObjectMapper

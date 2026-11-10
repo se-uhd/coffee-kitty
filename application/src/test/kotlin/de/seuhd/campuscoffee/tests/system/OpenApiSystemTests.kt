@@ -5,8 +5,9 @@ import org.junit.jupiter.api.Test
 import org.springframework.test.context.TestPropertySource
 
 /**
- * System tests for the OpenAPI definition. The dev profile serves it at `/api/api-docs`. These tests turn it on
- * without that profile, so it is at the springdoc default path `/v3/api-docs`.
+ * System tests for the OpenAPI definition. The dev profile serves the definition at `/api/api-docs`. These tests run
+ * without the dev profile and turn the definition on with `springdoc.api-docs.enabled`. The definition is then at the
+ * springdoc default path `/v3/api-docs`.
  */
 @TestPropertySource(properties = ["springdoc.api-docs.enabled=true"])
 class OpenApiSystemTests : AbstractSystemTest() {
