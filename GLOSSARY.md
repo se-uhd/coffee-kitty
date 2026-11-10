@@ -83,8 +83,8 @@ with a line "Avoid:", which lists words not to use for the concept.
   `ConstraintMapping.REGISTRY` lists becomes a `DuplicationException`.
   Code: `CrudDataService.upsert`, `CrudDataServiceImpl.upsert`.
 - **migration**: A versioned SQL file in `data/src/main/resources/db/migration/`. At startup, Flyway applies every such
-  file that it has not applied to the database before, in version order. Nobody edits a file that others have applied,
-  for example a pushed file (CLAUDE.md, Database).
+  file that it has not applied to the database before, in version order. A migration that others have applied, such as
+  a pushed migration, must not change (CLAUDE.md, Database).
   Code: `V1__create_users_table.sql`, `V2__create_coffee_consumptions_table.sql`.
 - **data reset**: The deletion of all consumptions and then all users through the internal port `DataResetService`.
   The fixture loader runs this deletion when `reset-on-startup` is true, and the data integration, system, and
