@@ -52,10 +52,11 @@ dependencies {
 
 // Mockito's agent is the mockito-core jar itself. Resolve just that jar on a dedicated non-transitive configuration to
 // pass it as -javaagent.
-val mockitoAgent = configurations.create("mockitoAgent") {
-    isCanBeConsumed = false
-    isTransitive = false
-}
+val mockitoAgent =
+    configurations.create("mockitoAgent") {
+        isCanBeConsumed = false
+        isTransitive = false
+    }
 dependencies {
     "mockitoAgent"(libs.findLibrary("mockito-core").get())
 }
@@ -75,7 +76,9 @@ tasks.withType<Test>().configureEach {
     // The provider uses a local file collection instead of the script's `mockitoAgent`, because a reference to
     // the script would keep the configuration cache from storing the task.
     val agentJar = files(mockitoAgent)
-    jvmArgumentProviders.add(CommandLineArgumentProvider {
-        listOf("-javaagent:${agentJar.singleFile.absolutePath}")
-    })
+    jvmArgumentProviders.add(
+        CommandLineArgumentProvider {
+            listOf("-javaagent:${agentJar.singleFile.absolutePath}")
+        }
+    )
 }
