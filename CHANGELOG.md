@@ -14,6 +14,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   explains how to set up IntelliJ IDEA.
 - The README no longer tells readers to clone the repository, which they have already done when they read the README
   in IntelliJ IDEA. It runs `mise trust` before `mise install`, one command per block.
+- `gradle check` also runs ktlint on the root `build.gradle.kts` and `settings.gradle.kts` and on the included build
+  `build-logic`. ktlint had checked only the subprojects, so `java-conventions.gradle.kts` had four formatting
+  findings, which are fixed.
 
 ### Fixed
 
