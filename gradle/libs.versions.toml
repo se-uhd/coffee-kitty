@@ -16,7 +16,7 @@ archunit = "1.5.1"
 # Kotlin: >= 2.3.0 is required for jvmTarget 25, and it overrides the Boot 4 BOM's managed Kotlin stdlib. detekt and
 # ktlint run on their own compilers (`detekt-kotlin`, `ktlint-kotlin`), so this version is free to move.
 kotlin = "2.4.21"
-# Kotlin-friendly Mockito wrappers (whenever, reified any/mock); not managed by the Boot BOM.
+# Kotlin-friendly Mockito wrappers (e.g., whenever and a reified any and mock). The Boot BOM does not manage them.
 mockito-kotlin = "6.4.0"
 # Gradle plugins
 dependency-management = "1.1.7"
@@ -48,7 +48,7 @@ spring-boot-core = { module = "org.springframework.boot:spring-boot" }
 postgresql = { module = "org.postgresql:postgresql" }
 flyway-core = { module = "org.flywaydb:flyway-core" }
 flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql" }
-# Jackson 3 (tools.jackson) Kotlin module for Spring MVC's DTO binding in api; version from the Jackson 3 BOM.
+# Jackson 3 (tools.jackson) Kotlin module for Spring MVC's DTO binding in api. The Jackson 3 BOM manages the version.
 jackson3-module-kotlin = { module = "tools.jackson.module:jackson-module-kotlin" }
 junit-platform-suite = { module = "org.junit.platform:junit-platform-suite" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
@@ -83,8 +83,8 @@ detekt-gradle-plugin = { module = "dev.detekt:detekt-gradle-plugin", version.ref
 
 # detekt rule-authoring API: the custom rules in :detekt-rules compile against detekt-api, and detekt-test-utils
 # compiles Kotlin snippets into the compiler's syntax tree (PSI) for their unit tests. Same version as the detekt
-# plugin. (We use detekt-test-utils rather than detekt-test because the latter's alpha metadata requires a detekt-api
-# test-fixtures variant that is not published.)
+# plugin. The tests use detekt-test-utils instead of detekt-test, because the alpha metadata of detekt-test requires a
+# test-fixtures variant of detekt-api that is not published.
 detekt-api = { module = "dev.detekt:detekt-api", version.ref = "detekt" }
 detekt-test-utils = { module = "dev.detekt:detekt-test-utils", version.ref = "detekt" }
 

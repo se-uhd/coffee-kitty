@@ -14,9 +14,9 @@ dependencies {
     // Swagger UI and the OpenAPI definition, which the dev profile serves.
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
     implementation(libs.spring.boot.starter.validation)
-    // Jackson 3 Kotlin module: Spring MVC in Boot 4 reads and writes the DTOs with Jackson 3 (`tools.jackson`), which
-    // needs it for the Kotlin data classes (e.g., constructor binding, nullability, and defaults), and Spring Boot
-    // auto-registers it.
+    // Jackson 3 Kotlin module: Spring MVC in Boot 4 reads and writes the DTOs with Jackson 3 (`tools.jackson`), and
+    // Jackson 3 needs this module for the Kotlin data classes (e.g., constructor binding, nullability, and defaults).
+    // Spring Boot registers the module automatically.
     implementation(libs.jackson3.module.kotlin)
 
     // MapStruct is compile-only for the Kotlin mappers. kapt runs the processor that generates the implementations.

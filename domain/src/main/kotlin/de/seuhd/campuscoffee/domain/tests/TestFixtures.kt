@@ -4,7 +4,7 @@ import de.seuhd.campuscoffee.domain.model.User
 import de.seuhd.campuscoffee.domain.ports.api.UserService
 
 /**
- * The five fixture users, each created with a consumption at zero. The object is in `src/main` so that the fixture
+ * The five fixture users, each created with a coffee count of zero. The object is in `src/main` so that the fixture
  * loader and the tests share one source of fixture data.
  */
 object TestFixtures {
@@ -46,8 +46,8 @@ object TestFixtures {
     fun getUserFixtures(): List<User> = USER_LIST
 
     /**
-     * Creates the fixture users through [userService], which also creates each user's consumption at zero, and
-     * returns the stored users.
+     * Creates the fixture users through [userService], which also creates each user's consumption with a coffee
+     * count of zero, and returns the stored users.
      *
      * @param userService the port that creates the users
      */

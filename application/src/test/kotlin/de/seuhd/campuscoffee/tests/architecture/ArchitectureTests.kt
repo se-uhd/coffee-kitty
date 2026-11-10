@@ -44,8 +44,8 @@ class ArchitectureTests {
             .mayOnlyBeAccessedByLayers("application")
             .whereLayer("application")
             .mayNotBeAccessedByAnyLayer()
-            // every imported production or test class must belong to one of the layers above, so a new top-level
-            // package cannot silently escape the layer rules
+            // every imported production or test class must belong to one of the layers above, so that the layer rules
+            // also cover a new top-level package
             .ensureAllClassesAreContainedInArchitecture()
             .check(classes)
     }
@@ -68,10 +68,10 @@ class ArchitectureTests {
     fun `production code depends on ports, never on Impl types`() {
         // No production class, not even an *Impl class, may depend on a concrete *Impl class instead of its port, so
         // that a domain service implementation cannot inject another one. @Configuration classes are exempt because
-        // they exist to compose the beans. The targets are the project's own concrete *Impl classes: a Kotlin runtime
-        // *Impl (e.g., kotlin.jvm.internal.FunctionReferenceImpl, the supertype of a class that Kotlin generates for a
-        // function reference) is not a layering violation, and the abstract CrudDataServiceImpl is the base class that
-        // each *DataServiceImpl extends. The rule does not check a class nested in an *Impl, such as the class that
+        // they exist to compose the beans. The targets are only the project's own concrete *Impl classes. The rule
+        // skips Kotlin runtime classes such as kotlin.jvm.internal.FunctionReferenceImpl, the supertype of a class that
+        // Kotlin generates for a function reference, and the abstract CrudDataServiceImpl, the base class that each
+        // *DataServiceImpl extends. The rule does not check a class nested in an *Impl, such as the class that
         // Kotlin generates for a reference to one of its methods, which depends on its outer class.
         val isConcreteOwnImplementation =
             object : DescribedPredicate<JavaClass>("a concrete campus-coffee class named *Impl") {

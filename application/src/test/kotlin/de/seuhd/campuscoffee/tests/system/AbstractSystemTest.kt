@@ -40,7 +40,7 @@ abstract class AbstractSystemTest {
     @BeforeEach
     fun beforeEach() {
         dataResetService.clearAll()
-        // create the fixture users, each together with a consumption at zero
+        // create the fixture users, each with a coffee count of zero
         fixtureUsers = TestFixtures.createUserFixtures(userService)
         configureClient(port)
     }

@@ -11,8 +11,9 @@ import org.springframework.stereotype.Component
 
 /**
  * Loads the fixture users on startup when `campus-coffee.fixtures.load-on-startup` is true (declared by
- * [FixturesProperties]). Creating a user through [UserService.create] also creates the user's consumption at zero.
- * The KDoc of the method [loadOnStartup] says when the loader clears the data first and when it loads nothing.
+ * [FixturesProperties]). Creating a user through [UserService.create] also creates the user's consumption with a coffee
+ * count of zero. The KDoc of the method [loadOnStartup] says when the loader clears the data first and when it loads
+ * nothing.
  *
  * As a [SmartInitializingSingleton], the loader runs at the end of singleton initialization, when Flyway has migrated
  * the schema and every bean is ready. In a servlet application, this moment comes before the embedded web server

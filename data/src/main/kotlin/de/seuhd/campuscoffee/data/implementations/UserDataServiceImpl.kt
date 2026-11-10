@@ -23,7 +23,10 @@ class UserDataServiceImpl(
         User::class.java
     ),
     UserDataService {
-    /** Returns all users ordered by login name, the order of the user list, instead of the base's creation order. */
+    /**
+     * Returns all users ordered by login name, the order of the user list, instead of the creation order of
+     * [CrudDataServiceImpl].
+     */
     override fun getAll(): List<User> = repository.findAllByOrderByLoginNameAsc().map { mapper.fromEntity(it) }
 
     override fun getByLoginName(loginName: String): User =

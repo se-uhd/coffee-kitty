@@ -47,7 +47,9 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
             lastName = "Last"
         )
 
-    /** Stores a user with the given login name and their consumption at zero, and returns the user's id. */
+    /**
+     * Stores a user with the given login name and a consumption with a coffee count of zero, and returns the user's id.
+     */
     private fun storeUserWithConsumption(loginName: String): UUID {
         val user = userDataService.upsert(user(loginName))
         coffeeConsumptionDataService.upsert(CoffeeConsumption(user = user, count = 0))

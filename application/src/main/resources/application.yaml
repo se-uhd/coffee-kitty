@@ -9,9 +9,10 @@ spring:
         logServerErrorDetail: false
   jpa:
     # Open Session in View, which holds a database connection for the whole request, is off. No JPA entity has a lazy
-    # association yet. An adapter for a JPA entity that gets one must read and map it inside a @Transactional method,
-    # because the read methods of CrudDataServiceImpl and of the adapters, except getByUserIdForUpdate, are not
-    # @Transactional, so for a caller without a transaction they map the JPA entity outside one.
+    # association yet. An adapter for a JPA entity that gets one must read and map the entity inside a @Transactional
+    # method. The read methods of CrudDataServiceImpl and of the adapters, except getByUserIdForUpdate, are not
+    # @Transactional, so for a caller without a transaction, they map the entity outside any transaction, where a lazy
+    # association cannot load.
     open-in-view: false
     hibernate:
       # Flyway creates and migrates the schema, and Hibernate only checks at startup that the entities match it.
