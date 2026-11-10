@@ -1,8 +1,8 @@
 package de.seuhd.campuscoffee.domain.model
 
 /**
- * Domain objects and DTOs that carry an identifier. Generic code, such as `CrudDataServiceImpl.upsert` in the data
- * layer and [persistedId], reads the id of any of these types through this interface.
+ * Type of the domain objects and DTOs that have an id. Generic code reads the id through this interface, for example
+ * `CrudDataServiceImpl.upsert` in the data module and the extension property [persistedId].
  */
 interface Identifiable<T> {
     /** The unique identifier, or null if the object is not stored yet. */
@@ -10,8 +10,8 @@ interface Identifiable<T> {
 }
 
 /**
- * The non-null [Identifiable.id] of a stored object. On an object that is not stored yet, whose id is still null, it
- * throws an `IllegalStateException`.
+ * The [Identifiable.id] of a stored object as a non-null value. Throws an `IllegalStateException` for an object that
+ * is not stored yet and has no id.
  */
 val <ID : Any> Identifiable<ID>.persistedId: ID
     get() = checkNotNull(id) { "${this::class.simpleName} has no id, because it is not stored yet." }

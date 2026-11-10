@@ -5,8 +5,8 @@ import de.seuhd.campuscoffee.domain.model.DomainModel
 import org.mapstruct.MappingTarget
 
 /**
- * Generic mapper between a domain model and its JPA entity, in both directions, so that the domain model needs no
- * persistence annotations.
+ * Converts between domain objects and JPA entities. Only the JPA entities carry JPA annotations, and the domain module
+ * does not depend on JPA.
  *
  * @param DOMAIN the domain model type
  * @param ENTITY the JPA entity type
@@ -27,12 +27,12 @@ interface EntityMapper<DOMAIN : DomainModel<*>, ENTITY : Entity> {
     fun toEntity(source: DOMAIN): ENTITY
 
     /**
-     * Updates an existing JPA entity with the values of the domain object. A subinterface must override this method
-     * and ignore `id`, `createdAt`, and `updatedAt` with `@Mapping(target = ..., ignore = true)`, as
-     * [UserEntityMapper] does, because the id names the stored row and the lifecycle callbacks of [Entity] set the
-     * timestamps. Without the override, the update copies them from the domain object.
+     * Copies the values of [source] into the existing [target]. Each subinterface must override this method and
+     * ignore `id`, `createdAt`, and `updatedAt` with `@Mapping(target = ..., ignore = true)` (see [UserEntityMapper]).
+     * The id identifies the stored row, and the lifecycle callbacks of [Entity] set the timestamps. Without the
+     * override, the update copies the id and the timestamps from the domain object.
      *
-     * @param source the domain object holding the new values
+     * @param source the domain object with the new values
      * @param target the JPA entity to update in place
      */
     fun updateEntity(

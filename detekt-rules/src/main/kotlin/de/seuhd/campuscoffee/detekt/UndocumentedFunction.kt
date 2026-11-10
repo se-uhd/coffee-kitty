@@ -8,8 +8,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 /**
- * Reports every non-local, non-override named function that has no KDoc, regardless of visibility.
- * Local functions and overrides are exempt.
+ * Reports every named function without a KDoc, whatever its visibility. Local functions and overrides are exempt.
  */
 class UndocumentedFunction(
     config: Config

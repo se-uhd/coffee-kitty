@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service
 import java.util.UUID
 
 /**
- * The data adapter for the [UserDataService] port over the `users` table. The business rules are in the
- * domain services. [upsert] reports a violation of the unique constraints on the login name and the email address
- * as a `DuplicationException` through `ConstraintMapping.REGISTRY`.
+ * Data adapter that implements the [UserDataService] port on the `users` table. The business rules are in the domain
+ * services. [upsert] throws a `DuplicationException` for a login name or an email address that another user has (see
+ * [CrudDataServiceImpl]).
  */
 @Service
 class UserDataServiceImpl(
@@ -24,8 +24,8 @@ class UserDataServiceImpl(
     ),
     UserDataService {
     /**
-     * Returns all users ordered by login name, the order of the user list, instead of the creation order of
-     * [CrudDataServiceImpl].
+     * Returns every user, ordered by login name. The API returns the user list in this order, whereas
+     * [CrudDataServiceImpl.getAll] orders by creation time.
      */
     override fun getAll(): List<User> = repository.findAllByOrderByLoginNameAsc().map { mapper.fromEntity(it) }
 

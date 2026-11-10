@@ -3,8 +3,7 @@ plugins {
     alias(libs.plugins.ktlint)
 }
 
-// The convention plugins apply these Gradle plugins by id, so their jars must be on build-logic's
-// classpath here.
+// Put the jars of the Gradle plugins that the convention plugins apply by id on the classpath of build-logic.
 dependencies {
     implementation(libs.dependency.management.plugin)
     implementation(libs.kotlin.gradle.plugin)
@@ -14,9 +13,8 @@ dependencies {
     implementation(libs.detekt.gradle.plugin)
 }
 
-// Lint the convention plugins with the same ktlint version as the subprojects. The root build.gradle.kts runs this
-// check as part of `gradle check`. The exclusion skips the accessors that Gradle generates for the precompiled script
-// plugins under build/.
+// Lint the convention plugins with the ktlint version of the subprojects. The root `check` task runs ktlintCheck of
+// build-logic. The filter excludes the accessors that Gradle generates under build/ for the precompiled script plugins.
 ktlint {
     version.set(libs.versions.ktlint.tool)
     filter {

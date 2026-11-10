@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 
 /**
- * Reports each non-private `val`/`var` parameter of an enum class's primary constructor that the
- * enum's KDoc does not document with `@property` or `@param`. Only enums that already have a KDoc are
- * checked, because [UndocumentedNonLocalClass] reports a missing KDoc.
+ * Reports each non-private `val` or `var` parameter in the primary constructor of an enum class that the KDoc of the
+ * enum class does not name in an `@property` or `@param` tag. The rule checks only enum classes with a KDoc, because
+ * [UndocumentedNonLocalClass] reports a missing KDoc.
  */
 class UndocumentedEnumConstructorProperty(
     config: Config
@@ -22,8 +22,9 @@ class UndocumentedEnumConstructorProperty(
     }
 
     /**
-     * Reports each non-private `val`/`var` parameter of the enum [klass]'s primary constructor that its
-     * KDoc does not document. Runs only when the enum has a KDoc.
+     * Reports each non-private `val` or `var` parameter in the primary constructor of [klass] that the KDoc of [klass]
+     * does not name in an `@property` or `@param` tag. Reports nothing when [klass] is not an enum class or has no
+     * KDoc.
      */
     private fun checkEnumProperties(klass: KtClass) {
         if (!klass.isEnum()) return

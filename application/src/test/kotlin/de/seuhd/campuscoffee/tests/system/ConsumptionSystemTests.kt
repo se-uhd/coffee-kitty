@@ -17,8 +17,8 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 /**
- * System tests for a user's coffee count under `/api/users/{userId}/consumption`: reading the count and adding a
- * coffee with a delta of `+1`. The user is the fixture user `maxmustermann`.
+ * System tests for reading the coffee count of a user and adding a coffee through `/api/users/{userId}/consumption`.
+ * The tests for an unknown user use a random id, and all other tests use the fixture user `maxmustermann`.
  */
 class ConsumptionSystemTests : AbstractSystemTest() {
     private val loginName = "maxmustermann"
@@ -142,9 +142,9 @@ class ConsumptionSystemTests : AbstractSystemTest() {
 
     private companion object {
         /**
-         * The number of requests that the concurrency test sends at the same time, one per thread, each adding a
-         * coffee. Without the row lock that `getByUserIdForUpdate` takes on the consumption, 40 such requests lose some
-         * coffees, and 10 often lose none.
+         * The number of requests that the concurrency test sends at the same time from separate threads. Each request
+         * adds a coffee. Without the row lock that `getByUserIdForUpdate` sets on the consumption, 40 requests lose
+         * some coffees, but 10 requests often lose none.
          */
         const val CONCURRENT_REQUESTS = 40
 

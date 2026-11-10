@@ -7,9 +7,9 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 
 /**
- * Domain implementation of [DataResetService]. It clears the data of each entity through its data port, the
- * consumptions before the users that they reference. Clear the data of a new entity here, after every entity that
- * references it and before every entity that it references.
+ * Domain implementation of [DataResetService]. It deletes all consumptions and then all users, because every
+ * consumption references a user. Delete the rows of a new entity before the rows of the entities that the new entity
+ * references.
  */
 @Service
 class DataResetServiceImpl(

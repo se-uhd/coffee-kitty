@@ -14,7 +14,8 @@ dependencies {
     runtimeOnly(libs.flyway.core)
     runtimeOnly(libs.flyway.database.postgresql)
 
-    // MapStruct is compile-only for the Kotlin mappers. kapt runs the processor that generates the implementations.
+    // The mappers need the MapStruct annotations only at compile time. kapt runs the MapStruct processor, which
+    // generates the mapper implementations.
     compileOnly(libs.mapstruct)
     kapt(libs.mapstruct.processor)
 

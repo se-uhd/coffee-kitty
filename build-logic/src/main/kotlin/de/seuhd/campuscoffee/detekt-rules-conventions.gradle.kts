@@ -5,11 +5,10 @@ import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
-// Build configuration for the :detekt-rules tooling subproject, which holds the custom detekt rules that
-// kotlin-conventions loads via detektPlugins. It uses its own convention (not kotlin-conventions) only to avoid a
-// self-referential detektPlugins(project(":detekt-rules")) dependency. The KDoc rules still apply to the rule sources,
-// because detekt loads the rules from this subproject's own compiled output. Test sources are exempt, as in the
-// modules.
+// Build configuration of the subproject :detekt-rules, which holds the custom detekt rules. kotlin-conventions loads
+// these rules with detektPlugins(project(":detekt-rules")). :detekt-rules applies this convention plugin instead of
+// kotlin-conventions, because in :detekt-rules that line would make the subproject depend on itself. detekt still
+// checks the rule sources with the KDoc rules (see the dependencies block below).
 plugins {
     kotlin("jvm")
     id("org.jlleitschuh.gradle.ktlint")
@@ -30,7 +29,7 @@ configure<KtlintExtension> {
     version.set(libs.findVersion("ktlint-tool").get().requiredVersion)
 }
 
-// Run ktlint on the catalog's `ktlint-kotlin` compiler (gradle/libs.versions.toml explains the version).
+// Run ktlint on the `ktlint-kotlin` compiler from gradle/libs.versions.toml, which explains the version.
 configurations.matching { it.name.startsWith("ktlint") }.configureEach {
     resolutionStrategy.eachDependency {
         if (requested.group == "org.jetbrains.kotlin") {
@@ -39,8 +38,8 @@ configurations.matching { it.name.startsWith("ktlint") }.configureEach {
     }
 }
 
-// Run detekt on the catalog's `detekt-kotlin` compiler, as in kotlin-conventions: a detekt 2.0 alpha only runs on
-// the exact Kotlin it was built against.
+// Run detekt on the `detekt-kotlin` compiler from gradle/libs.versions.toml. A detekt 2.0 alpha runs only on the Kotlin
+// version that it was built with.
 configurations.matching { it.name.startsWith("detekt") }.configureEach {
     resolutionStrategy.eachDependency {
         if (requested.group == "org.jetbrains.kotlin") {
@@ -55,21 +54,22 @@ detekt {
     config.from(rootProject.file("config/detekt/detekt.yml"))
 }
 
-// Load the custom rules from this subproject's own compiled output (no self-referential project
-// dependency), so they run against the rule sources themselves.
+// Load the custom rules from the output of the main source set of :detekt-rules. detekt then checks the rule sources
+// with the rules that these sources define.
 dependencies {
     detektPlugins(files(sourceSets["main"].output))
 }
 
-// Restrict the task to the main source set, so that the KDoc rules skip the test sources. No detekt rule then checks
-// the test sources.
+// Run the `detekt` task on src/main/kotlin only, so that the test sources need no KDoc. No other detekt rule checks the
+// test sources either.
 tasks.named<Detekt>("detekt") {
     setSource(files("src/main/kotlin"))
 }
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
-    // JDK 25: the forked test JVM loads detekt-test-utils (kotlin-compiler-embeddable, caffeine), which call
-    // the deprecated sun.misc.Unsafe. The test JVM does not inherit the daemon's flags, so set them here too.
+    // Pass the JDK 25 flags of the Gradle daemon (see gradle.properties) to the forked test JVM, which does not inherit
+    // the daemon flags. The tests load kotlin-compiler-embeddable and caffeine through detekt-test-utils, and both
+    // libraries call the deprecated sun.misc.Unsafe.
     jvmArgs("--sun-misc-unsafe-memory-access=allow", "--enable-native-access=ALL-UNNAMED")
 }

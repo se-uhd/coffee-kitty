@@ -4,8 +4,8 @@ import jakarta.persistence.Column
 import jakarta.persistence.Table
 
 /**
- * JPA entity for a user. The companion object holds the names of the unique constraints that the Flyway migration
- * declares, for `ConstraintMapping`.
+ * JPA entity of a user. The companion object holds the names of the unique constraints that the migration
+ * `V1__create_users_table.sql` declares. `ConstraintMapping` refers to the constraints by these names.
  */
 @jakarta.persistence.Entity
 @Table(name = "users")

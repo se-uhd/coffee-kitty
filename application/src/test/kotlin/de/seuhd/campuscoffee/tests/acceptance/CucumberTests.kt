@@ -7,8 +7,9 @@ import org.junit.platform.suite.api.SelectPackages
 import org.junit.platform.suite.api.Suite
 
 /**
- * Test runner for the Cucumber tests. The HTML report goes to `build/reports/cucumber/cucumber.html`, relative to
- * the module directory (Gradle's test working directory), so `gradle clean` removes it.
+ * Runs the acceptance scenarios with Cucumber on the JUnit Platform. The path of the HTML report below is relative to
+ * the working directory of the Gradle test task, which is the module directory. The report is therefore written to
+ * `application/build/reports/cucumber/cucumber.html`, and `gradle clean` deletes it.
  */
 @Suite
 @IncludeEngines("cucumber")
@@ -21,9 +22,9 @@ import org.junit.platform.suite.api.Suite
     key = Constants.GLUE_PROPERTY_NAME,
     value = "de.seuhd.campuscoffee.tests.acceptance"
 )
-// Cucumber 8's glue hint calls getDeclaringClass() on every scanned class, which throws IncompatibleClassChangeError
-// for the classes that Kotlin generates for an inlined reified call such as returnResult<T>(). The hint only logs a
-// suggestion.
+// Turns off the glue hint of Cucumber 8, which only logs a suggestion. The hint calls getDeclaringClass() on every
+// scanned class. That call throws IncompatibleClassChangeError for a class that Kotlin generates for an inlined
+// reified call, such as returnResult<T>().
 @ConfigurationParameter(
     key = Constants.GLUE_HINT_ENABLED_PROPERTY_NAME,
     value = "false"

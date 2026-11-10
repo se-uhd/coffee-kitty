@@ -1,5 +1,6 @@
 spring:
   jpa:
     hibernate:
-      # Flyway creates and migrates the schema, and Hibernate only checks at startup that the entities match it.
+      # Flyway creates the schema from the migrations. Hibernate does not change the schema and checks at startup
+      # that the JPA entities match it.
       ddl-auto: validate

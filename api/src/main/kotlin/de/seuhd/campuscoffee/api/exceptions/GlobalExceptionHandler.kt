@@ -21,28 +21,33 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 /**
- * Global exception handler for all controllers, which answers every error with an [ErrorResponse] body.
+ * Exception handler for all controllers. The body of every error response is an [ErrorResponse].
  *
- * Extends [ResponseEntityExceptionHandler], so the standard Spring MVC exceptions (e.g., a wrong HTTP method, an
- * unreadable body, or an unknown path) map to their own status codes instead of the generic 500 fallback, and
- * [handleExceptionInternal] renders them as [ErrorResponse]. The domain exceptions are mapped explicitly in
- * [handleMappedException], each with its class name as the error code.
+ * [handleMappedException] maps each domain exception to a status and uses the class name of the exception as the
+ * error code. The base class [ResponseEntityExceptionHandler] maps each standard Spring MVC exception to its status
+ * code. Examples are the exceptions for a wrong HTTP method, an unreadable body, and an unknown path.
+ * [handleExceptionInternal] builds the error response for the standard Spring MVC exceptions. [handleGenericException]
+ * returns a 500 for every other exception.
  *
- * An `IllegalArgumentException` or `IllegalStateException` from a `require` or `check` guard signals a broken
- * server-side invariant, so the handler answers 500 and logs the full exception at ERROR. A log line never repeats
- * the looked-up or duplicate value of a domain exception, such as a login name, and every other text that can
- * repeat client input passes through [loggableText].
+ * A failed `require` or `check` throws an `IllegalArgumentException` or an `IllegalStateException`. Such an exception
+ * indicates a bug in the server code, and [handleGenericException] logs the exception with its stack trace at ERROR.
+ * The log line for a domain exception does not contain a looked-up or duplicate value, such as a login name. The
+ * handler passes every log message that can contain client input, such as the request path, through [loggableText].
+ * The stack traces that it logs at ERROR are not cleaned.
  */
 @ControllerAdvice
 class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     /**
-     * Handler for the domain exceptions. It answers with the HTTP status that [configFor] returns for the exception and
-     * with the class name of the exception as the error code, and it falls back to the generic handler for anything
-     * that [configFor] does not map. A new domain exception needs its class in the `@ExceptionHandler` annotation on
-     * this method and an entry in [configFor], or the client gets a 500. If its message can repeat a client value, such
-     * as a login name, it also needs a log message without that value in [logMessageOf].
+     * Returns an error response for a domain exception, with the status from [configFor] and the class name of the
+     * exception as the error code. The method calls [handleGenericException] for an exception that [configFor] does
+     * not map.
      *
-     * @param exception the thrown domain exception
+     * To add a domain exception, list its class in the `@ExceptionHandler` annotation of this method and add an entry
+     * to [configFor]. If the class or the entry is missing, the client gets a 500. If the message of the new exception
+     * can contain a value from the client, such as a login name, add a branch to [logMessageOf] that returns a message
+     * without that value.
+     *
+     * @param exception the domain exception
      * @param request   the current web request
      */
     @ExceptionHandler(NotFoundException::class, DuplicationException::class, ValidationException::class)
@@ -64,10 +69,9 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     /**
-     * Fallback handler for unexpected exceptions, returning HTTP 500. An `IllegalArgumentException` or
-     * `IllegalStateException` from a `require` or `check` guard reaches this handler.
-     * The response message is the fixed "An unexpected error occurred.", so no internal detail leaks, and the
-     * full exception is logged at ERROR with the request's method and path.
+     * Returns a 500 for every exception that no other handler maps, such as an `IllegalArgumentException` from a failed
+     * `require`. Every such response has the fixed message "An unexpected error occurred." The log line at ERROR
+     * contains the method and path of the request and the exception with its stack trace.
      *
      * @param exception the unexpected exception
      * @param request   the current web request
@@ -85,8 +89,9 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     /**
-     * Renders a failed validation of a `@Valid` request body as an [ErrorResponse] with the neutral `BadRequest`
-     * code. The message joins the errors, each field error with its field name, and is logged at INFO.
+     * Returns a 400 with the error code `BadRequest` for a request body that fails Bean Validation (`@Valid`). The
+     * message joins the validation errors with "; ", and each field error starts with the field name. The handler
+     * logs the message at INFO.
      */
     override fun handleMethodArgumentNotValid(
         ex: MethodArgumentNotValidException,
@@ -106,12 +111,15 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     /**
-     * Renders every other exception that [ResponseEntityExceptionHandler] handles (e.g., a malformed body, an
-     * unsupported method or media type, or an unknown path) as an [ErrorResponse] with a neutral message and code
-     * derived from the status. The framework exception's own message and class name are not echoed, because the
-     * message of a body parse failure carries parser detail that can quote a value from the request body. A 4xx is
-     * logged at INFO with the exception type, the status, and the request's method and path, and its message only
-     * at DEBUG. A 5xx is logged at ERROR with the stack trace.
+     * Builds the error response for an exception that [ResponseEntityExceptionHandler] handles, such as the exception
+     * for a malformed body, an unsupported method or media type, or an unknown path. [handleMethodArgumentNotValid]
+     * handles a failed Bean Validation instead. The error response has the reason phrase of the status as its message
+     * and the same phrase without spaces as its error code. The error response does not contain the message or the
+     * class name of the exception, because the message for a body that cannot be parsed can quote a value from the
+     * body.
+     *
+     * A 4xx is logged at INFO with the class name of the exception, the status, and the method and path of the
+     * request. The message of the exception is logged at DEBUG. A 5xx is logged at ERROR with the stack trace.
      */
     override fun handleExceptionInternal(
         ex: Exception,
@@ -131,8 +139,9 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     /**
-     * The error response with a preset `application/json;charset=UTF-8` content type, so the status and the body are
-     * written whatever the request accepts, with the charset that ApiWebConfig pins on negotiated JSON.
+     * Returns a response with [status], [body], and the content type `application/json;charset=UTF-8`. The client gets
+     * the JSON body even when its `Accept` header does not list JSON, because Spring skips content negotiation when
+     * the response already has a content type.
      */
     private fun <T : Any> respond(
         status: HttpStatusCode,
@@ -145,7 +154,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             .contentType(JSON_UTF8)
             .body(body)
 
-    /** Assembles the [ErrorResponse] body for the status, request, and message, stamped in UTC. */
+    /** Builds the [ErrorResponse] for [status], [request], and [message], with the current UTC time as timestamp. */
     private fun errorBody(
         status: HttpStatusCode,
         request: WebRequest,
@@ -161,16 +170,16 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             path = extractPath(request)
         )
 
-    /** The request's method and path for a log line, never the query string. */
+    /** Returns the method and path of [request] for a log line, without the query string. */
     private fun describe(request: WebRequest): String =
         (request as? ServletWebRequest)?.request?.let { "${it.method} ${loggableText(it.requestURI)}" }
             ?: "an unknown request"
 
-    /** Extracts the request URI from the web request, or "unknown" when it is not a servlet request. */
+    /** Returns the path of [request], or "unknown" for a request that is not a servlet request. */
     private fun extractPath(request: WebRequest): String =
         (request as? ServletWebRequest)?.request?.requestURI ?: "unknown"
 
-    /** The exception's message for a log line, without a looked-up or duplicate value such as a login name. */
+    /** Returns the message of [exception] for the log, without a looked-up or duplicate value, such as a login name. */
     private fun logMessageOf(exception: Exception): String? =
         when (exception) {
             is DuplicationException -> exception.logMessage
@@ -178,7 +187,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             else -> exception.message
         }
 
-    /** The status and log label for a mapped domain exception, or null for anything else. */
+    /** Returns the status and the log label for a domain exception, or null for any other exception. */
     private fun configFor(exception: Exception): ExceptionConfig? =
         when (exception) {
             is NotFoundException -> ExceptionConfig(HttpStatus.NOT_FOUND, "Resource not found")
@@ -188,18 +197,19 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         }
 
     /**
-     * Returns [text] as a single log line: Every control character (e.g., CR and LF) and every Unicode line or
-     * paragraph separator becomes a space, and the result is cut to [MAX_LOGGED_LENGTH] characters, so a crafted
-     * value cannot add a forged log entry or flood the log. Null is logged as an empty string.
+     * Returns [text] as a single log line. The function replaces every control character, such as CR and LF, and
+     * every Unicode line or paragraph separator with a space. This replacement stops a client from forging a log entry
+     * with a line break. The function then cuts the result to [MAX_LOGGED_LENGTH] characters to stop a long value from
+     * flooding the log. Null becomes an empty string.
      */
     private fun loggableText(text: String?): String =
         text.orEmpty().replace(CONTROL_AND_LINE_SEPARATOR_CHARACTERS, " ").take(MAX_LOGGED_LENGTH)
 
     /**
-     * The HTTP status and the log label that [configFor] assigns to a domain exception type.
+     * The HTTP status and the log label that [configFor] assigns to a domain exception.
      *
-     * @property httpStatus the status to answer with
-     * @property label the log line's prefix
+     * @property httpStatus the status of the error response
+     * @property label the prefix of the log line
      */
     private data class ExceptionConfig(
         val httpStatus: HttpStatus,
@@ -209,16 +219,17 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     private companion object {
         private val log = KotlinLogging.logger {}
 
-        /** The content type of every JSON error body, with the charset that ApiWebConfig pins on JSON. */
+        /** The content type of every error response, with the charset that ApiWebConfig adds to JSON responses. */
         private val JSON_UTF8 = MediaType(MediaType.APPLICATION_JSON, StandardCharsets.UTF_8)
 
         /**
-         * The Unicode control characters (C0, DEL, and C1, which include CR, LF, and NEL) and the Unicode line and
-         * paragraph separators.
+         * Matches a character of the Unicode category Cc, the line separator U+2028, or the paragraph separator
+         * U+2029. The category Cc contains the C0 controls U+0000 to U+001F, DEL, and the C1 controls U+0080 to U+009F.
+         * CR and LF are C0 controls, and NEL is a C1 control.
          */
         private val CONTROL_AND_LINE_SEPARATOR_CHARACTERS = Regex("[\\p{Cc}\\u2028\\u2029]")
 
-        /** The maximum number of characters that [loggableText] keeps from a value that the client can influence. */
+        /** The maximum number of characters that [loggableText] keeps of a text that can contain client input. */
         private const val MAX_LOGGED_LENGTH = 500
     }
 }

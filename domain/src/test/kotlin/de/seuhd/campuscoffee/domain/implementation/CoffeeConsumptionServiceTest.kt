@@ -21,7 +21,7 @@ import java.util.UUID
 import kotlin.reflect.jvm.javaMethod
 
 /**
- * Unit tests for [CoffeeConsumptionServiceImpl] with a Mockito mock of the consumption data port.
+ * Unit tests for [CoffeeConsumptionServiceImpl] with a Mockito mock of [CoffeeConsumptionDataService].
  */
 class CoffeeConsumptionServiceTest {
     private val dataService: CoffeeConsumptionDataService = mock()
@@ -62,8 +62,8 @@ class CoffeeConsumptionServiceTest {
     fun `applyDelta is transactional with REQUIRED propagation`() {
         val applyDelta = requireNotNull(CoffeeConsumptionServiceImpl::applyDelta.javaMethod)
 
-        // reading the consumption with the row lock and storing the raised count happen in one transaction, which
-        // holds the lock until it ends
+        // applyDelta must read the count and store the raised count in one transaction, because the row lock lasts
+        // only until the transaction ends
         assertThat(applyDelta.getAnnotation(Transactional::class.java)?.propagation).isEqualTo(Propagation.REQUIRED)
     }
 

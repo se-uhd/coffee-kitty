@@ -1,20 +1,20 @@
-// Declare the Kotlin Gradle plugin once at the root (without applying it here) so a single classloader
-// provides it to every subproject's convention plugins. Otherwise the Kotlin Gradle plugin warns that it was
-// loaded multiple times in different subprojects.
+// The root project declares the Kotlin Gradle plugin without applying it. Gradle then loads the plugin once, in the
+// classloader of the root project, which the subprojects inherit. Without this declaration, the Kotlin Gradle plugin
+// warns that it was loaded multiple times in different subprojects.
 plugins {
     base
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.ktlint)
 }
 
-// The subprojects get ktlint from their convention plugins. Applied here, ktlint also lints the root scripts
-// build.gradle.kts and settings.gradle.kts, and the base plugin gives the root project the `check` task that runs it.
+// The subprojects apply ktlint through their convention plugins. In the root project, ktlint lints build.gradle.kts and
+// settings.gradle.kts, and the `base` plugin adds the `check` task that runs ktlint.
 ktlint {
     version.set(libs.versions.ktlint.tool)
 }
 
-// The convention plugins in the included build build-logic belong to no subproject, so no subproject's check lints
-// them.
+// No subproject lints the convention plugins, because they belong to the included build build-logic. The root `check`
+// task runs the ktlintCheck task of build-logic.
 tasks.named("check") {
     dependsOn(gradle.includedBuild("build-logic").task(":ktlintCheck"))
 }

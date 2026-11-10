@@ -24,8 +24,7 @@ import java.util.UUID
 import kotlin.reflect.jvm.javaMethod
 
 /**
- * Unit tests for [UserServiceImpl], mocking the user and coffee consumption data ports, which echo what they store.
- * The mock of the user port assigns [createdId] to a new user, as the data adapter assigns an id.
+ * Unit tests for [UserServiceImpl] with Mockito mocks of [UserDataService] and [CoffeeConsumptionDataService].
  */
 class UserServiceTest {
     private val userDataService: UserDataService = mock()
@@ -44,13 +43,16 @@ class UserServiceTest {
             lastName = "M"
         )
 
-    /** A new user with [loginName] and [emailAddress], as a request or a fixture carries it. */
+    /** Returns a user with [loginName] and [emailAddress] and without an id or timestamps. */
     private fun newUser(
         loginName: String = "fresh",
         emailAddress: String = "fresh@se.de"
     ) = User(loginName = loginName, emailAddress = emailAddress, firstName = "Fresh", lastName = "User")
 
-    /** Makes both data ports echo what they store, with [createdId] assigned to a new user. */
+    /**
+     * Stubs `upsert` on both mocks to return its argument. The mock of [UserDataService] returns the user with the id
+     * [createdId].
+     */
     private fun stubUpserts() {
         whenever(userDataService.upsert(any())).thenAnswer { (it.arguments[0] as User).copy(id = createdId) }
         whenever(coffeeConsumptionDataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
@@ -106,7 +108,8 @@ class UserServiceTest {
     fun `create is transactional with REQUIRED propagation`() {
         val create = requireNotNull(UserServiceImpl::create.javaMethod)
 
-        // REQUIRED joins or opens a transaction, so a failure to store the consumption rolls the new user back
+        // with REQUIRED, create always runs in a transaction, and if storing the consumption fails, the rollback
+        // also removes the new user
         assertThat(create.getAnnotation(Transactional::class.java)?.propagation).isEqualTo(Propagation.REQUIRED)
     }
 

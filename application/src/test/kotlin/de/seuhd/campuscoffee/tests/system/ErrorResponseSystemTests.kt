@@ -12,8 +12,9 @@ import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 
 /**
- * System tests for the [ErrorResponse] body: its fields for a domain exception and the neutral error code of an error
- * that Spring MVC itself reports.
+ * System tests for the [ErrorResponse] body. They check every field for a domain exception and the error code for an
+ * error that Spring MVC reports. That error code is the reason phrase of the status without spaces, such as
+ * `NotFound`.
  */
 class ErrorResponseSystemTests : AbstractSystemTest() {
     private fun get(path: String) =
