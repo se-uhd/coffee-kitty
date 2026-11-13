@@ -10,7 +10,7 @@ springdoc = "3.2.0"
 mapstruct = "1.6.3"
 # kotlin-logging wraps SLF4J for Kotlin. A log call takes a lambda, which builds the message only when the log level is
 # enabled. `KotlinLogging.logger {}` names the logger after the enclosing class.
-kotlin-logging = "8.0.4"
+kotlin-logging = "8.0.6"
 cucumber = "8.0.4"
 archunit = "1.5.1"
 # Kotlin 2.3.0 or newer is required for jvmTarget 25. java-conventions sets kotlin-stdlib and kotlin-reflect to this
