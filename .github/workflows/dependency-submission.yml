@@ -28,7 +28,7 @@ jobs:
 
       # Install the Java and Gradle versions that mise.toml pins. The submission action below downloads a separate copy
       # of the same Gradle release.
-      - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
+      - uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
 
       # mise.toml pins Gradle to a major.minor prefix, but the action below needs an exact release. Read the exact
       # version from the Gradle that mise installed.
