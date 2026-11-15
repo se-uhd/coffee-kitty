@@ -5,7 +5,7 @@ import de.seuhd.campuscoffee.domain.model.User
 import de.seuhd.campuscoffee.domain.ports.internal.UserInternalService
 
 /**
- * The five fixture users. `jane_doe` is an admin, and the other four are users. The fixture loader and the tests use
+ * The five fixture users. Only `jane_doe` is an admin. The fixture loader and the tests use
  * this object. It is in `src/main`, because the fixture loader is production code and cannot use classes from
  * `src/test`.
  */

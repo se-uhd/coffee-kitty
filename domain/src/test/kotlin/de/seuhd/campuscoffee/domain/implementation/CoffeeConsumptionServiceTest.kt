@@ -27,7 +27,7 @@ import kotlin.reflect.jvm.javaMethod
 
 /**
  * Unit tests for [CoffeeConsumptionServiceImpl] with a Mockito mock of [CoffeeConsumptionDataService] and a fixed
- * clock. [serviceAt] creates the service with a clock that stands at a given time.
+ * clock. [serviceAt] creates the service with a clock fixed at a given time.
  */
 class CoffeeConsumptionServiceTest {
     private val dataService: CoffeeConsumptionDataService = mock()
@@ -133,7 +133,7 @@ class CoffeeConsumptionServiceTest {
     }
 
     @Test
-    fun `undo of a coffee without a stored time throws ConflictException that names the grace period`() {
+    fun `undo of a coffee without a stored time throws ConflictException about the grace period`() {
         whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(consumption(2))
 
         val exception = assertThrows<ConflictException> { service.undo(userId) }

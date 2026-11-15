@@ -108,7 +108,7 @@ class UserServiceTest {
 
     @Test
     fun `create is transactional with REQUIRED propagation`() {
-        // create has two overloads, so the test looks up the one without an acting user by its parameter types
+        // the test looks up create by its parameter types, because a second overload of create takes an acting user
         val create = UserServiceImpl::class.java.getMethod("create", User::class.java)
 
         // with REQUIRED, create always runs in a transaction, and if storing the consumption fails, the rollback

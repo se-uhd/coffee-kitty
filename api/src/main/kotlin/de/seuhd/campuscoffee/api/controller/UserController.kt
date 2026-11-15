@@ -61,8 +61,9 @@ class UserController(
     /**
      * Creates a user and returns 201 Created with the URL of the new user in the `Location` header. In the same
      * transaction, the domain creates the consumption of the user with a coffee count of zero. Only an admin may create
-     * a user: the request names the acting user in the header `X-Acting-User` (see [CurrentUserProvider]). Without
-     * the header, the response is 401 Unauthorized, and for a user who is not an admin, 403 Forbidden.
+     * a user. The header `X-Acting-User` contains the login name of the acting user (see [CurrentUserProvider]).
+     * Without a known acting user, the response is 401 Unauthorized, and 403 Forbidden if the acting user is not an
+     * admin.
      *
      * `ResponseEntity.created` sets the status of the response. springdoc reads `@ResponseStatus` and documents the
      * status 201 instead of 200 in the OpenAPI definition.

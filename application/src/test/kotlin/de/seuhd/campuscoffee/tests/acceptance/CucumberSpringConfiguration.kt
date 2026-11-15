@@ -46,7 +46,7 @@ class CucumberSpringConfiguration(
 
     /**
      * Adds the [SettableClock] to the Spring context of the scenarios. `@SpringBootTest` uses a nested
-     * `@TestConfiguration` in addition to the configuration of the application. `@Primary` selects the settable clock
+     * `@TestConfiguration` in addition to the configuration of the application. Spring picks the `@Primary` clock
      * wherever the application injects a `Clock`.
      */
     @TestConfiguration

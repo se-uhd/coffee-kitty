@@ -12,12 +12,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import tools.jackson.databind.json.JsonMapper
 
 /**
- * Answers a [RequestRejectedException] that a controller throws with 400 Bad Request and an `ErrorResponse`. The
- * firewall of Spring Security checks a header value, such as one with a control character, only when the code reads
- * the header, so the exception can reach a controller. A path that the firewall rejects never reaches a controller,
- * and `SecurityConfig.requestRejectedHandler` answers it with the same 400. The advice has the highest precedence,
- * because `GlobalExceptionHandler` would answer the exception with a 500. The message does not quote the request, and
- * the log names only the exception type, as in the coffee app of SE@UHD.
+ * Responds with 400 Bad Request and an `ErrorResponse` when Spring MVC throws a [RequestRejectedException]. The
+ * firewall of Spring Security checks a header value, such as one with a control character, only when code reads the
+ * header, and Spring MVC reads some headers after the filter chain has passed the request on. A path that the firewall
+ * rejects never reaches Spring MVC, and `SecurityConfig.requestRejectedHandler` responds to it with the same 400. The
+ * advice has the highest precedence, because `GlobalExceptionHandler` would turn the exception into a 500. The message
+ * does not quote the request, and the log contains only the exception type, as in the coffee app of SE@UHD.
  *
  * @param jsonMapper the JSON mapper of Spring MVC
  */

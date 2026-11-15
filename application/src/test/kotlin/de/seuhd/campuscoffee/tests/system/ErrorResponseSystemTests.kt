@@ -51,7 +51,7 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `requesting a path with a semicolon returns 400 Bad Request with an error response that does not quote it`() {
+    fun `requesting a path with a semicolon returns 400 Bad Request with a message that does not quote the path`() {
         val result = get("/api/users;x=1")
 
         assertThat(result.status.value()).isEqualTo(400)

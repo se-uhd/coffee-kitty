@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import java.time.Duration
 
 /**
- * Domain configuration of the coffee consumption rules. The class is in the domain module, because the domain
+ * Domain configuration of the rule for undoing a coffee. The class is in the domain module, because the domain
  * enforces the rule and cannot depend on the api or application modules. The typed binding lets the IDE resolve the
  * key in `application.yaml`. The coffee app of SE@UHD has the same class.
  *

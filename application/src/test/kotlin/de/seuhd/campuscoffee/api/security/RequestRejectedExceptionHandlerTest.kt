@@ -8,13 +8,13 @@ import org.springframework.security.web.firewall.RequestRejectedException
 import tools.jackson.databind.json.JsonMapper
 
 /**
- * Unit test for [RequestRejectedExceptionHandler], which answers a request that the firewall of Spring Security rejects
- * while a controller reads it, such as a header value with a control character. HTTP clients refuse to send such a
- * header, so a system test cannot send one.
+ * Unit test for [RequestRejectedExceptionHandler], which responds to a request that the firewall of Spring Security
+ * rejects while Spring MVC reads it, such as one with a control character in a header. HTTP clients refuse to send such
+ * a header, which rules out a system test.
  */
 class RequestRejectedExceptionHandlerTest {
     @Test
-    fun `a request that the firewall rejects in a controller gets 400 Bad Request without the rejected value`() {
+    fun `handleRequestRejected turns a RequestRejectedException into 400 Bad Request without the rejected value`() {
         val response = MockHttpServletResponse()
 
         RequestRejectedExceptionHandler(JsonMapper.builder().build()).handleRequestRejected(

@@ -22,7 +22,7 @@ class GracePeriodTest {
     }
 
     @Test
-    fun `isOpen is false for a coffee recorded just over one grace period ago`() {
+    fun `isOpen is false for a coffee recorded one nanosecond more than one grace period ago`() {
         assertThat(gracePeriod.isOpen(LocalDateTime.parse("2026-01-15T11:54:59.999999999"))).isFalse()
     }
 }

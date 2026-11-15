@@ -12,8 +12,8 @@ import tools.jackson.databind.json.JsonMapper
 
 /**
  * Unit tests for [CurrentUserProvider] and [AuthenticationExceptionHandler] on a route without a rule in
- * `SecurityConfig`: without a principal, [CurrentUserProvider.currentUser] throws, and the handler answers the
- * exception with the 401 of [JsonAuthenticationEntryPoint].
+ * `SecurityConfig`: without a principal, [CurrentUserProvider.currentUser] throws, and the handler turns the exception
+ * into the 401 of [JsonAuthenticationEntryPoint].
  */
 class AuthenticationExceptionHandlerTest {
     private val handler = AuthenticationExceptionHandler(JsonAuthenticationEntryPoint(JsonMapper.builder().build()))
@@ -22,7 +22,7 @@ class AuthenticationExceptionHandlerTest {
     fun clearSecurityContext() = SecurityContextHolder.clearContext()
 
     @Test
-    fun `currentUser without a principal throws, and the handler answers with 401 and the challenge`() {
+    fun `currentUser without a principal throws, and the handler responds with 401 and the challenge`() {
         val exception = assertThrows<AuthenticationCredentialsNotFoundException> { CurrentUserProvider().currentUser() }
         val response = MockHttpServletResponse()
 

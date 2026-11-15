@@ -28,10 +28,10 @@ import java.util.UUID
  *
  * The Given steps find the id of the user in the list from `GET /api/users` and add coffees through
  * `POST /api/users/{userId}/consumption`. The step "the user {string} has {int} coffees" also checks the resulting
- * coffee count. The When steps add a coffee or undo the most recent coffee through
- * `POST /api/users/{userId}/consumption/undo` and keep the latest response. The Then steps check the status of that
- * response and read the coffee count with `GET /api/users/{userId}/consumption`. Before each request, a step with a
- * time sets the [SettableClock].
+ * coffee count. The When steps add a coffee, or undo the most recent coffee through
+ * `POST /api/users/{userId}/consumption/undo`, and keep the latest response. The Then steps check the status of that
+ * response and read the coffee count with `GET /api/users/{userId}/consumption`. A step with a time sets the
+ * [SettableClock] to that time before its request.
  */
 class CucumberConsumptionSteps(
     private val objectMapper: ObjectMapper,
