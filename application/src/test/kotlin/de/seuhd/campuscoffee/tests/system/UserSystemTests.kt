@@ -3,6 +3,8 @@ package de.seuhd.campuscoffee.tests.system
 import de.seuhd.campuscoffee.api.dtos.ConsumptionDto
 import de.seuhd.campuscoffee.api.dtos.UserDto
 import de.seuhd.campuscoffee.api.exceptions.ErrorResponse
+import de.seuhd.campuscoffee.api.security.CurrentUserProvider
+import de.seuhd.campuscoffee.domain.model.Role
 import de.seuhd.campuscoffee.domain.model.persistedId
 import de.seuhd.campuscoffee.tests.SystemTestUtils.client
 import org.assertj.core.api.Assertions.assertThat
@@ -17,7 +19,8 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 /**
- * System tests for listing, reading, and creating users through `/api/users`.
+ * System tests for listing, reading, and creating users through `/api/users`. The requests that create a user send
+ * the admin `jane_doe` in the header `X-Acting-User` unless a test leaves the header out or names another user.
  */
 class UserSystemTests : AbstractSystemTest() {
     /**
@@ -37,11 +40,13 @@ class UserSystemTests : AbstractSystemTest() {
 
     private fun createUser(
         body: Map<String, Any>,
-        uri: String = "/api/users"
+        uri: String = "/api/users",
+        actingUser: String? = ADMIN_LOGIN_NAME
     ) = client()
         .post()
         .uri(uri)
         .contentType(MediaType.APPLICATION_JSON)
+        .headers { headers -> actingUser?.let { headers.set(CurrentUserProvider.ACTING_USER_HEADER, it) } }
         .body(body)
         .exchange()
 
@@ -228,5 +233,100 @@ class UserSystemTests : AbstractSystemTest() {
 
         assertThat(result.status.value()).isEqualTo(400)
         assertThat(result.responseBody!!.errorCode).isEqualTo("ValidationException")
+    }
+
+    @Test
+    fun `creating a user without the acting user header returns 401 Unauthorized and creates no user`() {
+        val result = createUser(newUser(), actingUser = null).returnResult<ErrorResponse>()
+
+        assertThat(result.status.value()).isEqualTo(401)
+        assertThat(result.responseBody!!.errorCode).isEqualTo("Unauthorized")
+        assertThat(result.responseBody!!.message).isEqualTo("The header X-Acting-User is missing.")
+        assertThat(result.responseHeaders.getFirst("WWW-Authenticate")).isEqualTo(CHALLENGE)
+        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+    }
+
+    @Test
+    fun `creating a user as a user who is not an admin returns 403 Forbidden and creates no user`() {
+        val result = createUser(newUser(), actingUser = "maxmustermann").returnResult<ErrorResponse>()
+
+        assertThat(result.status.value()).isEqualTo(403)
+        assertThat(result.responseBody!!.errorCode).isEqualTo("ForbiddenException")
+        assertThat(result.responseBody!!.message).isEqualTo("Only an admin may create a user.")
+        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+    }
+
+    @Test
+    fun `creating a user with an unknown acting user returns 401 Unauthorized and creates no user`() {
+        val result = createUser(newUser(), actingUser = "nobody").returnResult<ErrorResponse>()
+
+        assertThat(result.status.value()).isEqualTo(401)
+        assertThat(result.responseBody!!.errorCode).isEqualTo("Unauthorized")
+        assertThat(result.responseBody!!.message).isEqualTo("No user has the login name in X-Acting-User.")
+        assertThat(result.responseHeaders.getFirst("WWW-Authenticate")).isEqualTo(CHALLENGE)
+        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+    }
+
+    @Test
+    fun `creating a user with an invalid body and without the acting user header returns 401 Unauthorized`() {
+        val result = createUser(newUser(loginName = " "), actingUser = null).returnResult<ErrorResponse>()
+
+        assertThat(result.status.value()).isEqualTo(401)
+        assertThat(result.responseHeaders.getFirst("WWW-Authenticate")).isEqualTo(CHALLENGE)
+    }
+
+    @Test
+    fun `listing users with an unknown acting user returns 401 Unauthorized`() {
+        val result =
+            client()
+                .get()
+                .uri("/api/users")
+                .header(CurrentUserProvider.ACTING_USER_HEADER, "nobody")
+                .exchange()
+                .returnResult<ErrorResponse>()
+
+        assertThat(result.status.value()).isEqualTo(401)
+        assertThat(result.responseHeaders.getFirst("WWW-Authenticate")).isEqualTo(CHALLENGE)
+    }
+
+    @Test
+    fun `creating a user without the acting user header and with an id returns 401 Unauthorized`() {
+        val body = newUser() + ("id" to UUID.randomUUID().toString())
+
+        val result = createUser(body, actingUser = null).returnResult<ErrorResponse>()
+
+        assertThat(result.status.value()).isEqualTo(401)
+    }
+
+    @Test
+    fun `creating a user without a role returns 201 Created with the role USER`() {
+        val result = createUser(newUser()).returnResult<UserDto>()
+
+        assertThat(result.status.value()).isEqualTo(201)
+        assertThat(result.responseBody!!.role).isEqualTo(Role.USER)
+    }
+
+    @Test
+    fun `an admin creating a user with the role ADMIN returns 201 Created with the role ADMIN`() {
+        val result = createUser(newUser() + ("role" to "ADMIN")).returnResult<UserDto>()
+
+        assertThat(result.status.value()).isEqualTo(201)
+        assertThat(result.responseBody!!.role).isEqualTo(Role.ADMIN)
+    }
+
+    @Test
+    fun `creating a user with an unknown role returns 400 Bad Request and creates no user`() {
+        val result = createUser(newUser() + ("role" to "OWNER")).returnResult<ErrorResponse>()
+
+        assertThat(result.status.value()).isEqualTo(400)
+        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+    }
+
+    private companion object {
+        /** The fixture user with the role ADMIN, who may create users. */
+        const val ADMIN_LOGIN_NAME = "jane_doe"
+
+        /** The challenge that RFC 9110 requires in the header WWW-Authenticate of a 401. */
+        const val CHALLENGE = "X-Acting-User realm=\"Coffee Kitty\""
     }
 }

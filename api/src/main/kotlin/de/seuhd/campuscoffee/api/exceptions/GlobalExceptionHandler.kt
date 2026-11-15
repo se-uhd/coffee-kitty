@@ -2,6 +2,7 @@ package de.seuhd.campuscoffee.api.exceptions
 
 import de.seuhd.campuscoffee.domain.exceptions.ConflictException
 import de.seuhd.campuscoffee.domain.exceptions.DuplicationException
+import de.seuhd.campuscoffee.domain.exceptions.ForbiddenException
 import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
 import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -55,6 +56,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         NotFoundException::class,
         DuplicationException::class,
         ConflictException::class,
+        ForbiddenException::class,
         ValidationException::class
     )
     fun handleMappedException(
@@ -199,6 +201,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             is NotFoundException -> ExceptionConfig(HttpStatus.NOT_FOUND, "Resource not found")
             is DuplicationException -> ExceptionConfig(HttpStatus.CONFLICT, "Duplicate resource")
             is ConflictException -> ExceptionConfig(HttpStatus.CONFLICT, "Conflict with the current state")
+            is ForbiddenException -> ExceptionConfig(HttpStatus.FORBIDDEN, "Action not allowed")
             is ValidationException -> ExceptionConfig(HttpStatus.BAD_REQUEST, "Domain validation failed")
             else -> null
         }

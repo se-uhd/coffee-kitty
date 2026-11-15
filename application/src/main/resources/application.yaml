@@ -1,6 +1,10 @@
 spring:
   application:
     name: coffee-kitty
+  autoconfigure:
+    # SecurityConfig authenticates with ActingUserAuthenticationFilter and needs no user store of Spring Security, which
+    # would otherwise log a generated password on every start.
+    exclude: org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
   datasource:
     driver-class-name: org.postgresql.Driver
     hikari:
@@ -44,6 +48,11 @@ springdoc:
 campus-coffee:
   fixtures:
     load-on-startup: false
+  bootstrap-admin:
+    login-name: ${BOOTSTRAP_ADMIN_LOGIN_NAME:}
+    email-address: ${BOOTSTRAP_ADMIN_EMAIL_ADDRESS:}
+    first-name: ${BOOTSTRAP_ADMIN_FIRST_NAME:Bootstrap}
+    last-name: ${BOOTSTRAP_ADMIN_LAST_NAME:Admin}
   consumption:
     grace-period: ${CAMPUS_COFFEE_GRACE_PERIOD:5m}
 

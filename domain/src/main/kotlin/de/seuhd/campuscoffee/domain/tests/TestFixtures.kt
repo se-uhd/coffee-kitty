@@ -1,11 +1,13 @@
 package de.seuhd.campuscoffee.domain.tests
 
+import de.seuhd.campuscoffee.domain.model.Role
 import de.seuhd.campuscoffee.domain.model.User
-import de.seuhd.campuscoffee.domain.ports.api.UserService
+import de.seuhd.campuscoffee.domain.ports.internal.UserInternalService
 
 /**
- * The five fixture users. The fixture loader and the tests use this object. It is in `src/main`, because the fixture
- * loader is production code and cannot use classes from `src/test`.
+ * The five fixture users. `jane_doe` is an admin, and the other four are users. The fixture loader and the tests use
+ * this object. It is in `src/main`, because the fixture loader is production code and cannot use classes from
+ * `src/test`.
  */
 object TestFixtures {
     private val USER_LIST =
@@ -14,7 +16,8 @@ object TestFixtures {
                 loginName = "jane_doe",
                 emailAddress = "jane.doe@se.uni-heidelberg.de",
                 firstName = "Jane",
-                lastName = "Doe"
+                lastName = "Doe",
+                role = Role.ADMIN
             ),
             User(
                 loginName = "maxmustermann",
@@ -46,10 +49,11 @@ object TestFixtures {
     fun getUserFixtures(): List<User> = USER_LIST
 
     /**
-     * Creates the fixture users through [userService] and returns the stored users. Each user gets a consumption with
-     * a coffee count of zero.
+     * Creates the fixture users through [userInternalService] and returns the stored users. Each user gets a
+     * consumption with a coffee count of zero.
      *
-     * @param userService the port that creates the users
+     * @param userInternalService the port that creates the users without an acting user
      */
-    fun createUserFixtures(userService: UserService): List<User> = getUserFixtures().map { userService.create(it) }
+    fun createUserFixtures(userInternalService: UserInternalService): List<User> =
+        getUserFixtures().map { userInternalService.create(it) }
 }

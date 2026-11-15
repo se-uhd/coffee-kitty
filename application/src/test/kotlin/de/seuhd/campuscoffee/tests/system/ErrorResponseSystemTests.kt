@@ -50,6 +50,16 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
         assertThat(result.responseBody!!.message).isEqualTo("Not Found")
     }
 
+    @Test
+    fun `requesting a path with a semicolon returns 400 Bad Request with an error response that does not quote it`() {
+        val result = get("/api/users;x=1")
+
+        assertThat(result.status.value()).isEqualTo(400)
+        assertThat(result.responseBody!!.errorCode).isEqualTo("BadRequest")
+        assertThat(result.responseBody!!.message).isEqualTo("The request could not be read.")
+        assertThat(result.responseBody!!.path).isEqualTo("/api/users;x=1")
+    }
+
     private companion object {
         /** The tolerance for comparing the UTC timestamp of an error response with the current UTC time. */
         val byLessThanOneMinute = within(1, ChronoUnit.MINUTES)
