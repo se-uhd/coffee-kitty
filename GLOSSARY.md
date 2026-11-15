@@ -26,9 +26,9 @@ with a line "Avoid:", which lists words not to use for the concept.
 - **coffee count**: A user's total number of coffees. The number starts at zero when the user is created. Adding a
   coffee raises it by one, and an undo lowers it by one.
   API: `ConsumptionDto.count`. Code: `CoffeeConsumption.count`, `coffee_consumptions.count`.
-- **consumption**: The stored record that holds the coffee count of one user and the time of each recent coffee that
-  the user did not undo. Adding a coffee drops the times whose grace period has passed. Every user has exactly one such
-  record, which `UserService.create` creates together with the user.
+- **consumption**: The stored record that holds the coffee count of one user and the time of each recent coffee that the
+  user did not undo. Adding a coffee drops the times whose grace period has passed. Every user has exactly one such
+  record, which `UserService.create` or `UserInternalService.create` creates together with the user.
   API: `/api/users/{userId}/consumption`, `ConsumptionDto`. Code: `CoffeeConsumption`, `coffee_consumptions`,
   `coffeeTimes`, `coffee_times`.
 - **delta**: The field in the request body of `POST /api/users/{userId}/consumption` that states the change to the
@@ -43,24 +43,24 @@ with a line "Avoid:", which lists words not to use for the concept.
   API: `POST /api/users/{userId}/consumption/undo`. Code: `CoffeeConsumptionService.undo`.
   Avoid: cancel, coffee canceled.
 - **grace period**: The time after a user adds a coffee, 5 minutes by default, in which the user can undo the coffee.
-  The grace period includes the instant at which it ends: for a coffee added at 10:00:00, an undo at 10:05:00
+  The grace period includes the instant at which it ends: For a coffee added at 10:00:00, an undo at 10:05:00
   succeeds, and an undo at 10:05:01 returns 409 Conflict.
-  Code: `GracePeriod`, `campus-coffee.consumption.grace-period`.
+  Code: `GracePeriod`, `campus-coffee.consumption.grace-period`, environment variable
+  `CAMPUS_COFFEE_GRACE_PERIOD`.
   Avoid: grace window.
 - **role**: What a user may do in Coffee Kitty, either `USER` or `ADMIN`. An admin may also create users.
   API: `UserDto.role`. Code: `Role`, `User.role`, `users.role`, `requireAdmin`.
-- **acting user**: The user who sends a request, named by login name in the header `X-Acting-User`. Coffee Kitty has no
-  authentication yet, so any client can name any user.
-  API: `X-Acting-User`, `WWW-Authenticate: X-Acting-User realm="Coffee Kitty"` in a 401. Code: `CurrentUserProvider`,
-  `ActingUserAuthenticationFilter`, `SecurityConfig`.
-  Avoid: current user (except in the class name), caller.
-- **bootstrap admin**: The admin that the app stores on startup from the keys under `campus-coffee.bootstrap-admin`
-  when no admin exists, after the fixture loader. If a user has the configured login name, the app gives that user the
+- **acting user**: The user who sends a request, identified by the login name in the header `X-Acting-User`. Because
+  Coffee Kitty has no authentication yet, any client can act as any user. API: `X-Acting-User`, `WWW-Authenticate:
+  X-Acting-User realm="Coffee Kitty"` in a 401. Code: `CurrentUserProvider`, `ActingUserAuthenticationFilter`,
+  `SecurityConfig`. Avoid: current user (except in the class name), caller.
+- **bootstrap admin**: The admin that the app stores on startup from the keys under `campus-coffee.bootstrap-admin` when
+  no admin exists after the fixture loader has run. If a user has the configured login name, the app gives that user the
   role `ADMIN`. Otherwise, it creates the configured user.
   Code: `BootstrapAdminLoader`, `BootstrapAdminProperties`, `StartupDataInitializer`,
   `UserInternalService.createInitialAdmin`.
-- **fixture user**: One of the five users in `TestFixtures`, such as `jane_doe`, who is the admin among them. In the
-  dev profile, the fixture loader creates these users with a coffee count of zero on every start, and the system and
+- **fixture user**: One of the five users in `TestFixtures`, such as `jane_doe`, the only admin among them. In the dev
+  profile, the fixture loader creates these users with a coffee count of zero on every start, and the system and
   acceptance tests create them the same way before each test.
   Code: `TestFixtures`, `FixtureStartupLoader`, `campus-coffee.fixtures.*`.
   Avoid: seeded user.
@@ -128,13 +128,17 @@ with a line "Avoid:", which lists words not to use for the concept.
   `statusCode`, `statusMessage`, `timestamp` (in UTC), and `path`. For a domain exception, `errorCode` is the class name
   of the exception. For any other error, `errorCode` is the reason phrase of the status without spaces, such as
   `BadRequest`.
-  Code: `ErrorResponse`, `GlobalExceptionHandler`.
+  Code: `ErrorResponse`, `GlobalExceptionHandler`, `writeErrorResponse`.
 - **domain exception**: An exception class in `domain/.../exceptions/`. `GlobalExceptionHandler` maps each of these
   classes to a status and uses the class name as the error code. `NotFoundException` (404) means that a lookup found no
   stored object, for example no user with the id in the path. `DuplicationException` (409) means that a request repeats
   a value that must be unique, such as the login name or the email address of another user. `ConflictException` (409)
   means that a well-formed request does not apply to the current state, such as an undo after the grace period.
-  `ForbiddenException` (403) means that the acting user may not perform the action, such as a user who is not an admin
-  and creates a user. `ValidationException` (400) means that a request breaks a rule of the domain or of a controller,
-  such as an integer delta other than +1 or an id in the body of `POST /api/users`. A request body that fails Bean
-  Validation or cannot be read, such as a body with a delta of 1.9, gets a 400 with the error code `BadRequest` instead.
+  `ForbiddenException` (403) means that the acting user may not perform the action, such as creating a user without the
+  role `ADMIN`. `ValidationException` (400) means that a request breaks a rule of the domain or of a controller, such as
+  an integer delta other than +1 or an id in the body of `POST /api/users`. A request body that fails Bean Validation or
+  cannot be read, such as a body with a delta of 1.9, gets a 400 with the error code `BadRequest` instead.
+- **firewall**: The `StrictHttpFirewall` of Spring Security, which rejects a request with `;`, `//`, `..`, or an encoded
+  slash in the path or with a control character in a header value. Security rules and Spring MVC can read such a
+  request differently. A rejected request gets 400 Bad Request with the message "The request could not be read."
+  Code: `SecurityConfig.requestRejectedHandler`, `RequestRejectedExceptionHandler`.

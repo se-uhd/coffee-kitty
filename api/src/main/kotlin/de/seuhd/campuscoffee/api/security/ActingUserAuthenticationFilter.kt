@@ -15,21 +15,21 @@ import org.springframework.web.filter.OncePerRequestFilter
 import org.springframework.web.servlet.HandlerExceptionResolver
 
 /**
- * Resolves the acting user of a request before Spring MVC calls a controller and reads the request body. If the request
- * names a login name in the header [CurrentUserProvider.ACTING_USER_HEADER], the filter looks up the user and stores
- * the user as the principal of the request, with the authority `ROLE_USER` or `ROLE_ADMIN`. Spring Security then
- * treats the request as authenticated, although Coffee Kitty checks no password or token and any client can name any
- * user. A login name that no user has gets a 401 from [entryPoint], and the request does not reach a controller. A
- * request without the header continues without a principal, and `SecurityConfig` decides whether its route needs one.
- * Any other exception of the lookup, such as a failed database connection, goes to [exceptionResolver], which answers
- * it like an exception of a controller.
+ * Resolves the acting user of a request before Spring MVC reads the request body and calls a controller. If the header
+ * [CurrentUserProvider.ACTING_USER_HEADER] contains a login name, the filter looks up the user and stores the user as
+ * the principal of the request, with the authority `ROLE_USER` or `ROLE_ADMIN`. Spring Security then treats the request
+ * as authenticated, although Coffee Kitty checks no password or token and any client can act as any user. A request
+ * with a login name that no user has gets a 401 from [entryPoint] and does not reach a controller. A request without
+ * the header continues without a principal, and `SecurityConfig` defines whether its route needs one. Any other
+ * exception of the lookup, such as a failed database connection, goes to [exceptionResolver], which handles it like an
+ * exception of a controller.
  *
  * `SecurityConfig` creates the filter for its filter chain. The filter is not a Spring bean, because Spring Boot would
- * register a bean of type `Filter` a second time for every request, outside the filter chain.
+ * register a bean of type `Filter` with the servlet container and run it outside the filter chain as well.
  *
  * @param userService the port that looks up the user by login name
- * @param entryPoint  the entry point that answers an unknown login name with 401 Unauthorized
- * @param exceptionResolver the resolver of Spring MVC that answers any other exception with an `ErrorResponse`
+ * @param entryPoint  the entry point that responds with 401 Unauthorized to an unknown login name
+ * @param exceptionResolver the resolver of Spring MVC that turns any other exception into an `ErrorResponse`
  */
 class ActingUserAuthenticationFilter(
     private val userService: UserService,
@@ -57,7 +57,7 @@ class ActingUserAuthenticationFilter(
     }
 
     /**
-     * Returns the user with [loginName], or null after the filter has answered the request, because no user has
+     * Returns the user with [loginName], or null after the filter has responded to the request, because no user has
      * [loginName] or the lookup failed.
      */
     @Suppress("TooGenericExceptionCaught") // any failure of the lookup has to become an error response
@@ -73,7 +73,7 @@ class ActingUserAuthenticationFilter(
             entryPoint.commence(request, response, BadCredentialsException(UNKNOWN_USER_MESSAGE))
             null
         } catch (e: RuntimeException) {
-            // GlobalExceptionHandler answers any other failure, so that the body is an ErrorResponse
+            // pass any other failure to GlobalExceptionHandler, which writes an ErrorResponse
             exceptionResolver.resolveException(request, response, null, e)
             null
         }

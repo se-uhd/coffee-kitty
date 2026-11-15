@@ -127,7 +127,7 @@ class ConsumptionSystemTests : AbstractSystemTest() {
             executor.shutdownNow()
         }
         assertThat(consumption().count).isEqualTo(CONCURRENT_REQUESTS)
-        // every remaining coffee has a time within its grace period, so each one can be undone, and then none
+        // each remaining coffee is within its grace period: every one can be undone, and the next undo returns 409
         repeat(CONCURRENT_REQUESTS) { assertThat(undo(userId).statusCode()).isEqualTo(200) }
         assertThat(undo(userId).statusCode()).isEqualTo(409)
         assertThat(consumption().count).isEqualTo(0)
@@ -161,7 +161,7 @@ class ConsumptionSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `getting the consumption of an unknown user returns 404 Not Found that names the user`() {
+    fun `getting the consumption of an unknown user returns 404 Not Found with the id of the user`() {
         val userId = UUID.randomUUID()
 
         val result = getConsumption(userId).returnResult<ErrorResponse>()
@@ -172,7 +172,7 @@ class ConsumptionSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `adding a coffee for an unknown user returns 404 Not Found that names the user`() {
+    fun `adding a coffee for an unknown user returns 404 Not Found with the id of the user`() {
         val userId = UUID.randomUUID()
 
         val result = postConsumption(ConsumptionDeltaDto(1), userId).returnResult<ErrorResponse>()
@@ -183,7 +183,7 @@ class ConsumptionSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `undoing a coffee of an unknown user returns 404 Not Found that names the user`() {
+    fun `undoing a coffee of an unknown user returns 404 Not Found with the id of the user`() {
         val userId = UUID.randomUUID()
 
         val result = undo(userId).returnResult<ErrorResponse>()

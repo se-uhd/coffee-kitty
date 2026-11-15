@@ -13,10 +13,10 @@ import org.springframework.stereotype.Component
  * Creates the bootstrap admin of [BootstrapAdminProperties] on startup when no admin exists, so that a database without
  * an admin gets one who can create users. [UserInternalService.createInitialAdmin] checks a new admin like any other
  * new user and creates the consumption of the admin in the same transaction. If a user with the configured login name
- * exists, it makes that user an admin. This case occurs after the migration V4, which gives every existing user the
+ * exists, that user becomes the admin. This case occurs after the migration V4, which gives every existing user the
  * role `USER`. The coffee app of SE@UHD has a loader with the same name.
  *
- * [StartupDataInitializer] calls [createBootstrapAdmin] after the fixture loader, so that in the dev profile the loader
+ * [StartupDataInitializer] calls [createBootstrapAdmin] after the fixture loader. In the dev profile, this loader then
  * sees the fixture admin `jane_doe` and creates no admin.
  */
 @Component
@@ -77,7 +77,10 @@ class BootstrapAdminLoader(
             userInternalService.createInitialAdmin(admin)
         }
 
-    /** Returns [value], or throws if it is missing or blank, naming the key under [PREFIX]. */
+    /**
+     * Returns [value], or throws an exception with the key under [PREFIX] in its message if [value] is missing or
+     * blank.
+     */
     private fun required(
         value: String?,
         key: String

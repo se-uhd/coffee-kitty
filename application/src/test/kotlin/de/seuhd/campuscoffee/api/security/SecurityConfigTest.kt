@@ -8,12 +8,12 @@ import org.springframework.security.web.firewall.RequestRejectedException
 import tools.jackson.databind.json.JsonMapper
 
 /**
- * Unit tests for the handler of rejected requests in [SecurityConfig]. The test client of the system tests turns `//`
- * into `/`, so this test passes such a path to the handler directly.
+ * Unit tests for the handler of rejected requests in [SecurityConfig]. Because the test client of the system tests
+ * turns `//` into `/`, this test passes such a path to the handler directly.
  */
 class SecurityConfigTest {
     @Test
-    fun `a rejected request gets 400 Bad Request with an error response that does not quote the request`() {
+    fun `a rejected request gets 400 Bad Request with an error response without the message of the exception`() {
         val response = MockHttpServletResponse()
 
         SecurityConfig()

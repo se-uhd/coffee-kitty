@@ -3,7 +3,7 @@ package de.seuhd.campuscoffee.configuration
 import org.springframework.boot.context.properties.ConfigurationProperties
 
 /**
- * The bootstrap admin, bound from the keys under `campus-coffee.bootstrap-admin`. On a start without fixture users,
+ * The bootstrap admin, bound from the keys under `campus-coffee.bootstrap-admin`. On every start,
  * `BootstrapAdminLoader` creates this user as an admin when no admin exists, so that a database without the fixture
  * user `jane_doe` gets an admin who can create users. The coffee app of SE@UHD has a class with the same name, which
  * also holds a password.

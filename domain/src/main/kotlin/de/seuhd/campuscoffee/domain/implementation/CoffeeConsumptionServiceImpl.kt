@@ -19,9 +19,9 @@ import java.util.UUID
  * for the same user waits until the transaction ends and then reads the raised count. Without the lock, two
  * concurrent requests could both read a count of 2 and both store a count of 3.
  *
- * [applyDelta] appends the time of the coffee from [clock], which the tests fix to a given time, and drops the times
+ * [applyDelta] appends the time of the coffee from [clock], which a test can set to a fixed time, and drops the times
  * whose grace period has passed, so that the list of times does not grow with every coffee. [undo] takes the time of
- * the most recent coffee that is not undone, asks [gracePeriod] whether its grace period is still open, and removes it.
+ * the most recent coffee that is not undone, checks its grace period with [gracePeriod], and removes the time.
  * As in the coffee app of SE@UHD, the coffee before can then be undone while its own grace period is open.
  */
 @Service
@@ -44,7 +44,7 @@ class CoffeeConsumptionServiceImpl(
         return coffeeConsumptionDataService.upsert(
             current.copy(
                 count = current.count + delta,
-                // a time whose grace period has passed can never be undone again, so the list keeps only open ones
+                // keep only the times within their grace period, because the other coffees can no longer be undone
                 coffeeTimes = current.coffeeTimes.filter { gracePeriod.isOpen(it) } + now()
             )
         )
@@ -56,8 +56,8 @@ class CoffeeConsumptionServiceImpl(
         if (current.count <= 0) {
             throw ConflictException("There is no coffee to undo.")
         }
-        // without a time, the grace period of the most recent coffee has passed: applyDelta drops such times, and a
-        // coffee added before Coffee Kitty 0.2.0 has none
+        // a coffee without a time cannot be undone: it was added before Coffee Kitty 0.2.0, or applyDelta dropped its
+        // time after the grace period
         val lastCoffeeAt = current.coffeeTimes.lastOrNull()
         if (lastCoffeeAt == null || !gracePeriod.isOpen(lastCoffeeAt)) {
             throw ConflictException("The grace period to undo this coffee has passed.")

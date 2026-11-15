@@ -8,12 +8,13 @@ of a software engineering lecture, and students extend it over the semester. A u
 and a first and a last name. Each user has exactly one consumption, which holds a coffee count that starts at zero. The
 REST API lists, creates, and reads users, reads a coffee count, adds one coffee at a time, and undoes the most recent
 coffee within 5 minutes. `requirements/` holds the functional requirements, such as FR-3 for the undo. Every user has a
-role, `USER` or `ADMIN`, and only an admin may create a user. The app has no authentication yet: a request names its
-acting user in the header `X-Acting-User`. `ActingUserAuthenticationFilter` in `api/.../security/` resolves it to a
-`User` before the controllers run, and `CurrentUserProvider` returns that user to the controllers. The controllers pass
-that user to the domain, which checks the role with `requireAdmin` in `AuthorizationUtil.kt`, as the coffee app of
-SE@UHD does. The app has no frontend. In the dev profile, Swagger UI documents the API. `GLOSSARY.md` defines one term
-for each concept. Use these terms in code, messages, and documentation.
+role, `USER` or `ADMIN`, and only an admin may create a user. The app has no authentication yet: The header
+`X-Acting-User` of a request contains the login name of the acting user. `ActingUserAuthenticationFilter` in
+`api/.../security/` resolves the login name in this header to a `User` before the controllers run, and
+`CurrentUserProvider` returns that user to the controllers. The controllers pass that user to the domain, which checks
+the role with `requireAdmin` in `AuthorizationUtil.kt`, as the coffee app of SE@UHD does. The app has no frontend. In
+the dev profile, Swagger UI documents the API. `GLOSSARY.md` defines one term for each concept. Use these terms in code,
+messages, and documentation.
 
 ## Architecture
 
@@ -77,9 +78,9 @@ the consumption with `getByUserIdForUpdate`, which locks the row until the trans
 a coffee for the same user at the same time waits until the first transaction ends. The second request then reads the
 raised count, and both coffees count. `applyDelta` also appends the time of the coffee to `coffeeTimes` and drops the
 times whose grace period has passed. The data module stores the list in the table `coffee_times`.
-`CoffeeConsumptionServiceImpl.undo` locks the consumption in the same way, lowers the count by one while
+`CoffeeConsumptionServiceImpl.undo` locks the consumption in the same way, lowers the count by one if
 `GracePeriod.isOpen` accepts the last of the `coffeeTimes`, and removes that time. Otherwise, it throws a
-`ConflictException`. The coffee before can then be undone while its own grace period is open. `applyDelta` and
+`ConflictException`. After an undo, the coffee before can be undone while its own grace period is open. `applyDelta` and
 `GracePeriod` read the time from the `Clock` bean of `ClockConfiguration`. `ConsumptionProperties` binds the grace
 period, `campus-coffee.consumption.grace-period`, with a default of 5 minutes.
 
@@ -177,12 +178,11 @@ changed decision in a new ADR that refers to the old one, and set the status of 
 
 ## Versioning and Releases
 
-The project follows [Semantic Versioning](https://semver.org/) and keeps a
-[Keep a Changelog](https://keepachangelog.com/)-style `CHANGELOG.md`. For every notable change, add a bullet to its
-group under `## [Unreleased]`, such as `Added`, `Changed`, or `Fixed`. A release raises the patch version for bug
-fixes, tooling, and internal cleanups, the minor version for features, and the major version for breaking changes. As
-long as the major version is 0, a breaking change raises the minor version, which Semantic Versioning allows for
-initial development. The
+The project follows [Semantic Versioning](https://semver.org/) and keeps a [Keep a
+Changelog](https://keepachangelog.com/)-style `CHANGELOG.md`. For every notable change, add a bullet to its group under
+`## [Unreleased]`, such as `Added`, `Changed`, or `Fixed`. A release raises the patch version for bug fixes, tooling,
+and internal cleanups, the minor version for features, and the major version for breaking changes. As long as the major
+version is 0, a breaking change raises the minor version, which Semantic Versioning allows for initial development. The
 `version` in the root `gradle.properties` must equal the version in the most recent `## [x.y.z]` header of
 `CHANGELOG.md`, and `scripts/check-version-sync.sh` fails in CI when the two versions differ. To release a version:
 
@@ -281,23 +281,23 @@ profile, springdoc is off.
 
 - Acting user: Spring Security runs `ActingUserAuthenticationFilter` before the controllers. A controller that calls
   `CurrentUserProvider.currentUser` needs a rule in `SecurityConfig.securityFilterChain` that requires authentication
-  for its method and path, such as `requestMatchers(HttpMethod.POST, "/api/users").authenticated()`. Without the rule,
-  a request without an acting user still gets 401, but only after Spring MVC has read and validated its body. On
-  startup, `StartupDataInitializer` runs the fixture loader and then `BootstrapAdminLoader`, which stores the admin of
-  `campus-coffee.bootstrap-admin` when no admin exists. Spring Security keeps its default firewall, which rejects a
-  path with `;`, `//`, or `..` and a header value with a control character. `SecurityConfig.requestRejectedHandler` and
-  `RequestRejectedExceptionHandler` answer such a request with 400 and an `ErrorResponse` (`writeErrorResponse` in
+  for its method and path, such as `requestMatchers(HttpMethod.POST, "/api/users").authenticated()`. Without the rule, a
+  request without an acting user and with an invalid body gets 400 instead of 401, because Spring MVC validates the body
+  before the controller calls `CurrentUserProvider.currentUser`.
+- Firewall: Spring Security keeps its default firewall, which rejects, among others, a path with `;`, `//`, `..`, or an
+  encoded slash and a header value with a control character. `SecurityConfig.requestRejectedHandler` and
+  `RequestRejectedExceptionHandler` respond to such a request with 400 and an `ErrorResponse` (`writeErrorResponse` in
   `api/.../security/`).
-- Error handling: The domain exceptions are `NotFoundException` (404) and `DuplicationException` (409), which the data
-  adapters throw (see Generic Base Classes), `ConflictException` (409), which `CoffeeConsumptionServiceImpl.undo`
-  throws, `ForbiddenException` (403), which `requireAdmin` throws, and `ValidationException` (400), which the domain
-  services and `UserController` throw. `JsonAuthenticationEntryPoint` answers a request without a known acting user
-  with 401 and the header `WWW-Authenticate`, which RFC 9110 requires in every 401.
-  `GlobalExceptionHandler` extends `ResponseEntityExceptionHandler`, which maps Spring's standard web exceptions to
-  their status codes (e.g., 404 for an unknown path). Any other exception becomes a 500. The body of every error
-  response is an `ErrorResponse`. Its `errorCode` is the class name of the domain exception or, for any other error, the
-  reason phrase of the status without spaces (e.g., `BadRequest`). To add a domain exception, make the changes that the
-  KDoc of `GlobalExceptionHandler.handleMappedException` lists.
+- Error handling: The data adapters throw the domain exceptions `NotFoundException` (404) and `DuplicationException`
+  (409), as described in Generic Base Classes. `CoffeeConsumptionServiceImpl.undo` throws `ConflictException` (409),
+  `requireAdmin` throws `ForbiddenException` (403), and the domain services and `UserController` throw
+  `ValidationException` (400). `JsonAuthenticationEntryPoint` responds to a request without a known acting user with 401
+  and the header `WWW-Authenticate`, which RFC 9110 requires in every 401. `GlobalExceptionHandler` extends
+  `ResponseEntityExceptionHandler`, which maps Spring's standard web exceptions to their status codes (e.g., 404 for an
+  unknown path). Any other exception becomes a 500. The body of every error response is an `ErrorResponse`. Its
+  `errorCode` is the class name of the domain exception or, for any other error, the reason phrase of the status without
+  spaces (e.g., `BadRequest`). To add a domain exception, make the changes that the KDoc of
+  `GlobalExceptionHandler.handleMappedException` lists.
 - MapStruct: The `kotlin-kapt-conventions` plugin runs MapStruct through kapt with the option
   `mapstruct.unmappedTargetPolicy=ERROR`. With this option, the build fails when a target property has neither a
   source nor `ignore = true`.
@@ -310,7 +310,7 @@ profile, springdoc is off.
   timestamp that `upsert` returns then equals the timestamp that a later query reads.
 - Time: Every timestamp in the database, the code, and the API is in UTC, and the API serves timestamps without an
   offset. A domain service that compares times reads the current time from the injected `Clock`, so that a test can
-  fix the time (see `CoffeeConsumptionServiceTest`). Other code reads the clock with
+  fix the time (see `CoffeeConsumptionServiceTest`). Other code reads the current time with
   `LocalDateTime.now(ZoneOffset.UTC)`, never in the system time zone. A client converts a timestamp to a local time
   zone only for display.
 

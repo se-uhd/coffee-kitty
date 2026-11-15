@@ -22,8 +22,8 @@ import tools.jackson.databind.json.JsonMapper
 
 /**
  * Unit tests for [ActingUserAuthenticationFilter] with a mocked [UserService] and the real
- * [JsonAuthenticationEntryPoint]. The filter stores a known acting user as the principal, answers an unknown login name
- * with 401, and passes any other exception of the lookup to the exception resolver of Spring MVC.
+ * [JsonAuthenticationEntryPoint]. The filter stores a known acting user as the principal, responds to an unknown login
+ * name with 401, and passes any other exception of the lookup to the exception resolver of Spring MVC.
  */
 class ActingUserAuthenticationFilterTest {
     private val userService = mock<UserService>()
@@ -53,7 +53,7 @@ class ActingUserAuthenticationFilterTest {
     fun clearSecurityContext() = SecurityContextHolder.clearContext()
 
     @Test
-    fun `a known login name becomes the principal of the request`() {
+    fun `the user with a known login name becomes the principal of the request`() {
         whenever(userService.getByLoginName("jane_doe")).thenReturn(admin)
         var principal: Any? = null
         val chain = FilterChain { _, _ -> principal = SecurityContextHolder.getContext().authentication?.principal }
@@ -64,7 +64,7 @@ class ActingUserAuthenticationFilterTest {
     }
 
     @Test
-    fun `an unknown login name gets 401 with the challenge and does not reach the controller`() {
+    fun `a request with an unknown login name gets 401 with the challenge and does not reach the controller`() {
         whenever(userService.getByLoginName("nobody"))
             .thenThrow(NotFoundException(User::class.java, "login name", "nobody"))
         val response = MockHttpServletResponse()
@@ -79,7 +79,7 @@ class ActingUserAuthenticationFilterTest {
     }
 
     @Test
-    fun `another exception of the lookup goes to the exception resolver and does not reach the controller`() {
+    fun `another exception of the lookup goes to the exception resolver and stops the filter chain`() {
         val failure = IllegalStateException("The database is not available.")
         whenever(userService.getByLoginName("jane_doe")).thenThrow(failure)
         var called = false

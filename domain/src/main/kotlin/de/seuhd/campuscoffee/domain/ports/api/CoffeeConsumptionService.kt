@@ -38,7 +38,7 @@ interface CoffeeConsumptionService {
 
     /**
      * Undoes the most recent coffee of the user with [userId] that is not undone yet and returns the consumption with
-     * the lowered coffee count. The undo succeeds until 5 minutes after that coffee, including that instant. After an
+     * the lowered coffee count. The undo succeeds until the grace period ends, including that instant. After an
      * undo, the coffee before is the most recent coffee.
      *
      * @param userId the id of the user

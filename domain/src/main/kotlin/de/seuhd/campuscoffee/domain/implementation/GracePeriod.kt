@@ -7,7 +7,7 @@ import java.time.ZoneOffset
 
 /**
  * The grace period after a coffee, in which the user can still undo the coffee. [CoffeeConsumptionServiceImpl.undo]
- * decides with [isOpen]. The current time comes from the application [Clock], which also provides the time of each
+ * calls [isOpen] for an undo. The current time comes from the application [Clock], which also provides the time of each
  * coffee. The coffee app of SE@UHD has a class with the same name and the same [isOpen].
  */
 @Component

@@ -29,10 +29,11 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
 ## Supporting Information
 
 - User requirement (parent): "If I tap twice by mistake, I want to fix it myself."
-- Changes the rule that the coffee count is never reduced (README.md, GLOSSARY.md).
+- Changes the rule that the coffee count is never reduced (README.md and GLOSSARY.md of Coffee Kitty 0.1.0).
 - Verified by: consumption.feature, the Scenario Outline "Undo a coffee within the grace period" and the four scenarios
   after it.
-- The last two success criteria follow the coffee app of SE@UHD, which undoes the coffee before after an undo if that
-  coffee is still within its own grace period.
+- TBD (resolved): What does a second undo in a row do? After an undo, the user can undo the coffee before if that
+  coffee is still within its own grace period, as in the coffee app of SE@UHD (the last two success criteria).
+  Decided by: group lead.
 - TBD (open): Are 5 minutes enough to notice a mistake? Contact person: group lead.
 - TBD (open): Who is allowed to correct a coffee count after the grace period? Contact person: group lead.

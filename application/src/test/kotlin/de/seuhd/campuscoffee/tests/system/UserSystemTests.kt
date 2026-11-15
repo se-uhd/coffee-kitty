@@ -19,8 +19,9 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 /**
- * System tests for listing, reading, and creating users through `/api/users`. The requests that create a user send
- * the admin `jane_doe` in the header `X-Acting-User` unless a test leaves the header out or names another user.
+ * System tests for listing, reading, and creating users through `/api/users`. The requests that create a user have the
+ * login name of the admin `jane_doe` in the header `X-Acting-User` unless a test leaves the header out or sets another
+ * login name.
  */
 class UserSystemTests : AbstractSystemTest() {
     /**
@@ -307,7 +308,7 @@ class UserSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `an admin creating a user with the role ADMIN returns 201 Created with the role ADMIN`() {
+    fun `creating a user with the role ADMIN as an admin returns 201 Created with the role ADMIN`() {
         val result = createUser(newUser() + ("role" to "ADMIN")).returnResult<UserDto>()
 
         assertThat(result.status.value()).isEqualTo(201)
@@ -326,7 +327,7 @@ class UserSystemTests : AbstractSystemTest() {
         /** The fixture user with the role ADMIN, who may create users. */
         const val ADMIN_LOGIN_NAME = "jane_doe"
 
-        /** The challenge that RFC 9110 requires in the header WWW-Authenticate of a 401. */
+        /** The challenge of Coffee Kitty in the header WWW-Authenticate, which RFC 9110 requires in a 401. */
         const val CHALLENGE = "X-Acting-User realm=\"Coffee Kitty\""
     }
 }

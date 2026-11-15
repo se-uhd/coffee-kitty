@@ -6,35 +6,35 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 
 /**
- * Resolves the user who acts on the current request. A controller passes this [User] to the domain, which decides
- * with the role of the user whether the action is allowed, such as `UserService.create` for a new user.
+ * Returns the acting user of the current request. A controller passes this [User] to the domain, which decides
+ * with the role of the user whether the action is allowed. `UserService.create`, for example, requires an admin.
  *
  * [ActingUserAuthenticationFilter] resolves the acting user from the request header [ACTING_USER_HEADER] before
- * Spring MVC calls the controller and stores the user as the principal of the request in the `SecurityContext` of
+ * any controller runs. The filter stores the user as the principal of the request in the `SecurityContext` of
  * Spring Security, where [currentUser] reads it. Coffee Kitty has no authentication yet, and any client can name any
  * user, an admin included. The coffee app of SE@UHD has a class with the same name and the same [currentUser], which
- * reads the user that its authentication filters stored.
+ * reads the user that the authentication filters of that app stored.
  */
 @Component
 class CurrentUserProvider {
     /**
      * Returns the acting user of the current request.
      *
-     * @throws AuthenticationCredentialsNotFoundException if the request names no acting user, which
-     *   [AuthenticationExceptionHandler] answers with 401 Unauthorized
+     * @throws AuthenticationCredentialsNotFoundException if the request has no acting user, which
+     *   [AuthenticationExceptionHandler] turns into a 401 Unauthorized
      */
     fun currentUser(): User =
         SecurityContextHolder.getContext().authentication?.principal as? User
             ?: throw AuthenticationCredentialsNotFoundException(MISSING_HEADER_MESSAGE)
 
     companion object {
-        /** The request header that names the acting user by login name, such as `X-Acting-User: jane_doe`. */
+        /** The request header with the login name of the acting user, such as `X-Acting-User: jane_doe`. */
         const val ACTING_USER_HEADER = "X-Acting-User"
 
         /**
          * The challenge in the header `WWW-Authenticate` of every 401 response. RFC 9110 (section 11.6.1) requires the
-         * header in a 401 and defines a challenge as an authentication scheme with parameters. The scheme names the
-         * request header that identifies the acting user.
+         * header in a 401 and defines a challenge as an authentication scheme with parameters. The scheme is the name
+         * of the request header that identifies the acting user.
          */
         const val AUTHENTICATION_CHALLENGE = "$ACTING_USER_HEADER realm=\"Coffee Kitty\""
 

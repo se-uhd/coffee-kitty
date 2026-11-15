@@ -17,8 +17,8 @@ import java.time.ZoneOffset
 internal const val UNREADABLE_REQUEST_MESSAGE = "The request could not be read."
 
 /**
- * Writes an [ErrorResponse] with [status] and [message] for a request that the filter chain answers before Spring MVC
- * handles it, so that the body has the same fields as the bodies of `GlobalExceptionHandler`.
+ * Writes an [ErrorResponse] with [status] and [message] when a class of this package responds to a request in place of
+ * `GlobalExceptionHandler`. The body has the same fields as the bodies that `GlobalExceptionHandler` writes.
  *
  * @param jsonMapper the JSON mapper of Spring MVC
  * @param status     the status of the response

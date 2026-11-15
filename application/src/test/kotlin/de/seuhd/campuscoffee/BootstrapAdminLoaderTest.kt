@@ -42,7 +42,7 @@ class BootstrapAdminLoaderTest {
     }
 
     @Test
-    fun `createBootstrapAdmin with an email address but without a login name throws`() {
+    fun `createBootstrapAdmin with an email address but without a login name throws and creates no admin`() {
         val exception =
             assertThrows<IllegalArgumentException> {
                 loader(complete.copy(loginName = null)).createBootstrapAdmin()
@@ -53,7 +53,7 @@ class BootstrapAdminLoaderTest {
     }
 
     @Test
-    fun `createBootstrapAdmin with a login name that the domain refuses throws an exception that names the keys`() {
+    fun `createBootstrapAdmin with a login name that the domain refuses throws an exception with the key prefix`() {
         whenever(userInternalService.createInitialAdmin(any()))
             .thenThrow(ValidationException("The login name is invalid."))
 
@@ -74,7 +74,7 @@ class BootstrapAdminLoaderTest {
     }
 
     @Test
-    fun `createBootstrapAdmin with a duplicate that stays throws an exception that names the keys`() {
+    fun `createBootstrapAdmin with a duplicate that stays throws an exception with the key prefix`() {
         whenever(userInternalService.createInitialAdmin(any()))
             .thenThrow(DuplicationException(User::class.java, "email address", "admin@se.de"))
 
