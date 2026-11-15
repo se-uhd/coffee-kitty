@@ -16,9 +16,30 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   SE@UHD, and `campus-coffee.consumption.grace-period` sets it (default 5 minutes). The migration V3 creates the
   table `coffee_times`, which holds the time of each recent coffee that is not undone. Adding a coffee drops the times
   whose grace period has passed. Coffees added before this release have no time and cannot be undone.
+- Every user has a role, `USER` or `ADMIN` (migration V4), and the fixture user `jane_doe` is an admin.
+  `POST /api/users` may set the role of the new user, which defaults to `USER`. `Role`, `ForbiddenException`,
+  `requireAdmin`, `CurrentUserProvider`, `SecurityConfig`, `JsonAuthenticationEntryPoint`, `BootstrapAdminLoader`, and
+  the internal port `UserInternalService` have the names of the coffee app of SE@UHD.
+- Spring Security runs `ActingUserAuthenticationFilter` before the controllers. The filter resolves the acting user
+  from the header `X-Acting-User`, and `SecurityConfig` lists the routes that need one. A request without a known acting
+  user gets 401 Unauthorized before Spring MVC reads its body, and every 401 has the header `WWW-Authenticate` with the
+  challenge `X-Acting-User realm="Coffee Kitty"`, as RFC 9110 requires.
+- When no admin exists, `BootstrapAdminLoader` stores an admin on startup, after the fixture loader, from the keys
+  under `campus-coffee.bootstrap-admin`, which the environment variables `BOOTSTRAP_ADMIN_LOGIN_NAME`,
+  `BOOTSTRAP_ADMIN_EMAIL_ADDRESS`, `BOOTSTRAP_ADMIN_FIRST_NAME`, and `BOOTSTRAP_ADMIN_LAST_NAME` set. If a user has the
+  configured login name, the loader gives that user the role `ADMIN`.
 
 ### Changed
 
+- Breaking: only an admin may create a user with `POST /api/users`. Coffee Kitty has no authentication yet, so a
+  client names its acting user by login name in the header `X-Acting-User`. The response is 401 Unauthorized without
+  a known acting user and 403 Forbidden for a user who is not an admin. The migration V4 gives every existing user the
+  role `USER`, also `jane_doe` in a database that the `dev` profile does not reset. Configure the bootstrap admin
+  with the login name of an existing user, or of a new one, before creating users.
+- The default firewall of Spring Security rejects a path with `;`, `//`, `..`, or an encoded slash and a header value
+  with a control character, because security rules and Spring MVC can read such a request differently. Such a request
+  gets 400 Bad Request with the message "The request could not be read." Coffee Kitty 0.1.0 answered
+  `GET /api/users;x=1` like `GET /api/users` and `GET /api//users` with 404 Not Found.
 - The README describes how the group buys coffee beans from the kitty and how a user who buys coffee with their own
   money declares the purchase as an expense. It states that students first see the app in the lectures on agentic
   software engineering and explains how to set up IntelliJ IDEA.

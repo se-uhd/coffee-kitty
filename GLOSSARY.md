@@ -7,8 +7,8 @@ with a line "Avoid:", which lists words not to use for the concept.
 
 ## Domain
 
-- **user**: A person whose coffees the app counts. The app stores the login name, the email address, and the first and
-  last name of the person.
+- **user**: A person whose coffees the app counts. The app stores the login name, the email address, the first and the
+  last name, and the role of the person.
   API: `/api/users`, `UserDto`, `userId`. Code: `User`, `UserService`, `users`.
   Avoid: member, drinker, account.
 - **login name**: A user's unique name, which consists of ASCII letters, digits, and underscores and has at most 255
@@ -47,9 +47,21 @@ with a line "Avoid:", which lists words not to use for the concept.
   succeeds, and an undo at 10:05:01 returns 409 Conflict.
   Code: `GracePeriod`, `campus-coffee.consumption.grace-period`.
   Avoid: grace window.
-- **fixture user**: One of the five users in `TestFixtures`, such as `jane_doe`. In the dev profile, the fixture loader
-  creates these users with a coffee count of zero on every start, and the system and acceptance tests create them the
-  same way before each test.
+- **role**: What a user may do in Coffee Kitty, either `USER` or `ADMIN`. An admin may also create users.
+  API: `UserDto.role`. Code: `Role`, `User.role`, `users.role`, `requireAdmin`.
+- **acting user**: The user who sends a request, named by login name in the header `X-Acting-User`. Coffee Kitty has no
+  authentication yet, so any client can name any user.
+  API: `X-Acting-User`, `WWW-Authenticate: X-Acting-User realm="Coffee Kitty"` in a 401. Code: `CurrentUserProvider`,
+  `ActingUserAuthenticationFilter`, `SecurityConfig`.
+  Avoid: current user (except in the class name), caller.
+- **bootstrap admin**: The admin that the app stores on startup from the keys under `campus-coffee.bootstrap-admin`
+  when no admin exists, after the fixture loader. If a user has the configured login name, the app gives that user the
+  role `ADMIN`. Otherwise, it creates the configured user.
+  Code: `BootstrapAdminLoader`, `BootstrapAdminProperties`, `StartupDataInitializer`,
+  `UserInternalService.createInitialAdmin`.
+- **fixture user**: One of the five users in `TestFixtures`, such as `jane_doe`, who is the admin among them. In the
+  dev profile, the fixture loader creates these users with a coffee count of zero on every start, and the system and
+  acceptance tests create them the same way before each test.
   Code: `TestFixtures`, `FixtureStartupLoader`, `campus-coffee.fixtures.*`.
   Avoid: seeded user.
 
@@ -102,10 +114,10 @@ with a line "Avoid:", which lists words not to use for the concept.
   The fixture loader runs this deletion when `reset-on-startup` is true, and the data integration, system, and
   acceptance tests run it before each test. A client cannot delete the data through the API.
   Code: `DataResetService.clearAll`.
-- **fixture loader**: The Spring component that creates the fixture users through `UserService.create` at startup when
-  `campus-coffee.fixtures.load-on-startup` is true. With `campus-coffee.fixtures.reset-on-startup` set to true, as in
-  the dev profile, the component runs a data reset first. Without that setting, the component creates the fixture users
-  only when the database has no users.
+- **fixture loader**: The Spring component that creates the fixture users through `UserInternalService.create` at
+  startup when `campus-coffee.fixtures.load-on-startup` is true. With `campus-coffee.fixtures.reset-on-startup` set to
+  true, as in the dev profile, the component runs a data reset first. Without that setting, the component creates the
+  fixture users only when the database has no users.
   Code: `FixtureStartupLoader`, `FixturesProperties`.
   Avoid: startup loader.
 - **dev profile**: The Spring profile `dev` for running the app locally. In this profile, the app serves the API and
@@ -122,7 +134,7 @@ with a line "Avoid:", which lists words not to use for the concept.
   stored object, for example no user with the id in the path. `DuplicationException` (409) means that a request repeats
   a value that must be unique, such as the login name or the email address of another user. `ConflictException` (409)
   means that a well-formed request does not apply to the current state, such as an undo after the grace period.
-  `ValidationException` (400)
-  means that a request breaks a rule of the domain or of a controller, such as an integer delta other than +1 or an id
-  in the body of `POST /api/users`. A request body that fails Bean Validation or cannot be read, such as a body with a
-  delta of 1.9, gets a 400 with the error code `BadRequest` instead.
+  `ForbiddenException` (403) means that the acting user may not perform the action, such as a user who is not an admin
+  and creates a user. `ValidationException` (400) means that a request breaks a rule of the domain or of a controller,
+  such as an integer delta other than +1 or an id in the body of `POST /api/users`. A request body that fails Bean
+  Validation or cannot be read, such as a body with a delta of 1.9, gets a 400 with the error code `BadRequest` instead.

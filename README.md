@@ -27,8 +27,10 @@ layer rules that ArchUnit enforces, but Coffee Kitty has only two entities: user
 - Within 5 minutes of adding a coffee, a user can undo it, which lowers the coffee count by one. After an undo, the
   coffee before is the most recent coffee, which the user can undo while it is within its own 5 minutes.
   `requirements/FR-3-undo-coffee.md` states this requirement.
-- The REST API accepts and returns only JSON. Any client can call every endpoint, because Coffee Kitty has no
-  authentication.
+- Every user has a role, `USER` or `ADMIN`. Only an admin may create a user. Coffee Kitty has no authentication yet: a
+  request names its acting user by login name in the header `X-Acting-User`, and any client can name any user. The
+  fixture user `jane_doe` is an admin.
+- The REST API accepts and returns only JSON.
 - A Spring Boot backend in Kotlin stores the users and their coffee counts in PostgreSQL through Jakarta Persistence
   (JPA). Flyway migrations define the database schema.
 
@@ -148,9 +150,10 @@ and the system and acceptance tests create the same users before each test.
 
 ## REST API
 
-The paths in this section are relative to `/api`, and Swagger UI documents every endpoint. Each command requires the
-app to run in the `dev` profile on port 8081. Because the ids change with every restart, a command that needs an id
-first looks up the id of the fixture user `jane_doe` with `python3`.
+The paths in this section are relative to `/api`, and Swagger UI documents every endpoint. Each command requires the app
+to run in the `dev` profile on port 8081. Because the ids change with every restart, a command that needs an id first
+looks up the id of the fixture user `jane_doe` with `python3`. A request that names an unknown login name in the header
+`X-Acting-User` gets 401 Unauthorized on every route.
 
 `GET /users` returns all users as a JSON array, ordered by login name:
 
@@ -158,12 +161,22 @@ first looks up the id of the fixture user `jane_doe` with `python3`.
 curl http://localhost:8081/api/users
 ```
 
-`POST /users` with `{ "loginName", "emailAddress", "firstName", "lastName" }` creates a user with a coffee count of
-zero and returns 201 Created with the new user and a `Location` header. The endpoint returns 400 Bad Request for a
-missing or malformed field or an `id` in the body, and 409 Conflict when the login name or the email address is taken:
+`POST /users` with `{ "loginName", "emailAddress", "firstName", "lastName" }` and an optional `"role"` creates a user
+with a coffee count of zero and returns 201 Created with the new user and a `Location` header. Only an admin may create
+a user, so the request names an admin in the header `X-Acting-User`. The endpoint returns 401 Unauthorized without the
+header or for an unknown login name, 403 Forbidden when the acting user is not an admin, 400 Bad Request for a missing
+or malformed field or an `id` in the body, and 409 Conflict when the login name or the email address is taken. A
+filter checks the acting user before the controller reads the body, so a request without a known acting user gets 401
+even with an invalid body. Every 401 has the header `WWW-Authenticate: X-Acting-User realm="Coffee Kitty"`, as RFC 9110
+requires. In the `dev` profile, the fixture loader creates `jane_doe` as an admin. When no admin exists, the app stores
+a bootstrap admin on startup from the environment variables `BOOTSTRAP_ADMIN_LOGIN_NAME` and
+`BOOTSTRAP_ADMIN_EMAIL_ADDRESS` (optional: `BOOTSTRAP_ADMIN_FIRST_NAME` and `BOOTSTRAP_ADMIN_LAST_NAME`). If a user has
+that login name, the app gives that user the role `ADMIN`. This case occurs after the migration V4, which gives every
+existing user, `jane_doe` included, the role `USER` in a database that the `dev` profile does not reset. The command
+creates the user `ada_lovelace` as the admin `jane_doe`:
 
 ```shell
-curl --include --request POST --header "Content-Type: application/json" \
+curl --include --request POST --header "Content-Type: application/json" --header "X-Acting-User: jane_doe" \
   --data '{"loginName":"ada_lovelace","emailAddress":"ada.lovelace@example.com","firstName":"Ada","lastName":"Lovelace"}' \
   http://localhost:8081/api/users
 ```
@@ -211,9 +224,9 @@ curl --request POST http://localhost:8081/api/users/$USER_ID/consumption/undo
 
 The three consumption endpoints return 404 Not Found for an unknown user. An error response has a JSON body with the
 fields `errorCode`, `message`, `statusCode`, `statusMessage`, `timestamp`, and `path`. For a domain exception,
-`errorCode` is the class name of the exception: `NotFoundException`, `DuplicationException`, `ConflictException`, or
-`ValidationException`. For any other error, `errorCode` is the reason phrase of the status without spaces, such as
-`BadRequest`. Every timestamp in a response is in UTC and has no offset.
+`errorCode` is the class name of the exception: `NotFoundException`, `DuplicationException`, `ConflictException`,
+`ForbiddenException`, or `ValidationException`. For any other error, `errorCode` is the reason phrase of the status
+without spaces, such as `BadRequest`. Every timestamp in a response is in UTC and has no offset.
 
 ## Testing
 

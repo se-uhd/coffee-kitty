@@ -10,7 +10,8 @@ import java.util.UUID
  * checks the same limits before a request reaches the domain, but it checks the email address with `@Email` instead
  * of [EMAIL_ADDRESS_PATTERN].
  *
- * The data module assigns [id], [createdAt], and [updatedAt]. They are null on a user that is not stored yet.
+ * The data module assigns [id], [createdAt], and [updatedAt]. They are null on a user that is not stored yet. [role]
+ * decides which actions the user may perform, and a new user is a [Role.USER] unless an admin sets another role.
  */
 data class User(
     override val id: UUID? = null,
@@ -19,7 +20,8 @@ data class User(
     val loginName: String,
     val emailAddress: String,
     val firstName: String,
-    val lastName: String
+    val lastName: String,
+    val role: Role = Role.USER
 ) : DomainModel<UUID> {
     /** The limits that every new user must meet. */
     companion object {

@@ -1,7 +1,7 @@
 package de.seuhd.campuscoffee.tests.acceptance
 
-import de.seuhd.campuscoffee.domain.ports.api.UserService
 import de.seuhd.campuscoffee.domain.ports.internal.DataResetService
+import de.seuhd.campuscoffee.domain.ports.internal.UserInternalService
 import de.seuhd.campuscoffee.domain.tests.TestFixtures
 import de.seuhd.campuscoffee.tests.SystemTestUtils.configureClient
 import de.seuhd.campuscoffee.tests.SystemTestUtils.configurePostgresContainer
@@ -26,7 +26,7 @@ import org.springframework.test.context.DynamicPropertySource
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @CucumberContextConfiguration
 class CucumberSpringConfiguration(
-    private val userService: UserService,
+    private val userInternalService: UserInternalService,
     private val dataResetService: DataResetService
 ) {
     @LocalServerPort
@@ -35,7 +35,7 @@ class CucumberSpringConfiguration(
     @Before
     fun beforeEach() {
         dataResetService.clearAll()
-        TestFixtures.createUserFixtures(userService)
+        TestFixtures.createUserFixtures(userInternalService)
         configureClient(port)
     }
 

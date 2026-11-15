@@ -4,6 +4,7 @@ import de.seuhd.campuscoffee.Application
 import de.seuhd.campuscoffee.domain.model.User
 import de.seuhd.campuscoffee.domain.ports.api.UserService
 import de.seuhd.campuscoffee.domain.ports.internal.DataResetService
+import de.seuhd.campuscoffee.domain.ports.internal.UserInternalService
 import de.seuhd.campuscoffee.domain.tests.TestFixtures
 import de.seuhd.campuscoffee.tests.SystemTestUtils.configureClient
 import de.seuhd.campuscoffee.tests.SystemTestUtils.configurePostgresContainer
@@ -29,6 +30,9 @@ abstract class AbstractSystemTest {
     protected lateinit var userService: UserService
 
     @Autowired
+    protected lateinit var userInternalService: UserInternalService
+
+    @Autowired
     protected lateinit var dataResetService: DataResetService
 
     @LocalServerPort
@@ -40,7 +44,7 @@ abstract class AbstractSystemTest {
     @BeforeEach
     fun beforeEach() {
         dataResetService.clearAll()
-        fixtureUsers = TestFixtures.createUserFixtures(userService)
+        fixtureUsers = TestFixtures.createUserFixtures(userInternalService)
         configureClient(port)
     }
 

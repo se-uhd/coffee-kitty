@@ -1,8 +1,10 @@
 package de.seuhd.campuscoffee.domain.implementation
 
+import de.seuhd.campuscoffee.domain.exceptions.ForbiddenException
 import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
 import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
+import de.seuhd.campuscoffee.domain.model.Role
 import de.seuhd.campuscoffee.domain.model.User
 import de.seuhd.campuscoffee.domain.ports.data.CoffeeConsumptionDataService
 import de.seuhd.campuscoffee.domain.ports.data.UserDataService
@@ -12,6 +14,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.any
+import org.mockito.kotlin.argThat
 import org.mockito.kotlin.inOrder
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
@@ -21,7 +24,6 @@ import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.util.UUID
-import kotlin.reflect.jvm.javaMethod
 
 /**
  * Unit tests for [UserServiceImpl] with Mockito mocks of [UserDataService] and [CoffeeConsumptionDataService].
@@ -106,7 +108,8 @@ class UserServiceTest {
 
     @Test
     fun `create is transactional with REQUIRED propagation`() {
-        val create = requireNotNull(UserServiceImpl::create.javaMethod)
+        // create has two overloads, so the test looks up the one without an acting user by its parameter types
+        val create = UserServiceImpl::class.java.getMethod("create", User::class.java)
 
         // with REQUIRED, create always runs in a transaction, and if storing the consumption fails, the rollback
         // also removes the new user
@@ -184,5 +187,62 @@ class UserServiceTest {
         service.create(user)
 
         verify(userDataService).upsert(user)
+    }
+
+    @Test
+    fun `createInitialAdmin without an admin stores the user with the role ADMIN and a consumption`() {
+        stubUpserts()
+        whenever(userDataService.getAll()).thenReturn(listOf(storedUser))
+
+        val created = service.createInitialAdmin(newUser())
+
+        assertThat(created?.role).isEqualTo(Role.ADMIN)
+        verify(userDataService).upsert(argThat { role == Role.ADMIN })
+        verify(coffeeConsumptionDataService).upsert(any())
+    }
+
+    @Test
+    fun `createInitialAdmin with a user of the same login name gives that user the role ADMIN`() {
+        whenever(userDataService.getAll()).thenReturn(listOf(storedUser))
+        whenever(userDataService.upsert(any())).thenAnswer { it.arguments[0] as User }
+
+        val promoted = service.createInitialAdmin(newUser(loginName = storedUser.loginName))
+
+        assertThat(promoted).isEqualTo(storedUser.copy(role = Role.ADMIN))
+        verify(coffeeConsumptionDataService, never()).upsert(any())
+    }
+
+    @Test
+    fun `createInitialAdmin with an existing admin returns null and stores nothing`() {
+        whenever(userDataService.getAll()).thenReturn(listOf(storedUser.copy(role = Role.ADMIN)))
+
+        assertThat(service.createInitialAdmin(newUser())).isNull()
+        verifyNothingStored()
+    }
+
+    @Test
+    fun `create by an admin stores the user and the consumption`() {
+        stubUpserts()
+        val admin = storedUser.copy(role = Role.ADMIN)
+
+        val created = service.create(newUser(), admin)
+
+        assertThat(created.id).isEqualTo(createdId)
+        verify(coffeeConsumptionDataService).upsert(any())
+    }
+
+    @Test
+    fun `create by a user who is not an admin throws ForbiddenException and stores nothing`() {
+        val exception = assertThrows<ForbiddenException> { service.create(newUser(), storedUser) }
+
+        assertThat(exception.message).isEqualTo("Only an admin may create a user.")
+        verifyNothingStored()
+    }
+
+    @Test
+    fun `getByLoginName returns the user from the data port`() {
+        whenever(userDataService.getByLoginName("max")).thenReturn(storedUser)
+
+        assertThat(service.getByLoginName("max")).isEqualTo(storedUser)
     }
 }

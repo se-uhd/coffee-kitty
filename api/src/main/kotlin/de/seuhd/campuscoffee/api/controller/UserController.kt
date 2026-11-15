@@ -2,11 +2,13 @@ package de.seuhd.campuscoffee.api.controller
 
 import de.seuhd.campuscoffee.api.dtos.UserDto
 import de.seuhd.campuscoffee.api.mapper.UserDtoMapper
+import de.seuhd.campuscoffee.api.security.CurrentUserProvider
 import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import de.seuhd.campuscoffee.domain.model.persistedId
 import de.seuhd.campuscoffee.domain.ports.api.UserService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -32,7 +34,8 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as ApiRequestBody
 @RequestMapping("/users")
 class UserController(
     private val userService: UserService,
-    private val userDtoMapper: UserDtoMapper
+    private val userDtoMapper: UserDtoMapper,
+    private val currentUserProvider: CurrentUserProvider
 ) {
     /**
      * Returns every user, ordered by login name. The endpoint does not split the list into pages, because a coffee
@@ -57,7 +60,9 @@ class UserController(
 
     /**
      * Creates a user and returns 201 Created with the URL of the new user in the `Location` header. In the same
-     * transaction, the domain creates the consumption of the user with a coffee count of zero.
+     * transaction, the domain creates the consumption of the user with a coffee count of zero. Only an admin may create
+     * a user: the request names the acting user in the header `X-Acting-User` (see [CurrentUserProvider]). Without
+     * the header, the response is 401 Unauthorized, and for a user who is not an admin, 403 Forbidden.
      *
      * `ResponseEntity.created` sets the status of the response. springdoc reads `@ResponseStatus` and documents the
      * status 201 instead of 200 in the OpenAPI definition.
@@ -65,7 +70,13 @@ class UserController(
      * @param dto the user to create, without an id
      * @throws ValidationException if the body contains an id
      */
-    @Operation(summary = "Create a user.")
+    @Operation(summary = "Create a user (admin).")
+    @Parameter(
+        `in` = ParameterIn.HEADER,
+        name = CurrentUserProvider.ACTING_USER_HEADER,
+        description = "Login name of the acting user, who has to be an admin.",
+        required = true
+    )
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("")
     fun create(
@@ -73,10 +84,11 @@ class UserController(
         @RequestBody
         @Valid dto: UserDto
     ): ResponseEntity<UserDto> {
+        val actingUser = currentUserProvider.currentUser()
         if (dto.id != null) {
             throw ValidationException("ID must not be set when creating a user.")
         }
-        val created = userService.create(userDtoMapper.toDomain(dto))
+        val created = userService.create(userDtoMapper.toDomain(dto), actingUser)
         return ResponseEntity.created(locationOf(created.persistedId)).body(userDtoMapper.fromDomain(created))
     }
 

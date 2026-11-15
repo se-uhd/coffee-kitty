@@ -4,6 +4,7 @@ import de.seuhd.campuscoffee.configuration.FixturesProperties
 import de.seuhd.campuscoffee.domain.model.User
 import de.seuhd.campuscoffee.domain.ports.api.UserService
 import de.seuhd.campuscoffee.domain.ports.internal.DataResetService
+import de.seuhd.campuscoffee.domain.ports.internal.UserInternalService
 import de.seuhd.campuscoffee.domain.tests.TestFixtures
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -23,6 +24,7 @@ import org.mockito.kotlin.whenever
  */
 class FixtureStartupLoaderTest {
     private val userService = mock<UserService>()
+    private val userInternalService = mock<UserInternalService>()
     private val dataResetService = mock<DataResetService>()
     private val fixtureLoginNames = TestFixtures.getUserFixtures().map { it.loginName }
 
@@ -30,6 +32,7 @@ class FixtureStartupLoaderTest {
     private fun loader(resetOnStartup: Boolean = false) =
         FixtureStartupLoader(
             userService,
+            userInternalService,
             dataResetService,
             FixturesProperties(loadOnStartup = true, resetOnStartup = resetOnStartup)
         )
@@ -37,12 +40,12 @@ class FixtureStartupLoaderTest {
     @Test
     fun `loadOnStartup creates the fixture users when the database is empty`() {
         whenever(userService.getAll()).thenReturn(emptyList())
-        whenever(userService.create(any())).thenAnswer { it.arguments[0] as User }
+        whenever(userInternalService.create(any())).thenAnswer { it.arguments[0] as User }
 
         loader().loadOnStartup()
 
         val created = argumentCaptor<User>()
-        verify(userService, times(fixtureLoginNames.size)).create(created.capture())
+        verify(userInternalService, times(fixtureLoginNames.size)).create(created.capture())
         assertThat(created.allValues.map { it.loginName }).containsExactlyElementsOf(fixtureLoginNames)
         verify(dataResetService, never()).clearAll()
     }
@@ -53,21 +56,21 @@ class FixtureStartupLoaderTest {
 
         loader().loadOnStartup()
 
-        verify(userService, never()).create(any())
+        verify(userInternalService, never()).create(any())
         verify(dataResetService, never()).clearAll()
     }
 
     @Test
     fun `loadOnStartup clears the data and then creates the fixture users when reset-on-startup is set`() {
         whenever(userService.getAll()).thenReturn(listOf(TestFixtures.getUserFixtures().first()))
-        whenever(userService.create(any())).thenAnswer { it.arguments[0] as User }
+        whenever(userInternalService.create(any())).thenAnswer { it.arguments[0] as User }
 
         loader(resetOnStartup = true).loadOnStartup()
 
-        val ordered = inOrder(dataResetService, userService)
+        val ordered = inOrder(dataResetService, userInternalService)
         ordered.verify(dataResetService).clearAll()
         val created = argumentCaptor<User>()
-        ordered.verify(userService, times(fixtureLoginNames.size)).create(created.capture())
+        ordered.verify(userInternalService, times(fixtureLoginNames.size)).create(created.capture())
         assertThat(created.allValues.map { it.loginName }).containsExactlyElementsOf(fixtureLoginNames)
     }
 }

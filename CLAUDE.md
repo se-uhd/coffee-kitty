@@ -7,9 +7,13 @@ Group at Heidelberg University. The package prefix `de.seuhd` stands for the gro
 of a software engineering lecture, and students extend it over the semester. A user has a login name, an email address,
 and a first and a last name. Each user has exactly one consumption, which holds a coffee count that starts at zero. The
 REST API lists, creates, and reads users, reads a coffee count, adds one coffee at a time, and undoes the most recent
-coffee within 5 minutes. `requirements/` holds the functional requirements, such as FR-3 for the undo. Every endpoint is
-open, because the app has no authentication. The app has no frontend. In the dev profile, Swagger UI documents the API.
-`GLOSSARY.md` defines one term for each concept. Use these terms in code, messages, and documentation.
+coffee within 5 minutes. `requirements/` holds the functional requirements, such as FR-3 for the undo. Every user has a
+role, `USER` or `ADMIN`, and only an admin may create a user. The app has no authentication yet: a request names its
+acting user in the header `X-Acting-User`. `ActingUserAuthenticationFilter` in `api/.../security/` resolves it to a
+`User` before the controllers run, and `CurrentUserProvider` returns that user to the controllers. The controllers pass
+that user to the domain, which checks the role with `requireAdmin` in `AuthorizationUtil.kt`, as the coffee app of
+SE@UHD does. The app has no frontend. In the dev profile, Swagger UI documents the API. `GLOSSARY.md` defines one term
+for each concept. Use these terms in code, messages, and documentation.
 
 ## Architecture
 
@@ -30,7 +34,9 @@ when a build script declares a repository.
 - `data`: the JPA entities, the repositories, the entity mappers, the data adapters, and the Flyway migrations. Depends
   on `domain`.
 - `application`: the composition root, which wires the other modules into one Spring Boot application. It holds the
-  main class, the fixture loader with `FixturesProperties`, and `application.yaml`, but no web or business code.
+  main class, the startup tasks (`StartupDataInitializer`, which runs the fixture loader with `FixturesProperties`
+  and then `BootstrapAdminLoader` with `BootstrapAdminProperties`), `ClockConfiguration`, and `application.yaml`, but no
+  web or business code.
   Depends on `domain`, `api`, and `data`.
 
 ### Layer Rules (Enforced by ArchUnit)
@@ -59,15 +65,16 @@ The ports are in `domain/src/main/kotlin/de/seuhd/campuscoffee/domain/ports/`:
 - API ports (`ports/api/`), which the controllers call, such as `UserService`.
 - Data ports (`ports/data/`), which the data module implements, such as `UserDataService`. Each entity has a
   `*DataService` that extends the generic `CrudDataService<DOMAIN, ID>`.
-- Internal ports (`ports/internal/`), which the fixture loader and the test setup call, such as `DataResetService`.
+- Internal ports (`ports/internal/`), which the fixture loader, the bootstrap admin loader, and the test setup call,
+  such as `DataResetService` and `UserInternalService`.
 
 The implementations of the API and internal ports are in `domain/.../implementation/`. `UserServiceImpl.create` trims
 the email address, converts it to lowercase, and checks the new user against the limits in the companion object of
 `User`. In one transaction, the method then stores the user and the consumption of the user with a coffee count of zero.
-The fixture loader and the test setup create the fixture users through `UserService.create`, which checks the fixture
-users like any other new user. `CoffeeConsumptionServiceImpl.applyDelta` accepts only a delta of `+1` and reads the
-consumption with `getByUserIdForUpdate`, which locks the row until the transaction ends. A second request that adds a
-coffee for the same user at the same time waits until the first transaction ends. The second request then reads the
+The fixture loader and the test setup create the fixture users through `UserInternalService.create`, which checks the
+fixture users like any other new user. `CoffeeConsumptionServiceImpl.applyDelta` accepts only a delta of `+1` and reads
+the consumption with `getByUserIdForUpdate`, which locks the row until the transaction ends. A second request that adds
+a coffee for the same user at the same time waits until the first transaction ends. The second request then reads the
 raised count, and both coffees count. `applyDelta` also appends the time of the coffee to `coffeeTimes` and drops the
 times whose grace period has passed. The data module stores the list in the table `coffee_times`.
 `CoffeeConsumptionServiceImpl.undo` locks the consumption in the same way, lowers the count by one while
@@ -173,7 +180,9 @@ changed decision in a new ADR that refers to the old one, and set the status of 
 The project follows [Semantic Versioning](https://semver.org/) and keeps a
 [Keep a Changelog](https://keepachangelog.com/)-style `CHANGELOG.md`. For every notable change, add a bullet to its
 group under `## [Unreleased]`, such as `Added`, `Changed`, or `Fixed`. A release raises the patch version for bug
-fixes, tooling, and internal cleanups, the minor version for features, and the major version for breaking changes. The
+fixes, tooling, and internal cleanups, the minor version for features, and the major version for breaking changes. As
+long as the major version is 0, a breaking change raises the minor version, which Semantic Versioning allows for
+initial development. The
 `version` in the root `gradle.properties` must equal the version in the most recent `## [x.y.z]` header of
 `CHANGELOG.md`, and `scripts/check-version-sync.sh` fails in CI when the two versions differ. To release a version:
 
@@ -270,9 +279,20 @@ profile, springdoc is off.
 
 ## Important Patterns
 
+- Acting user: Spring Security runs `ActingUserAuthenticationFilter` before the controllers. A controller that calls
+  `CurrentUserProvider.currentUser` needs a rule in `SecurityConfig.securityFilterChain` that requires authentication
+  for its method and path, such as `requestMatchers(HttpMethod.POST, "/api/users").authenticated()`. Without the rule,
+  a request without an acting user still gets 401, but only after Spring MVC has read and validated its body. On
+  startup, `StartupDataInitializer` runs the fixture loader and then `BootstrapAdminLoader`, which stores the admin of
+  `campus-coffee.bootstrap-admin` when no admin exists. Spring Security keeps its default firewall, which rejects a
+  path with `;`, `//`, or `..` and a header value with a control character. `SecurityConfig.requestRejectedHandler` and
+  `RequestRejectedExceptionHandler` answer such a request with 400 and an `ErrorResponse` (`writeErrorResponse` in
+  `api/.../security/`).
 - Error handling: The domain exceptions are `NotFoundException` (404) and `DuplicationException` (409), which the data
   adapters throw (see Generic Base Classes), `ConflictException` (409), which `CoffeeConsumptionServiceImpl.undo`
-  throws, and `ValidationException` (400), which the domain services and `UserController` throw.
+  throws, `ForbiddenException` (403), which `requireAdmin` throws, and `ValidationException` (400), which the domain
+  services and `UserController` throw. `JsonAuthenticationEntryPoint` answers a request without a known acting user
+  with 401 and the header `WWW-Authenticate`, which RFC 9110 requires in every 401.
   `GlobalExceptionHandler` extends `ResponseEntityExceptionHandler`, which maps Spring's standard web exceptions to
   their status codes (e.g., 404 for an unknown path). Any other exception becomes a 500. The body of every error
   response is an `ErrorResponse`. Its `errorCode` is the class name of the domain exception or, for any other error, the
