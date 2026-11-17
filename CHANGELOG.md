@@ -22,6 +22,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the `gradle-9.9.x` directory as the local Gradle installation (README, section IntelliJ IDEA).
 - For a failed test, Gradle prints the assertion message, e.g., `expected: 200 but was: 404`, and the stack trace with
   the class and method of each line, which IntelliJ IDEA links to the source.
+- The workflow `.github/workflows/mise-outdated.yml` checks the pins in `mise.toml` every Monday and opens an issue when
+  a pin no longer covers the newest release of its tool, because Dependabot does not read `mise.toml`.
 
 ### Fixed
 

@@ -3,6 +3,9 @@
 # version from a BOM, and Dependabot does not update the library.
 # Docs: https://docs.github.com/code-security/dependabot/dependabot-version-updates
 #
+# Dependabot does not read mise.toml, which pins the JDK and Gradle. The workflow .github/workflows/mise-outdated.yml
+# checks these pins every Monday and opens an issue when a pin needs a bump.
+#
 # With the `cooldown` of each entry, Dependabot proposes a release only 7 days after the release is published. A
 # release that an attacker publishes from the stolen account of a maintainer is usually withdrawn within days. A
 # reviewer cannot tell such a release from a genuine one, because the pull request shows only a new version number.
