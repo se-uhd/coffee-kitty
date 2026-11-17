@@ -24,6 +24,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the class and method of each line, which IntelliJ IDEA links to the source.
 - The workflow `.github/workflows/mise-outdated.yml` checks the pins in `mise.toml` every Monday and opens an issue when
   a pin no longer covers the newest release of its tool, because Dependabot does not read `mise.toml`.
+- When IntelliJ IDEA runs a single scenario of a feature file, Cucumber loads the step definitions from the package of
+  `CucumberTests` (`application/src/test/resources/cucumber.properties`) and no longer scans every test class.
 
 ### Fixed
 
