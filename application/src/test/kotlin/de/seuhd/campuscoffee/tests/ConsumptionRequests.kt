@@ -61,7 +61,7 @@ object ConsumptionRequests {
             .responseBody!!
             .count
 
-    /** Adds a coffee for the user with [loginName] and returns the status code, 200 if the coffee counts. */
+    /** Adds a coffee for the user with [loginName] and returns the status code, 200 on success. */
     fun addCoffee(loginName: String): Int =
         client()
             .post()
