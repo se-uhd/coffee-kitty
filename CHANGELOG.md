@@ -18,6 +18,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `gradle check` runs ktlint on the root `build.gradle.kts` and `settings.gradle.kts` and on the included build
   `build-logic`, in addition to the subprojects. ktlint found four formatting violations in
   `java-conventions.gradle.kts`, which are fixed.
+- Coffee Kitty uses Gradle 9.9 instead of 9.8 (`mise.toml`), and `mise install` installs it. In IntelliJ IDEA, select
+  the `gradle-9.9.x` directory as the local Gradle installation (README, section IntelliJ IDEA).
 
 ### Fixed
 
