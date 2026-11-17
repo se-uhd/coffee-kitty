@@ -8,8 +8,8 @@ the admin, the coffee count before the correction, and a note with the reason fo
 ## Rationale
 
 After the grace period of FR-3, a user cannot undo a coffee, and a wrong coffee count remains recorded, for example
-after a double tap that the user notices too late. An admin can correct such a count at any time, and the note records
-why the coffee count changed.
+after a double tap that the user notices too late. An admin can correct a wrong coffee count at any time, and the note
+records why the coffee count changed.
 
 ## Success Criteria
 
