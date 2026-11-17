@@ -233,17 +233,23 @@ constraints, such as a null in a NOT NULL column, passes the startup check and f
   `DataTestApplication` against PostgreSQL in Testcontainers. `ConstraintMappingRegistryIntegrationTest` fails unless
   `ConstraintMapping.REGISTRY` lists exactly the unique constraints and unique indexes of the schema.
 - System tests: the classes in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/system/`, such as
-  `UserSystemTests`. They extend `AbstractSystemTest` and send requests with Spring's `RestTestClient`.
-  `SystemTestUtils` holds the PostgreSQL container from Testcontainers that the system and acceptance tests share.
+  `UserSystemTests`. They extend `AbstractSystemTest` and send their requests through `UserRequests` and
+  `ConsumptionRequests` in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/`, which use Spring's
+  `RestTestClient`. A function for a system test returns a `Response` with the status code, the headers, and the body
+  or the error response. `SystemTestUtils` holds the PostgreSQL container from Testcontainers that the system and
+  acceptance tests share.
 - Acceptance tests: Cucumber scenarios for behavior-driven development (BDD). The step definitions and the Cucumber
   configuration are in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/acceptance/`, and the feature files,
   such as `consumption.feature`, are in `application/src/test/resources/de/seuhd/campuscoffee/tests/acceptance/`.
   `CucumberSpringConfiguration` replaces the `Clock` bean with a `SettableClock`, which the steps set to the times in
-  the scenarios, such as 10:05:01. `ConsumptionRequests` in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/`
-  sends the requests of a step by login name and returns the status code or the values to check. Step definitions send
-  every request through `ConsumptionRequests` and never build an HTTP request themselves, so that a reader of a step
-  does not need to know the REST API.
+  the scenarios, such as 10:05:01. `ConsumptionRequests` sends the requests of a step by login name and returns the
+  status code or the values to check.
 - Architecture tests: `ArchitectureTests` (see Layer Rules).
+
+System tests and step definitions send every request through `UserRequests` and `ConsumptionRequests` and never build
+an HTTP request themselves, so that a reader of a test does not need to know the REST API. The exceptions are the tests
+in which the request itself is under test. `ErrorResponseSystemTests` builds the requests for an unknown path and for a
+path that the firewall rejects, and `OpenApiSystemTests` builds the request for the OpenAPI definition.
 
 ### Test Naming
 

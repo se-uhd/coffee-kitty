@@ -13,8 +13,11 @@ import org.springframework.test.web.servlet.client.returnResult
 import java.util.UUID
 
 /**
- * The requests of the step definitions, so that a step does not have to build an HTTP request. A function takes the
- * login names of fixture users and returns the status code of the response or the values that a step checks.
+ * The requests for the coffee count of a user, so that a step definition or a system test does not have to build an
+ * HTTP request. The functions for the step definitions take the login names of fixture users and return the status
+ * code of the response or the values that a step checks. The functions for the system tests, [retrieveConsumption],
+ * [applyDelta], and [undo], take the id of a user, so that a test can also send a request for an unknown user. They
+ * return the [Response] with the status code, the headers, and the body or the error response.
  *
  * [correctCoffeeCount] and [corrections] send the requests of FR-8 (`requirements/FR-8-correct-coffee-count.md`),
  * which Coffee Kitty 0.2.0 does not implement yet. Until an implementation adds them, [correctCoffeeCount] returns
@@ -114,4 +117,49 @@ object ConsumptionRequests {
             .returnResult<Array<Correction>>()
             .responseBody!!
             .toList()
+
+    /**
+     * Reads the consumption of the user with [userId], which holds the coffee count.
+     *
+     * @param userId the id of the user
+     */
+    fun retrieveConsumption(userId: UUID): Response<ConsumptionDto> =
+        client()
+            .get()
+            .uri("/api/users/{userId}/consumption", userId)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .toResponse()
+
+    /**
+     * Sends [body], which holds the delta, to change the coffee count of the user with [userId]. A body of
+     * `ConsumptionDeltaDto(1)` adds a coffee.
+     *
+     * @param userId the id of the user
+     * @param body   the request body, such as `ConsumptionDeltaDto(1)`. A map lets a test send a body that
+     *   `ConsumptionDeltaDto` cannot hold, such as `mapOf("delta" to 1.9)`, which the server rejects.
+     */
+    fun applyDelta(
+        userId: UUID,
+        body: Any
+    ): Response<ConsumptionDto> =
+        client()
+            .post()
+            .uri("/api/users/{userId}/consumption", userId)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(body)
+            .exchange()
+            .toResponse()
+
+    /**
+     * Undoes the most recent coffee of the user with [userId] (FR-3).
+     *
+     * @param userId the id of the user
+     */
+    fun undo(userId: UUID): Response<ConsumptionDto> =
+        client()
+            .post()
+            .uri("/api/users/{userId}/consumption/undo", userId)
+            .exchange()
+            .toResponse()
 }

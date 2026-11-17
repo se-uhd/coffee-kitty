@@ -2,75 +2,48 @@ package de.seuhd.campuscoffee.tests.system
 
 import de.seuhd.campuscoffee.api.dtos.ConsumptionDeltaDto
 import de.seuhd.campuscoffee.api.dtos.ConsumptionDto
-import de.seuhd.campuscoffee.api.exceptions.ErrorResponse
 import de.seuhd.campuscoffee.domain.model.persistedId
-import de.seuhd.campuscoffee.tests.SystemTestUtils.client
-import de.seuhd.campuscoffee.tests.SystemTestUtils.requireStatus
-import de.seuhd.campuscoffee.tests.SystemTestUtils.statusCode
+import de.seuhd.campuscoffee.tests.ConsumptionRequests
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.http.MediaType
-import org.springframework.test.web.servlet.client.returnResult
 import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 /**
- * System tests for reading the coffee count of a user and adding a coffee through `/api/users/{userId}/consumption`.
- * The tests for an unknown user use a random id, and all other tests use the fixture user `maxmustermann`.
+ * System tests for reading the coffee count of a user, adding a coffee, and undoing a coffee. The tests send their
+ * requests through [ConsumptionRequests]. The tests for an unknown user use a random id, and all other tests use the
+ * fixture user `maxmustermann`.
  */
 class ConsumptionSystemTests : AbstractSystemTest() {
     private val loginName = "maxmustermann"
 
     private fun fixtureUserId(): UUID = fixtureUser(loginName).persistedId
 
-    private fun getConsumption(userId: UUID = fixtureUserId()) =
-        client()
-            .get()
-            .uri("/api/users/{userId}/consumption", userId)
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-
-    private fun postConsumption(
-        body: Any,
-        userId: UUID = fixtureUserId()
-    ) = client()
-        .post()
-        .uri("/api/users/{userId}/consumption", userId)
-        .contentType(MediaType.APPLICATION_JSON)
-        .body(body)
-        .exchange()
-
-    private fun undo(userId: UUID = fixtureUserId()) =
-        client()
-            .post()
-            .uri("/api/users/{userId}/consumption/undo", userId)
-            .exchange()
-
-    private fun consumption(): ConsumptionDto = getConsumption().returnResult<ConsumptionDto>().responseBody!!
+    private fun consumption(): ConsumptionDto = ConsumptionRequests.retrieveConsumption(fixtureUserId()).body
 
     @Test
     fun `getting the consumption of a fixture user returns 200 OK with a count of zero`() {
-        val result = getConsumption().returnResult<ConsumptionDto>()
+        val response = ConsumptionRequests.retrieveConsumption(fixtureUserId())
 
-        assertThat(result.status.value()).isEqualTo(200)
-        assertThat(result.responseBody!!.loginName).isEqualTo(loginName)
-        assertThat(result.responseBody!!.count).isEqualTo(0)
+        assertThat(response.status).isEqualTo(200)
+        assertThat(response.body.loginName).isEqualTo(loginName)
+        assertThat(response.body.count).isEqualTo(0)
     }
 
     @Test
     fun `adding a coffee returns 200 OK with a count of 1`() {
-        val result = postConsumption(ConsumptionDeltaDto(1)).returnResult<ConsumptionDto>()
+        val response = ConsumptionRequests.applyDelta(fixtureUserId(), ConsumptionDeltaDto(1))
 
-        assertThat(result.status.value()).isEqualTo(200)
-        assertThat(result.responseBody!!.count).isEqualTo(1)
+        assertThat(response.status).isEqualTo(200)
+        assertThat(response.body.count).isEqualTo(1)
     }
 
     @Test
     fun `adding two coffees raises the count to 2`() {
-        postConsumption(ConsumptionDeltaDto(1)).requireStatus(200)
-        postConsumption(ConsumptionDeltaDto(1)).requireStatus(200)
+        ConsumptionRequests.applyDelta(fixtureUserId(), ConsumptionDeltaDto(1)).requireStatus(200)
+        ConsumptionRequests.applyDelta(fixtureUserId(), ConsumptionDeltaDto(1)).requireStatus(200)
 
         assertThat(consumption().count).isEqualTo(2)
     }
@@ -85,7 +58,7 @@ class ConsumptionSystemTests : AbstractSystemTest() {
                 (1..CONCURRENT_REQUESTS).map {
                     executor.submit<Int> {
                         start.await()
-                        postConsumption(ConsumptionDeltaDto(1), userId).statusCode()
+                        ConsumptionRequests.applyDelta(userId, ConsumptionDeltaDto(1)).status
                     }
                 }
             start.countDown()
@@ -101,7 +74,7 @@ class ConsumptionSystemTests : AbstractSystemTest() {
     fun `undoing and adding coffees concurrently keeps the count and the times of the coffees consistent`() {
         val userId = fixtureUserId()
         repeat(CONCURRENT_REQUESTS) {
-            assertThat(postConsumption(ConsumptionDeltaDto(1), userId).statusCode()).isEqualTo(200)
+            assertThat(ConsumptionRequests.applyDelta(userId, ConsumptionDeltaDto(1)).status).isEqualTo(200)
         }
         val start = CountDownLatch(1)
         val executor = Executors.newFixedThreadPool(2 * CONCURRENT_REQUESTS)
@@ -110,14 +83,14 @@ class ConsumptionSystemTests : AbstractSystemTest() {
                 (1..CONCURRENT_REQUESTS).map {
                     executor.submit<Int> {
                         start.await()
-                        postConsumption(ConsumptionDeltaDto(1), userId).statusCode()
+                        ConsumptionRequests.applyDelta(userId, ConsumptionDeltaDto(1)).status
                     }
                 }
             val undos =
                 (1..CONCURRENT_REQUESTS).map {
                     executor.submit<Int> {
                         start.await()
-                        undo(userId).statusCode()
+                        ConsumptionRequests.undo(userId).status
                     }
                 }
             start.countDown()
@@ -128,69 +101,69 @@ class ConsumptionSystemTests : AbstractSystemTest() {
         }
         assertThat(consumption().count).isEqualTo(CONCURRENT_REQUESTS)
         // each remaining coffee is within its grace period: every one can be undone, and the next undo returns 409
-        repeat(CONCURRENT_REQUESTS) { assertThat(undo(userId).statusCode()).isEqualTo(200) }
-        assertThat(undo(userId).statusCode()).isEqualTo(409)
+        repeat(CONCURRENT_REQUESTS) { assertThat(ConsumptionRequests.undo(userId).status).isEqualTo(200) }
+        assertThat(ConsumptionRequests.undo(userId).status).isEqualTo(409)
         assertThat(consumption().count).isEqualTo(0)
     }
 
     @Test
     fun `posting a delta of 2 returns 400 Bad Request and keeps the count at zero`() {
-        val result = postConsumption(ConsumptionDeltaDto(2)).returnResult<ErrorResponse>()
+        val response = ConsumptionRequests.applyDelta(fixtureUserId(), ConsumptionDeltaDto(2))
 
-        assertThat(result.status.value()).isEqualTo(400)
-        assertThat(result.responseBody!!.errorCode).isEqualTo("ValidationException")
-        assertThat(result.responseBody!!.message).isEqualTo("The delta must be +1.")
+        assertThat(response.status).isEqualTo(400)
+        assertThat(response.error.errorCode).isEqualTo("ValidationException")
+        assertThat(response.error.message).isEqualTo("The delta must be +1.")
         assertThat(consumption().count).isEqualTo(0)
     }
 
     @Test
     fun `posting a fractional delta returns 400 Bad Request and keeps the count at zero`() {
-        val result = postConsumption(mapOf("delta" to 1.9)).returnResult<ErrorResponse>()
+        val response = ConsumptionRequests.applyDelta(fixtureUserId(), mapOf("delta" to 1.9))
 
-        assertThat(result.status.value()).isEqualTo(400)
-        assertThat(result.responseBody!!.errorCode).isEqualTo("BadRequest")
+        assertThat(response.status).isEqualTo(400)
+        assertThat(response.error.errorCode).isEqualTo("BadRequest")
         assertThat(consumption().count).isEqualTo(0)
     }
 
     @Test
     fun `posting a body without a delta returns 400 Bad Request`() {
-        val result = postConsumption(emptyMap<String, Any>()).returnResult<ErrorResponse>()
+        val response = ConsumptionRequests.applyDelta(fixtureUserId(), emptyMap<String, Any>())
 
-        assertThat(result.status.value()).isEqualTo(400)
-        assertThat(result.responseBody!!.errorCode).isEqualTo("BadRequest")
+        assertThat(response.status).isEqualTo(400)
+        assertThat(response.error.errorCode).isEqualTo("BadRequest")
     }
 
     @Test
     fun `getting the consumption of an unknown user returns 404 Not Found with the id of the user`() {
         val userId = UUID.randomUUID()
 
-        val result = getConsumption(userId).returnResult<ErrorResponse>()
+        val response = ConsumptionRequests.retrieveConsumption(userId)
 
-        assertThat(result.status.value()).isEqualTo(404)
-        assertThat(result.responseBody!!.errorCode).isEqualTo("NotFoundException")
-        assertThat(result.responseBody!!.message).isEqualTo("User with ID $userId does not exist.")
+        assertThat(response.status).isEqualTo(404)
+        assertThat(response.error.errorCode).isEqualTo("NotFoundException")
+        assertThat(response.error.message).isEqualTo("User with ID $userId does not exist.")
     }
 
     @Test
     fun `adding a coffee for an unknown user returns 404 Not Found with the id of the user`() {
         val userId = UUID.randomUUID()
 
-        val result = postConsumption(ConsumptionDeltaDto(1), userId).returnResult<ErrorResponse>()
+        val response = ConsumptionRequests.applyDelta(userId, ConsumptionDeltaDto(1))
 
-        assertThat(result.status.value()).isEqualTo(404)
-        assertThat(result.responseBody!!.errorCode).isEqualTo("NotFoundException")
-        assertThat(result.responseBody!!.message).isEqualTo("User with ID $userId does not exist.")
+        assertThat(response.status).isEqualTo(404)
+        assertThat(response.error.errorCode).isEqualTo("NotFoundException")
+        assertThat(response.error.message).isEqualTo("User with ID $userId does not exist.")
     }
 
     @Test
     fun `undoing a coffee of an unknown user returns 404 Not Found with the id of the user`() {
         val userId = UUID.randomUUID()
 
-        val result = undo(userId).returnResult<ErrorResponse>()
+        val response = ConsumptionRequests.undo(userId)
 
-        assertThat(result.status.value()).isEqualTo(404)
-        assertThat(result.responseBody!!.errorCode).isEqualTo("NotFoundException")
-        assertThat(result.responseBody!!.message).isEqualTo("User with ID $userId does not exist.")
+        assertThat(response.status).isEqualTo(404)
+        assertThat(response.error.errorCode).isEqualTo("NotFoundException")
+        assertThat(response.error.message).isEqualTo("User with ID $userId does not exist.")
     }
 
     private companion object {

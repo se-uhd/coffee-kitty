@@ -1,0 +1,55 @@
+package de.seuhd.campuscoffee.tests
+
+import de.seuhd.campuscoffee.api.exceptions.ErrorResponse
+import org.assertj.core.api.Assertions.assertThat
+import org.springframework.http.HttpHeaders
+import org.springframework.test.web.servlet.client.RestTestClient
+import org.springframework.test.web.servlet.client.returnResult
+
+/**
+ * The response to a request that [UserRequests] or [ConsumptionRequests] sent, for a test that checks more than the
+ * status code. A successful response (status 2xx) has a [body] of type [T], such as a `UserDto`. Any other response
+ * has an [error], the error response of Coffee Kitty.
+ *
+ * @param status  the status code, such as 201 or 404
+ * @param headers the response headers, such as `Location` or `WWW-Authenticate`
+ */
+class Response<T : Any>(
+    val status: Int,
+    val headers: HttpHeaders,
+    private val successBody: T?,
+    private val errorBody: ErrorResponse?
+) {
+    /** The body of a successful response. Fails if the status is not 2xx or if the response has no body. */
+    val body: T
+        get() = checkNotNull(successBody) { "The status $status is not 2xx, or the response has no body." }
+
+    /** The error response. Fails if the status is 2xx or if the response has no body. */
+    val error: ErrorResponse
+        get() = checkNotNull(errorBody) { "The status $status is 2xx, or the response has no body." }
+
+    /**
+     * Asserts that a setup request returned the status [expected]. A failed setup step then stops the test before a
+     * later assertion can pass for the wrong reason.
+     *
+     * @param expected the status code of a successful setup request
+     */
+    fun requireStatus(expected: Int) {
+        assertThat(status).`as`("setup request status").isEqualTo(expected)
+    }
+}
+
+/**
+ * Reads the status code, the headers, and the body of this response into a [Response]. For a status of 2xx, the
+ * function reads the body as [T], and for any other status as an [ErrorResponse].
+ */
+inline fun <reified T : Any> RestTestClient.ResponseSpec.toResponse(): Response<T> {
+    val result = returnResult<ByteArray>()
+    val successful = result.status.is2xxSuccessful
+    return Response(
+        status = result.status.value(),
+        headers = result.responseHeaders,
+        successBody = if (successful) returnResult<T>().responseBody else null,
+        errorBody = if (successful) null else returnResult<ErrorResponse>().responseBody
+    )
+}

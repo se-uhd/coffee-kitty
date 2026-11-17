@@ -18,6 +18,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - The step definitions of FR-3 in `CucumberConsumptionSteps` send their requests through `ConsumptionRequests`
   instead of building HTTP requests, and their Then steps check the stored coffee count.
+- The system tests send their requests through the new `UserRequests` and through new functions of
+  `ConsumptionRequests` instead of building HTTP requests. These functions return a `Response` with the status code,
+  the headers, and the body or the error response. Only the tests of an unknown path, of a path that the firewall
+  rejects, and of the OpenAPI definition build their own requests.
 
 ### Fixed
 
