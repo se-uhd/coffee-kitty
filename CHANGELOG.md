@@ -10,6 +10,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - GLOSSARY.md defines the terms correction and note of FR-8.
+- `SecurityConfig` requires an acting user for the requests of FR-8, `PUT /api/users/{userId}/consumption` and
+  `GET /api/users/{userId}/consumption/corrections`, so that an implementation of FR-8 does not have to change the
+  security configuration. Until Coffee Kitty implements FR-8, a request with an acting user gets 405 or 404.
 
 ### Fixed
 
