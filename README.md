@@ -49,7 +49,7 @@ in detail, and `GLOSSARY.md` defines the terms of the project.
 
 ## Prerequisites
 
-- Java 25 and Gradle 9.8, which [mise](https://mise.jdx.dev/) installs from `mise.toml`. The repository has no Gradle
+- Java 25 and Gradle 9.9, which [mise](https://mise.jdx.dev/) installs from `mise.toml`. The repository has no Gradle
   wrapper.
 - Docker, for the local PostgreSQL database and for the tests that use Testcontainers.
 
@@ -123,7 +123,7 @@ another Gradle version, ignore the offer and select the local installation.
    The optional [mise plugin](https://plugins.jetbrains.com/plugin/24904-mise) sets this SDK from `mise.toml`.
 
 2. Under `Settings` -> `Build, Execution, Deployment` -> `Build Tools` -> `Gradle`, set `Distribution` to
-   `Local installation`. As `Location`, enter the `gradle-9.8.x` directory that contains `bin` and `lib`. The
+   `Local installation`. As `Location`, enter the `gradle-9.9.x` directory that contains `bin` and `lib`. The
    following command prints the path of this directory:
 
    ```shell
