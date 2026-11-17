@@ -7,6 +7,16 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- GLOSSARY.md defines the terms correction and note of FR-8.
+
+### Fixed
+
+- FR-8 names the TBD of FR-3 that it resolves by its question instead of a wrong position and quotes the decision of
+  the group lead as its business requirement. Its Rationale no longer states who reads the notes, which a TBD of FR-8
+  leaves open.
+
 ## [0.2.0] - 2026-11-17
 
 ### Added
