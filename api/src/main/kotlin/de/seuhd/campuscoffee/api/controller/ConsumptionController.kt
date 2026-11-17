@@ -19,10 +19,10 @@ import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as ApiRequestBody
 
 /**
- * Controller under `/api/users/{userId}/consumption` that reads the coffee count of a user and adds a coffee. Both
- * endpoints return the login name and the coffee count of the user as a [ConsumptionDto].
+ * Controller under `/api/users/{userId}/consumption` that reads the coffee count of a user, adds a coffee, and undoes
+ * the most recent coffee. Every endpoint returns the login name and the coffee count of the user as a [ConsumptionDto].
  */
-@Tag(name = "Consumption", description = "Reading a user's coffee count and adding a coffee.")
+@Tag(name = "Consumption", description = "Reading a user's coffee count, adding a coffee, and undoing a coffee.")
 @RestController
 @RequestMapping("/users/{userId}/consumption")
 class ConsumptionController(
@@ -62,4 +62,19 @@ class ConsumptionController(
         val updated = coffeeConsumptionService.applyDelta(userId, requireNotNull(dto.delta))
         return ResponseEntity.ok(consumptionDtoMapper.toDto(updated))
     }
+
+    /**
+     * Undoes the most recent coffee of the user with [userId] and returns the new coffee count. The domain throws a
+     * `ConflictException` (409) when the user has no coffee to undo or when the grace period of the most recent coffee
+     * has ended. The grace period is 5 minutes by default, and `campus-coffee.consumption.grace-period` sets it.
+     *
+     * @param userId the id of the user
+     */
+    @Operation(summary = "Undo the user's most recent coffee within the grace period after adding it.")
+    @PostMapping("/undo")
+    fun undo(
+        @Parameter(description = "Unique identifier of the user.", required = true)
+        @PathVariable userId: UUID
+    ): ResponseEntity<ConsumptionDto> =
+        ResponseEntity.ok(consumptionDtoMapper.toDto(coffeeConsumptionService.undo(userId)))
 }

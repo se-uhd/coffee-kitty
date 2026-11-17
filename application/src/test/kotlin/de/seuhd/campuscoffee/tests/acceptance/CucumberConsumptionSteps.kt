@@ -86,6 +86,12 @@ class CucumberConsumptionSteps(
         lastResult = postCoffee().returnResult<ByteArray>()
     }
 
+    @Given("the user adds a coffee at {time}")
+    fun theUserAddsACoffeeAt(time: LocalTime) {
+        clock.setTime(time)
+        postCoffee().requireStatus(200)
+    }
+
     @When("the user undoes the coffee at {time}")
     fun theUserUndoesTheCoffeeAt(time: LocalTime) {
         clock.setTime(time)

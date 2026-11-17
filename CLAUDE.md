@@ -6,8 +6,9 @@ Coffee Kitty is a minimal coffee counter with the architecture of the coffee app
 Group at Heidelberg University. The package prefix `de.seuhd` stands for the group. Coffee Kitty is the running example
 of a software engineering lecture, and students extend it over the semester. A user has a login name, an email address,
 and a first and a last name. Each user has exactly one consumption, which holds a coffee count that starts at zero. The
-REST API lists, creates, and reads users, reads a coffee count, and adds one coffee at a time. Every endpoint is open,
-because the app has no authentication. The app has no frontend. In the dev profile, Swagger UI documents the API.
+REST API lists, creates, and reads users, reads a coffee count, adds one coffee at a time, and undoes the most recent
+coffee within 5 minutes. `requirements/` holds the functional requirements, such as FR-3 for the undo. Every endpoint is
+open, because the app has no authentication. The app has no frontend. In the dev profile, Swagger UI documents the API.
 `GLOSSARY.md` defines one term for each concept. Use these terms in code, messages, and documentation.
 
 ## Architecture
@@ -62,12 +63,18 @@ The ports are in `domain/src/main/kotlin/de/seuhd/campuscoffee/domain/ports/`:
 
 The implementations of the API and internal ports are in `domain/.../implementation/`. `UserServiceImpl.create` trims
 the email address, converts it to lowercase, and checks the new user against the limits in the companion object of
-`User`. In one transaction, the method then stores the user and the consumption of the user with a coffee count of
-zero. The fixture loader and the test setup create the fixture users through `UserService.create`, which checks the
-fixture users like any other new user. `CoffeeConsumptionServiceImpl.applyDelta` accepts only a delta of `+1` and reads
-the consumption with `getByUserIdForUpdate`, which locks the row until the transaction ends. A second request that adds
-a coffee for the same user at the same time waits until the first transaction ends. The second request then reads the
-raised count, and both coffees count.
+`User`. In one transaction, the method then stores the user and the consumption of the user with a coffee count of zero.
+The fixture loader and the test setup create the fixture users through `UserService.create`, which checks the fixture
+users like any other new user. `CoffeeConsumptionServiceImpl.applyDelta` accepts only a delta of `+1` and reads the
+consumption with `getByUserIdForUpdate`, which locks the row until the transaction ends. A second request that adds a
+coffee for the same user at the same time waits until the first transaction ends. The second request then reads the
+raised count, and both coffees count. `applyDelta` also appends the time of the coffee to `coffeeTimes` and drops the
+times whose grace period has passed. The data module stores the list in the table `coffee_times`.
+`CoffeeConsumptionServiceImpl.undo` locks the consumption in the same way, lowers the count by one while
+`GracePeriod.isOpen` accepts the last of the `coffeeTimes`, and removes that time. Otherwise, it throws a
+`ConflictException`. The coffee before can then be undone while its own grace period is open. `applyDelta` and
+`GracePeriod` read the time from the `Clock` bean of `ClockConfiguration`. `ConsumptionProperties` binds the grace
+period, `campus-coffee.consumption.grace-period`, with a default of 5 minutes.
 
 ### Generic Base Classes
 
@@ -222,6 +229,8 @@ constraints, such as a null in a NOT NULL column, passes the startup check and f
 - Acceptance tests: Cucumber scenarios for behavior-driven development (BDD). The step definitions and the Cucumber
   configuration are in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/acceptance/`, and the feature files,
   such as `consumption.feature`, are in `application/src/test/resources/de/seuhd/campuscoffee/tests/acceptance/`.
+  `CucumberSpringConfiguration` replaces the `Clock` bean with a `SettableClock`, which the steps set to the times in
+  the scenarios, such as 10:05:01.
 - Architecture tests: `ArchitectureTests` (see Layer Rules).
 
 ### Test Naming
@@ -262,12 +271,13 @@ profile, springdoc is off.
 ## Important Patterns
 
 - Error handling: The domain exceptions are `NotFoundException` (404) and `DuplicationException` (409), which the data
-  adapters throw (see Generic Base Classes), and `ValidationException` (400), which the domain services and
-  `UserController` throw. `GlobalExceptionHandler` extends `ResponseEntityExceptionHandler`, which maps Spring's
-  standard web exceptions to their status codes (e.g., 404 for an unknown path). Any other exception becomes a 500.
-  The body of every error response is an `ErrorResponse`. Its `errorCode` is the class name of the domain exception
-  or, for any other error, the reason phrase of the status without spaces (e.g., `BadRequest`). To add a domain
-  exception, make the changes that the KDoc of `GlobalExceptionHandler.handleMappedException` lists.
+  adapters throw (see Generic Base Classes), `ConflictException` (409), which `CoffeeConsumptionServiceImpl.undo`
+  throws, and `ValidationException` (400), which the domain services and `UserController` throw.
+  `GlobalExceptionHandler` extends `ResponseEntityExceptionHandler`, which maps Spring's standard web exceptions to
+  their status codes (e.g., 404 for an unknown path). Any other exception becomes a 500. The body of every error
+  response is an `ErrorResponse`. Its `errorCode` is the class name of the domain exception or, for any other error, the
+  reason phrase of the status without spaces (e.g., `BadRequest`). To add a domain exception, make the changes that the
+  KDoc of `GlobalExceptionHandler.handleMappedException` lists.
 - MapStruct: The `kotlin-kapt-conventions` plugin runs MapStruct through kapt with the option
   `mapstruct.unmappedTargetPolicy=ERROR`. With this option, the build fails when a target property has neither a
   source nor `ignore = true`.
@@ -279,8 +289,10 @@ profile, springdoc is off.
   `@PreUpdate` and truncates them to microseconds, because a PostgreSQL `timestamp` column stores microseconds. A
   timestamp that `upsert` returns then equals the timestamp that a later query reads.
 - Time: Every timestamp in the database, the code, and the API is in UTC, and the API serves timestamps without an
-  offset. Read the clock only with `LocalDateTime.now(ZoneOffset.UTC)`, never in the system time zone. A client
-  converts a timestamp to a local time zone only for display.
+  offset. A domain service that compares times reads the current time from the injected `Clock`, so that a test can
+  fix the time (see `CoffeeConsumptionServiceTest`). Other code reads the clock with
+  `LocalDateTime.now(ZoneOffset.UTC)`, never in the system time zone. A client converts a timestamp to a local time
+  zone only for display.
 
 ## Adding a New Entity
 

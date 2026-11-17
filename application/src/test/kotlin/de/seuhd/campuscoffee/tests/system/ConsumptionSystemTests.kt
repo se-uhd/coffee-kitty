@@ -42,6 +42,12 @@ class ConsumptionSystemTests : AbstractSystemTest() {
         .body(body)
         .exchange()
 
+    private fun undo(userId: UUID = fixtureUserId()) =
+        client()
+            .post()
+            .uri("/api/users/{userId}/consumption/undo", userId)
+            .exchange()
+
     private fun consumption(): ConsumptionDto = getConsumption().returnResult<ConsumptionDto>().responseBody!!
 
     @Test
@@ -92,6 +98,42 @@ class ConsumptionSystemTests : AbstractSystemTest() {
     }
 
     @Test
+    fun `undoing and adding coffees concurrently keeps the count and the times of the coffees consistent`() {
+        val userId = fixtureUserId()
+        repeat(CONCURRENT_REQUESTS) {
+            assertThat(postConsumption(ConsumptionDeltaDto(1), userId).statusCode()).isEqualTo(200)
+        }
+        val start = CountDownLatch(1)
+        val executor = Executors.newFixedThreadPool(2 * CONCURRENT_REQUESTS)
+        try {
+            val adds =
+                (1..CONCURRENT_REQUESTS).map {
+                    executor.submit<Int> {
+                        start.await()
+                        postConsumption(ConsumptionDeltaDto(1), userId).statusCode()
+                    }
+                }
+            val undos =
+                (1..CONCURRENT_REQUESTS).map {
+                    executor.submit<Int> {
+                        start.await()
+                        undo(userId).statusCode()
+                    }
+                }
+            start.countDown()
+
+            assertThat((adds + undos).map { it.get(TIMEOUT_SECONDS, TimeUnit.SECONDS) }).containsOnly(200)
+        } finally {
+            executor.shutdownNow()
+        }
+        assertThat(consumption().count).isEqualTo(CONCURRENT_REQUESTS)
+        // every remaining coffee has a time within its grace period, so each one can be undone, and then none
+        repeat(CONCURRENT_REQUESTS) { assertThat(undo(userId).statusCode()).isEqualTo(200) }
+        assertThat(undo(userId).statusCode()).isEqualTo(409)
+        assertThat(consumption().count).isEqualTo(0)
+    }
+
+    @Test
     fun `posting a delta of 2 returns 400 Bad Request and keeps the count at zero`() {
         val result = postConsumption(ConsumptionDeltaDto(2)).returnResult<ErrorResponse>()
 
@@ -134,6 +176,17 @@ class ConsumptionSystemTests : AbstractSystemTest() {
         val userId = UUID.randomUUID()
 
         val result = postConsumption(ConsumptionDeltaDto(1), userId).returnResult<ErrorResponse>()
+
+        assertThat(result.status.value()).isEqualTo(404)
+        assertThat(result.responseBody!!.errorCode).isEqualTo("NotFoundException")
+        assertThat(result.responseBody!!.message).isEqualTo("User with ID $userId does not exist.")
+    }
+
+    @Test
+    fun `undoing a coffee of an unknown user returns 404 Not Found that names the user`() {
+        val userId = UUID.randomUUID()
+
+        val result = undo(userId).returnResult<ErrorResponse>()
 
         assertThat(result.status.value()).isEqualTo(404)
         assertThat(result.responseBody!!.errorCode).isEqualTo("NotFoundException")

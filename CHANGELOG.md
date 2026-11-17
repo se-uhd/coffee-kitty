@@ -7,6 +7,16 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- A user can undo their most recent coffee within 5 minutes of adding it (FR-3 in `requirements/FR-3-undo-coffee.md`).
+  `POST /api/users/{userId}/consumption/undo` lowers the coffee count by one and returns 409 Conflict when the user
+  has no coffee to undo or when the grace period of the most recent coffee has ended. After an undo, the coffee before
+  can be undone while its own grace period is open. The grace period includes its last instant, as in the coffee app of
+  SE@UHD, and `campus-coffee.consumption.grace-period` sets it (default 5 minutes). The migration V3 creates the
+  table `coffee_times`, which holds the time of each recent coffee that is not undone. Adding a coffee drops the times
+  whose grace period has passed. Coffees added before this release have no time and cannot be undone.
+
 ### Changed
 
 - The README describes how the group buys coffee beans from the kitty and how a user who buys coffee with their own

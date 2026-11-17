@@ -18,10 +18,10 @@ import org.springframework.test.context.DynamicPropertySource
 
 /**
  * The Spring context and the hooks for every acceptance scenario. Cucumber accepts only one class with
- * [CucumberContextConfiguration], and the step classes therefore contain only step definitions. The Spring context
- * uses the same PostgreSQL container as the system tests. Before each scenario, [beforeEach] runs a data reset and
- * creates the fixture users at a coffee count of zero. The nested [TestClockConfiguration] adds a [SettableClock], which
- * the step definitions set to the times in the scenarios.
+ * [CucumberContextConfiguration], and the step classes therefore contain only step definitions. The Spring context uses
+ * the same PostgreSQL container as the system tests. Before each scenario, [beforeEach] runs a data reset and creates
+ * the fixture users at a coffee count of zero. The nested [TestClockConfiguration] adds a [SettableClock], which the
+ * step definitions set to the times in the scenarios.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @CucumberContextConfiguration
