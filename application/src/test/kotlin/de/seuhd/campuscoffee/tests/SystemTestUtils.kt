@@ -1,6 +1,5 @@
 package de.seuhd.campuscoffee.tests
 
-import org.assertj.core.api.Assertions.assertThat
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.web.servlet.client.RestTestClient
 import org.springframework.test.web.servlet.client.returnResult
@@ -9,7 +8,7 @@ import org.testcontainers.utility.DockerImageName
 
 /**
  * Utilities for the system and acceptance tests: the shared PostgreSQL container, the shared [RestTestClient], and
- * the status helpers.
+ * [statusCode].
  */
 object SystemTestUtils {
     private lateinit var client: RestTestClient
@@ -39,14 +38,4 @@ object SystemTestUtils {
 
     /** Returns the status code of the response without asserting it. */
     fun RestTestClient.ResponseSpec.statusCode(): Int = returnResult<ByteArray>().status.value()
-
-    /**
-     * Asserts that a setup request returned the status [expected]. A failed setup step then stops the test before a
-     * later assertion can pass for the wrong reason.
-     *
-     * @param expected the status code of a successful setup request
-     */
-    fun RestTestClient.ResponseSpec.requireStatus(expected: Int) {
-        assertThat(statusCode()).`as`("setup request status").isEqualTo(expected)
-    }
 }
