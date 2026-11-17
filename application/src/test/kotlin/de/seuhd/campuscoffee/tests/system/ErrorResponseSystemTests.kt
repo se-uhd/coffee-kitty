@@ -1,15 +1,18 @@
 package de.seuhd.campuscoffee.tests.system
 
 import de.seuhd.campuscoffee.api.exceptions.ErrorResponse
+import de.seuhd.campuscoffee.tests.Response
 import de.seuhd.campuscoffee.tests.SystemTestUtils.client
+import de.seuhd.campuscoffee.tests.UserRequests
+import de.seuhd.campuscoffee.tests.toResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
-import org.springframework.test.web.servlet.client.returnResult
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
+import java.util.UUID
 
 /**
  * System tests for the [ErrorResponse] body. They check every field for a domain exception and the error code for an
@@ -17,47 +20,49 @@ import java.time.temporal.ChronoUnit
  * `NotFound`.
  */
 class ErrorResponseSystemTests : AbstractSystemTest() {
-    private fun get(path: String) =
+    /**
+     * Sends a GET request to [path]. The tests for an unknown path and for a path that the firewall rejects build
+     * their request here, because the path itself is under test and no function of [UserRequests] sends it.
+     */
+    private fun get(path: String): Response<ErrorResponse> =
         client()
             .get()
             .uri(path)
             .accept(MediaType.APPLICATION_JSON)
             .exchange()
-            .returnResult<ErrorResponse>()
+            .toResponse()
 
     @Test
     fun `getting an unknown user returns 404 Not Found with every field of the error response`() {
-        val path = "/api/users/00000000-0000-0000-0000-000000000001"
+        val response = UserRequests.retrieveById(UUID.fromString("00000000-0000-0000-0000-000000000001"))
 
-        val result = get(path)
-
-        assertThat(result.status.value()).isEqualTo(404)
-        val error = result.responseBody!!
+        assertThat(response.status).isEqualTo(404)
+        val error = response.error
         assertThat(error.errorCode).isEqualTo("NotFoundException")
         assertThat(error.message).isEqualTo("User with ID 00000000-0000-0000-0000-000000000001 does not exist.")
         assertThat(error.statusCode).isEqualTo(404)
         assertThat(error.statusMessage).isEqualTo("Not Found")
-        assertThat(error.path).isEqualTo(path)
+        assertThat(error.path).isEqualTo("/api/users/00000000-0000-0000-0000-000000000001")
         assertThat(error.timestamp).isCloseTo(LocalDateTime.now(ZoneOffset.UTC), byLessThanOneMinute)
     }
 
     @Test
     fun `requesting an unknown path returns 404 Not Found with the error code NotFound`() {
-        val result = get("/api/unknown")
+        val response = get("/api/unknown")
 
-        assertThat(result.status.value()).isEqualTo(404)
-        assertThat(result.responseBody!!.errorCode).isEqualTo("NotFound")
-        assertThat(result.responseBody!!.message).isEqualTo("Not Found")
+        assertThat(response.status).isEqualTo(404)
+        assertThat(response.error.errorCode).isEqualTo("NotFound")
+        assertThat(response.error.message).isEqualTo("Not Found")
     }
 
     @Test
     fun `requesting a path with a semicolon returns 400 Bad Request with a message that does not quote the path`() {
-        val result = get("/api/users;x=1")
+        val response = get("/api/users;x=1")
 
-        assertThat(result.status.value()).isEqualTo(400)
-        assertThat(result.responseBody!!.errorCode).isEqualTo("BadRequest")
-        assertThat(result.responseBody!!.message).isEqualTo("The request could not be read.")
-        assertThat(result.responseBody!!.path).isEqualTo("/api/users;x=1")
+        assertThat(response.status).isEqualTo(400)
+        assertThat(response.error.errorCode).isEqualTo("BadRequest")
+        assertThat(response.error.message).isEqualTo("The request could not be read.")
+        assertThat(response.error.path).isEqualTo("/api/users;x=1")
     }
 
     private companion object {
