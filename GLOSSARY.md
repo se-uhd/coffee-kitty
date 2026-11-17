@@ -23,18 +23,30 @@ with a line "Avoid:", which lists words not to use for the concept.
 - **coffee**: One cup that a user drinks. Adding a cup raises the user's coffee count by one.
   API: `POST /api/users/{userId}/consumption` with `delta` 1. Code: `CoffeeConsumptionService.applyDelta`.
   Avoid: bump (a count).
-- **coffee count**: A user's total number of coffees. The number starts at zero when the user is created and never
-  decreases.
+- **coffee count**: A user's total number of coffees. The number starts at zero when the user is created. Adding a
+  coffee raises it by one, and an undo lowers it by one.
   API: `ConsumptionDto.count`. Code: `CoffeeConsumption.count`, `coffee_consumptions.count`.
-- **consumption**: The stored record that holds the coffee count of one user. Every user has exactly one such record,
-  which `UserService.create` creates together with the user.
-  API: `/api/users/{userId}/consumption`, `ConsumptionDto`. Code: `CoffeeConsumption`, `coffee_consumptions`.
+- **consumption**: The stored record that holds the coffee count of one user and the time of each recent coffee that
+  the user did not undo. Adding a coffee drops the times whose grace period has passed. Every user has exactly one such
+  record, which `UserService.create` creates together with the user.
+  API: `/api/users/{userId}/consumption`, `ConsumptionDto`. Code: `CoffeeConsumption`, `coffee_consumptions`,
+  `coffeeTimes`, `coffee_times`.
 - **delta**: The field in the request body of `POST /api/users/{userId}/consumption` that states the change to the
   coffee count. The domain accepts only +1, which adds one coffee, and rejects every other integer. An extension can
   accept -1 to remove a coffee without changing the format of the request body (see the KDoc of
   `CoffeeConsumptionService.applyDelta`).
   API: `ConsumptionDeltaDto.delta`, `{ "delta": 1 }`. Code: `CoffeeConsumptionService.applyDelta`.
   Avoid: single-step change.
+- **undo**: Reversing the most recent coffee that a user added and did not undo, while that coffee is within the grace
+  period. The undo lowers the coffee count by one. After an undo, the coffee before is the most recent coffee (FR-3 in
+  `requirements/FR-3-undo-coffee.md`).
+  API: `POST /api/users/{userId}/consumption/undo`. Code: `CoffeeConsumptionService.undo`.
+  Avoid: cancel, coffee canceled.
+- **grace period**: The time after a user adds a coffee, 5 minutes by default, in which the user can undo the coffee.
+  The grace period includes the instant at which it ends: for a coffee added at 10:00:00, an undo at 10:05:00
+  succeeds, and an undo at 10:05:01 returns 409 Conflict.
+  Code: `GracePeriod`, `campus-coffee.consumption.grace-period`.
+  Avoid: grace window.
 - **fixture user**: One of the five users in `TestFixtures`, such as `jane_doe`. In the dev profile, the fixture loader
   creates these users with a coffee count of zero on every start, and the system and acceptance tests create them the
   same way before each test.
@@ -108,7 +120,9 @@ with a line "Avoid:", which lists words not to use for the concept.
 - **domain exception**: An exception class in `domain/.../exceptions/`. `GlobalExceptionHandler` maps each of these
   classes to a status and uses the class name as the error code. `NotFoundException` (404) means that a lookup found no
   stored object, for example no user with the id in the path. `DuplicationException` (409) means that a request repeats
-  a value that must be unique, such as the login name or the email address of another user. `ValidationException` (400)
+  a value that must be unique, such as the login name or the email address of another user. `ConflictException` (409)
+  means that a well-formed request does not apply to the current state, such as an undo after the grace period.
+  `ValidationException` (400)
   means that a request breaks a rule of the domain or of a controller, such as an integer delta other than +1 or an id
   in the body of `POST /api/users`. A request body that fails Bean Validation or cannot be read, such as a body with a
   delta of 1.9, gets a 400 with the error code `BadRequest` instead.

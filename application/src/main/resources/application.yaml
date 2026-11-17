@@ -44,6 +44,8 @@ springdoc:
 campus-coffee:
   fixtures:
     load-on-startup: false
+  consumption:
+    grace-period: ${CAMPUS_COFFEE_GRACE_PERIOD:5m}
 
 ---
 spring:

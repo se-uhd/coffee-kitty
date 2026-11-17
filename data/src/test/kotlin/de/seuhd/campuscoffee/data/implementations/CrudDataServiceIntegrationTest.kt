@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.IllegalTransactionStateException
 import org.springframework.transaction.support.TransactionTemplate
+import java.time.LocalDateTime
 import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -26,7 +27,8 @@ import java.util.concurrent.TimeoutException
  * unique constraint and the [NotFoundException] for an unknown id, login name, or user. Further tests check that
  * deleting a user deletes the consumption of that user and that `getAll` keeps the creation order after an update.
  * The lock tests check that `getByUserIdForUpdate` makes a second transaction wait until the first transaction ends
- * and that a call outside a transaction fails.
+ * and that a call outside a transaction fails. A further test checks that the coffee times keep their order when a
+ * consumption is stored and updated.
  */
 class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     @Autowired
@@ -132,6 +134,24 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
         assertThat(updated.user).isEqualTo(user)
         assertThat(coffeeConsumptionDataService.getByUserId(userId).count).isEqualTo(1)
         assertThat(userDataService.getById(userId)).isEqualTo(user)
+    }
+
+    @Test
+    fun `upsert of a consumption stores the coffee times in order and an update replaces them in order`() {
+        val user = userDataService.upsert(user("ida"))
+        val userId = requireNotNull(user.id)
+        val first = LocalDateTime.of(2026, 11, 16, 10, 0, 0)
+        val times = listOf(first, first.plusMinutes(1), first.plusMinutes(2))
+        val stored = coffeeConsumptionDataService.upsert(CoffeeConsumption(user = user, count = 3, coffeeTimes = times))
+
+        assertThat(coffeeConsumptionDataService.getByUserId(userId).coffeeTimes).containsExactlyElementsOf(times)
+
+        val updated = times.drop(1) + first.plusMinutes(3)
+        coffeeConsumptionDataService.upsert(
+            stored.copy(count = 3, coffeeTimes = updated, createdAt = null, updatedAt = null)
+        )
+
+        assertThat(coffeeConsumptionDataService.getByUserId(userId).coffeeTimes).containsExactlyElementsOf(updated)
     }
 
     @Test

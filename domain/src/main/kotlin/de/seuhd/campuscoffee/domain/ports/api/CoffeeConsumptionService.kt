@@ -1,14 +1,15 @@
 package de.seuhd.campuscoffee.domain.ports.api
 
+import de.seuhd.campuscoffee.domain.exceptions.ConflictException
 import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
 import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
 import java.util.UUID
 
 /**
- * API port for the consumptions. The controllers call it to read a user's coffee count and to add a coffee.
- * `CoffeeConsumptionServiceImpl` in the domain module implements it. [UserService.create] creates the consumption of
- * a new user with a coffee count of zero.
+ * API port for the consumptions. The controllers call it to read a user's coffee count, to add a coffee, and to undo
+ * the most recent coffee. `CoffeeConsumptionServiceImpl` in the domain module implements it. [UserService.create]
+ * creates the consumption of a new user with a coffee count of zero.
  */
 interface CoffeeConsumptionService {
     /**
@@ -34,4 +35,16 @@ interface CoffeeConsumptionService {
         userId: UUID,
         delta: Int
     ): CoffeeConsumption
+
+    /**
+     * Undoes the most recent coffee of the user with [userId] that is not undone yet and returns the consumption with
+     * the lowered coffee count. The undo succeeds until 5 minutes after that coffee, including that instant. After an
+     * undo, the coffee before is the most recent coffee.
+     *
+     * @param userId the id of the user
+     * @throws ConflictException if the user has no coffee to undo or the grace period of the most recent coffee has
+     *   passed
+     * @throws NotFoundException if no user has [userId]
+     */
+    fun undo(userId: UUID): CoffeeConsumption
 }

@@ -22,8 +22,11 @@ layer rules that ArchUnit enforces, but Coffee Kitty has only two entities: user
   digits, and underscores. Login names and email addresses are unique. The app stores every email address trimmed and
   in lowercase.
 - Every user has one consumption, which holds the user's coffee count. When the app creates a user, it also creates
-  the consumption with a coffee count of zero. Adding a coffee raises the coffee count by one, and no endpoint lowers
-  it. When two requests add a coffee for the same user at the same time, both coffees count.
+  the consumption with a coffee count of zero. Adding a coffee raises the coffee count by one. When two requests add a
+  coffee for the same user at the same time, both coffees count.
+- Within 5 minutes of adding a coffee, a user can undo it, which lowers the coffee count by one. After an undo, the
+  coffee before is the most recent coffee, which the user can undo while it is within its own 5 minutes.
+  `requirements/FR-3-undo-coffee.md` states this requirement.
 - The REST API accepts and returns only JSON. Any client can call every endpoint, because Coffee Kitty has no
   authentication.
 - A Spring Boot backend in Kotlin stores the users and their coffee counts in PostgreSQL through Jakarta Persistence
@@ -194,11 +197,23 @@ curl --request POST --header "Content-Type: application/json" --data '{"delta":1
   http://localhost:8081/api/users/$USER_ID/consumption
 ```
 
-Both consumption endpoints return 404 Not Found for an unknown user. An error response has a JSON body with the fields
-`errorCode`, `message`, `statusCode`, `statusMessage`, `timestamp`, and `path`. For a domain exception, `errorCode` is
-the class name of the exception: `NotFoundException`, `DuplicationException`, or `ValidationException`. For any other
-error, `errorCode` is the reason phrase of the status without spaces, such as `BadRequest`. Every timestamp in a
-response is in UTC and has no offset.
+`POST /users/{userId}/consumption/undo` undoes the most recent coffee of the user and returns the new coffee count as
+`{ "loginName", "count" }`. The endpoint returns 409 Conflict when the user has no coffee to undo or when more than 5
+minutes have passed since the user added the most recent coffee that is not undone. The environment variable
+`CAMPUS_COFFEE_GRACE_PERIOD` changes these 5 minutes, as in `CAMPUS_COFFEE_GRACE_PERIOD=10m`. Run the
+command within 5 minutes of the command that adds a coffee:
+
+```shell
+USER_ID=$(curl -s http://localhost:8081/api/users |
+  python3 -c 'import json, sys; print(next(u["id"] for u in json.load(sys.stdin) if u["loginName"] == "jane_doe"))')
+curl --request POST http://localhost:8081/api/users/$USER_ID/consumption/undo
+```
+
+The three consumption endpoints return 404 Not Found for an unknown user. An error response has a JSON body with the
+fields `errorCode`, `message`, `statusCode`, `statusMessage`, `timestamp`, and `path`. For a domain exception,
+`errorCode` is the class name of the exception: `NotFoundException`, `DuplicationException`, `ConflictException`, or
+`ValidationException`. For any other error, `errorCode` is the reason phrase of the status without spaces, such as
+`BadRequest`. Every timestamp in a response is in UTC and has no offset.
 
 ## Testing
 

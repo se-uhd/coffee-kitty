@@ -1,5 +1,6 @@
 package de.seuhd.campuscoffee.api.exceptions
 
+import de.seuhd.campuscoffee.domain.exceptions.ConflictException
 import de.seuhd.campuscoffee.domain.exceptions.DuplicationException
 import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
 import de.seuhd.campuscoffee.domain.exceptions.ValidationException
@@ -50,7 +51,12 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
      * @param exception the domain exception
      * @param request   the current web request
      */
-    @ExceptionHandler(NotFoundException::class, DuplicationException::class, ValidationException::class)
+    @ExceptionHandler(
+        NotFoundException::class,
+        DuplicationException::class,
+        ConflictException::class,
+        ValidationException::class
+    )
     fun handleMappedException(
         exception: Exception,
         request: WebRequest
@@ -192,6 +198,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         when (exception) {
             is NotFoundException -> ExceptionConfig(HttpStatus.NOT_FOUND, "Resource not found")
             is DuplicationException -> ExceptionConfig(HttpStatus.CONFLICT, "Duplicate resource")
+            is ConflictException -> ExceptionConfig(HttpStatus.CONFLICT, "Conflict with the current state")
             is ValidationException -> ExceptionConfig(HttpStatus.BAD_REQUEST, "Domain validation failed")
             else -> null
         }
