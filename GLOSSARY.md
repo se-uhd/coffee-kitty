@@ -48,6 +48,13 @@ with a line "Avoid:", which lists words not to use for the concept.
   Code: `GracePeriod`, `campus-coffee.consumption.grace-period`, environment variable
   `CAMPUS_COFFEE_GRACE_PERIOD`.
   Avoid: grace window.
+- **correction**: An admin's change of a user's coffee count to a new count, which the admin explains in a note (FR-8 in
+  `requirements/FR-8-correct-coffee-count.md`, not implemented yet). An admin can correct a coffee count at any time,
+  even after the grace period.
+  Avoid: adjustment, override, reset (for a coffee count).
+- **note**: The text with which an admin explains a correction, such as "Double tap on 16.11." A correction needs a
+  note that is not blank.
+  Avoid: comment, reason (for the field).
 - **role**: What a user may do in Coffee Kitty, either `USER` or `ADMIN`. An admin may also create users.
   API: `UserDto.role`. Code: `Role`, `User.role`, `users.role`, `requireAdmin`.
 - **acting user**: The user who sends a request, identified by the login name in the header `X-Acting-User`. Because
