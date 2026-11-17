@@ -1,0 +1,86 @@
+# Dependabot does not read mise.toml, so this workflow checks the tools that mise.toml pins (the JDK and Gradle). Every
+# Monday, it runs `mise outdated --bump` and opens or updates an issue when a pin no longer covers the newest release,
+# e.g., the pin `gradle = '9.8'` after Gradle 9.9 is released. A newer release within a pin, e.g., Gradle 9.9.1 under
+# `gradle = '9.9'`, needs no change to mise.toml and is not reported: CI installs it, and `mise upgrade` installs it on
+# a developer machine. The workflow only reports; a developer bumps the pin in mise.toml by hand. The same workflow runs
+# in the coffee app of SE@UHD.
+name: mise outdated
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays, 06:00 UTC
+  workflow_dispatch: {} # allows a manual run
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  outdated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false # no step pushes to the repository
+
+      - uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
+        with:
+          install: false # `mise outdated` needs only mise itself, not the tools
+
+      - name: Report pins that need a bump as an issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # A nonzero exit code with valid JSON only means that a tool is behind. Invalid JSON with a nonzero exit code
+          # is an error, e.g., a network error, and fails the workflow. --bump fills in `bump`, the version that the pin
+          # in mise.toml has to move to; without it, `bump` is always null. --local skips the global mise config of the
+          # runner.
+          set +e
+          report_json="$(mise outdated --bump --local --json 2>/dev/null)"
+          status=$?
+          set -e
+          if ! printf '%s' "$report_json" | jq -e . >/dev/null 2>&1; then
+            if [ "$status" -ne 0 ]; then
+              echo "::error::mise outdated failed (exit $status) and produced no valid JSON."
+              exit 1
+            fi
+            report_json='{}'
+          fi
+
+          # A null `bump` means that the newest release is within the pin, which needs no change to mise.toml.
+          actionable="$(printf '%s' "$report_json" | jq -c '[to_entries[].value | select(.bump != null)]')"
+          count="$(printf '%s' "$actionable" | jq 'length')"
+          existing="$(gh issue list --label mise-outdated --state open --json number --jq '.[0].number // empty')"
+
+          if [ "$count" -eq 0 ]; then
+            echo "No pin in mise.toml needs a bump."
+            if [ -n "$existing" ]; then
+              gh issue close "$existing" \
+                --comment "Closed automatically: every pin in mise.toml covers the newest release."
+              echo "Closed issue #$existing"
+            fi
+            exit 0
+          fi
+
+          echo "Pins that need a bump:"
+          printf '%s' "$actionable" | jq -r '.[] | "  \(.name): \(.requested) -> \(.bump) (latest \(.latest))"'
+
+          gh label create mise-outdated --color FBCA04 \
+            --description "A pin in mise.toml needs a bump" --force
+
+          table="$(printf '%s' "$actionable" | jq -r '.[] | "\(.name)\t\(.requested)\t\(.latest)\t\(.bump)"')"
+          # The backslashes keep the backticks, which mark code in Markdown, from running as commands.
+          fence="\`\`\`"
+          intro="A pin in \`mise.toml\` no longer covers the newest release of its tool:"
+          advice="Bump the pin in \`mise.toml\`, update the version in \`README.md\` (section Prerequisites and the"
+          advice="$advice Gradle directory for IntelliJ IDEA), and run \`mise install\`. This issue is updated every"
+          advice="$advice Monday and closes automatically once every pin covers the newest release."
+          body="$(printf '%s\n\n%s\ntool\tpinned\tlatest\tbump-to\n%s\n%s\n\n%s' \
+            "$intro" "$fence" "$table" "$fence" "$advice")"
+
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --body "$body"
+            echo "Updated issue #$existing"
+          else
+            gh issue create --title "mise: a tool pin needs a bump" --label mise-outdated --body "$body"
+          fi
