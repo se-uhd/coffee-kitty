@@ -14,6 +14,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `GET /api/users/{userId}/consumption/corrections`, so that an implementation of FR-8 does not have to change the
   security configuration. Until Coffee Kitty implements FR-8, a request with an acting user gets 405 or 404.
 
+### Changed
+
+- The step definitions of FR-3 in `CucumberConsumptionSteps` send their requests through `ConsumptionRequests`
+  instead of building HTTP requests, and their Then steps check the stored coffee count.
+
 ### Fixed
 
 - FR-8 names the TBD of FR-3 that it resolves by its question instead of a wrong position and quotes the decision of
