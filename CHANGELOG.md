@@ -22,6 +22,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   from the header `X-Acting-User`, and `SecurityConfig` lists the routes that need one. A request without a known acting
   user gets 401 Unauthorized before Spring MVC reads its body, and every 401 has the header `WWW-Authenticate` with the
   challenge `X-Acting-User realm="Coffee Kitty"`, as RFC 9110 requires.
+- FR-8 in `requirements/FR-8-correct-coffee-count.md` specifies the correction of a coffee count by an admin, which
+  the group lead decided and which assignment 5 implements. FR-3 marks its open question about corrections as
+  resolved.
+- `ConsumptionRequests` in the tests sends the requests of the step definitions, such as adding a coffee or reading a
+  coffee count, so that a step names users by login name and gets status codes and values back. Its functions for
+  FR-8 send the correction and read the corrections, which Coffee Kitty implements only with assignment 5.
 - When no admin exists, `BootstrapAdminLoader` stores an admin on startup, after the fixture loader, from the keys
   under `campus-coffee.bootstrap-admin`, which the environment variables `BOOTSTRAP_ADMIN_LOGIN_NAME`,
   `BOOTSTRAP_ADMIN_EMAIL_ADDRESS`, `BOOTSTRAP_ADMIN_FIRST_NAME`, and `BOOTSTRAP_ADMIN_LAST_NAME` set. If a user has the

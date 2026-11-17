@@ -239,7 +239,8 @@ constraints, such as a null in a NOT NULL column, passes the startup check and f
   configuration are in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/acceptance/`, and the feature files,
   such as `consumption.feature`, are in `application/src/test/resources/de/seuhd/campuscoffee/tests/acceptance/`.
   `CucumberSpringConfiguration` replaces the `Clock` bean with a `SettableClock`, which the steps set to the times in
-  the scenarios, such as 10:05:01.
+  the scenarios, such as 10:05:01. `ConsumptionRequests` in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/`
+  sends the requests of a step by login name and returns the status code or the values to check.
 - Architecture tests: `ArchitectureTests` (see Layer Rules).
 
 ### Test Naming

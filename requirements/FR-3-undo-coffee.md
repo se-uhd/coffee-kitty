@@ -36,4 +36,5 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
   coffee is still within its own grace period, as in the coffee app of SE@UHD (the last two success criteria).
   Decided by: group lead.
 - TBD (open): Are 5 minutes enough to notice a mistake? Contact person: group lead.
-- TBD (open): Who is allowed to correct a coffee count after the grace period? Contact person: group lead.
+- TBD (resolved): Who is allowed to correct a coffee count after the grace period? An admin, with a note (FR-8).
+  Decided by: group lead.
