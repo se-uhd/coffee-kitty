@@ -20,6 +20,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `java-conventions.gradle.kts`, which are fixed.
 - Coffee Kitty uses Gradle 9.9 instead of 9.8 (`mise.toml`), and `mise install` installs it. In IntelliJ IDEA, select
   the `gradle-9.9.x` directory as the local Gradle installation (README, section IntelliJ IDEA).
+- For a failed test, Gradle prints the assertion message, e.g., `expected: 200 but was: 404`, and the stack trace with
+  the class and method of each line, which IntelliJ IDEA links to the source.
 
 ### Fixed
 

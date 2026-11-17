@@ -1,6 +1,7 @@
 package de.seuhd.campuscoffee
 
 import org.gradle.api.artifacts.VersionCatalogsExtension
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.process.CommandLineArgumentProvider
 
 // Java configuration of the modules: the Java toolchain, the Spring Boot BOM, the test dependencies, and the test JVM.
@@ -64,6 +65,12 @@ dependencies {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+    // For a failed test, Gradle prints the assertion message, e.g., "expected: 200 but was: 404", and the stack trace
+    // with the class and method of each line. IntelliJ IDEA links these lines to the source. The default format prints
+    // only "AssertionFailedError at CucumberConsumptionSteps.kt:92", which IntelliJ cannot link.
+    testLogging {
+        exceptionFormat = TestExceptionFormat.FULL
+    }
     jvmArgs(
         // Turn off class data sharing. With class data sharing on, the JVM prints "Sharing is only supported for boot
         // loader classes" when the Mockito agent appends to the boot class path.
