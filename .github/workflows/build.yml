@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false # no step pushes back to the repository
 
       # Install the Java and Gradle versions that mise.toml pins.
-      - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+      - uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5.2.8
 
       # Fail before the build when the version in gradle.properties differs from the latest release in CHANGELOG.md.
       - name: Check version is in sync with the changelog
