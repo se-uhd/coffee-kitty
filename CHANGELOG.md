@@ -7,6 +7,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- `POST /api/users/{userId}/consumption` rejects a delta that is a JSON string, such as `{"delta": "1"}`, with a 400
+  and the error code `BadRequest`. Until now Jackson read the string as the number 1, and the request added a coffee.
+  `application.yaml` sets `spring.jackson.mapper.allow-coercion-of-scalars` to false, so the same holds for every
+  number and boolean field of a request body.
+
 ## [0.2.1] - 2026-11-17
 
 ### Added

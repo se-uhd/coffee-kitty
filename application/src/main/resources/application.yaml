@@ -29,6 +29,10 @@ spring:
       # request causes, and Hibernate would log the same error a second time.
       hibernate.jdbc.log.errors: false
   jackson:
+    mapper:
+      # Jackson rejects a JSON string for a number or a boolean field, and the request gets a 400. With the default
+      # true, Jackson would read a delta of "1" as 1, and the request would add a coffee.
+      allow-coercion-of-scalars: false
     deserialization:
       # Jackson rejects a JSON number with a fraction for an integer field, and the request gets a 400. With the
       # default true, Jackson would truncate a delta of 1.9 to 1, and the request would add a coffee.
