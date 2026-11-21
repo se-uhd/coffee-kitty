@@ -126,6 +126,15 @@ class ConsumptionSystemTests : AbstractSystemTest() {
     }
 
     @Test
+    fun `posting a delta as a JSON string returns 400 Bad Request and keeps the count at zero`() {
+        val response = ConsumptionRequests.applyDelta(fixtureUserId(), mapOf("delta" to "1"))
+
+        assertThat(response.status).isEqualTo(400)
+        assertThat(response.error.errorCode).isEqualTo("BadRequest")
+        assertThat(consumption().count).isEqualTo(0)
+    }
+
+    @Test
     fun `posting a body without a delta returns 400 Bad Request`() {
         val response = ConsumptionRequests.applyDelta(fixtureUserId(), emptyMap<String, Any>())
 
