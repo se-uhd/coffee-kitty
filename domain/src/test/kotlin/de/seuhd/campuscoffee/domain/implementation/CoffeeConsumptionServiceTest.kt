@@ -6,6 +6,7 @@ import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
 import de.seuhd.campuscoffee.domain.model.User
 import de.seuhd.campuscoffee.domain.ports.data.CoffeeConsumptionDataService
+import de.seuhd.campuscoffee.domain.tests.TestFixtures
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -15,27 +16,28 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.argThat
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
+import org.mockito.kotlin.spy
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
-import java.time.Clock
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.util.UUID
 import kotlin.reflect.jvm.javaMethod
 
 /**
  * Unit tests for [CoffeeConsumptionServiceImpl] with a Mockito mock of [CoffeeConsumptionDataService] and a fixed
- * clock. [serviceAt] creates the service with a clock fixed at a given time.
+ * clock. [serviceAt] creates the service with a clock fixed at a given time. The fixed time, the clock, the user, and
+ * the consumptions without a coffee, with a recent coffee, and with an old coffee come from [TestFixtures].
+ * [consumption] returns a consumption with any other count and times.
  */
 class CoffeeConsumptionServiceTest {
     private val dataService: CoffeeConsumptionDataService = mock()
 
-    private val coffeeAddedAt: LocalDateTime = LocalDateTime.of(2026, 11, 16, 10, 0, 0)
+    private val coffeeAddedAt: LocalDateTime = TestFixtures.FIXED_TIME
 
     private fun serviceAt(now: LocalDateTime): CoffeeConsumptionServiceImpl {
-        val clock = Clock.fixed(now.toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
+        val clock = TestFixtures.fixedClock(now)
         return CoffeeConsumptionServiceImpl(dataService, GracePeriod(ConsumptionProperties(), clock), clock)
     }
 
@@ -43,14 +45,7 @@ class CoffeeConsumptionServiceTest {
 
     private val userId: UUID = UUID(0L, 1L)
 
-    private val user =
-        User(
-            id = userId,
-            loginName = "max",
-            emailAddress = "max@se.de",
-            firstName = "Max",
-            lastName = "M"
-        )
+    private val user = TestFixtures.regularUser().copy(id = userId)
 
     private fun consumption(
         count: Int,
@@ -76,6 +71,16 @@ class CoffeeConsumptionServiceTest {
     }
 
     @Test
+    fun `applyDelta of +1 for a user without a coffee stores a count of 1 and the time of the coffee`() {
+        whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(TestFixtures.consumptionWithoutCoffee(user))
+        whenever(dataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
+
+        service.applyDelta(userId, 1)
+
+        verify(dataService).upsert(TestFixtures.consumptionWithRecentCoffee(user))
+    }
+
+    @Test
     fun `applyDelta drops the times whose grace period has passed and keeps the times within it`() {
         val expired = coffeeAddedAt.minusMinutes(5).minusSeconds(1)
         val open = coffeeAddedAt.minusMinutes(5)
@@ -85,6 +90,16 @@ class CoffeeConsumptionServiceTest {
         service.applyDelta(userId, 1)
 
         verify(dataService).upsert(consumption(3, open, coffeeAddedAt))
+    }
+
+    @Test
+    fun `applyDelta stores the time of the coffee truncated to microseconds`() {
+        whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(consumption(2))
+        whenever(dataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
+
+        serviceAt(coffeeAddedAt.plusNanos(123_456_789)).applyDelta(userId, 1)
+
+        verify(dataService).upsert(consumption(3, coffeeAddedAt.plusNanos(123_456_000)))
     }
 
     @Test
@@ -101,6 +116,16 @@ class CoffeeConsumptionServiceTest {
     fun `applyDelta with a delta other than +1 throws ValidationException and writes nothing`(delta: Int) {
         assertThrows<ValidationException> { service.applyDelta(userId, delta) }
         verify(dataService, never()).upsert(any())
+    }
+
+    @Test
+    fun `undo 4 minutes and 59 seconds after the coffee lowers the count from 3 to 2`() {
+        whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(consumption(3, coffeeAddedAt))
+        whenever(dataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
+
+        val result = serviceAt(coffeeAddedAt.plusMinutes(4).plusSeconds(59)).undo(userId)
+
+        assertThat(result.count).isEqualTo(2)
     }
 
     @Test
@@ -123,8 +148,45 @@ class CoffeeConsumptionServiceTest {
     }
 
     @Test
+    fun `undo of the only coffee lowers the count from 1 to 0 and stores no time`() {
+        whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(TestFixtures.consumptionWithRecentCoffee(user))
+        whenever(dataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
+
+        val result = service.undo(userId)
+
+        assertThat(result.count).isZero()
+        assertThat(result.coffeeTimes).isEmpty()
+    }
+
+    @Test
+    fun `undo of a coffee added one hour ago throws ConflictException about the grace period and writes nothing`() {
+        whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(TestFixtures.consumptionWithOldCoffee(user))
+
+        val exception = assertThrows<ConflictException> { service.undo(userId) }
+
+        assertThat(exception.message).isEqualTo("The grace period to undo this coffee has passed.")
+        verify(dataService, never()).upsert(any())
+    }
+
+    @Test
+    fun `undo asks the spy of the grace period only about the most recent coffee`() {
+        val clock = TestFixtures.fixedClock()
+        val gracePeriod = spy(GracePeriod(ConsumptionProperties(), clock))
+        val earlierCoffeeAt = coffeeAddedAt.minusMinutes(1)
+        whenever(dataService.getByUserIdForUpdate(userId))
+            .thenReturn(consumption(2, earlierCoffeeAt, coffeeAddedAt))
+        whenever(dataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
+
+        CoffeeConsumptionServiceImpl(dataService, gracePeriod, clock).undo(userId)
+
+        // the spy runs the real isOpen and records its calls
+        verify(gracePeriod).isOpen(coffeeAddedAt)
+        verify(gracePeriod, never()).isOpen(earlierCoffeeAt)
+    }
+
+    @Test
     fun `undo without a coffee to undo throws ConflictException and writes nothing`() {
-        whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(consumption(0))
+        whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(TestFixtures.consumptionWithoutCoffee(user))
 
         val exception = assertThrows<ConflictException> { service.undo(userId) }
 
@@ -178,6 +240,15 @@ class CoffeeConsumptionServiceTest {
             .thenThrow(NotFoundException(User::class.java, userId))
 
         assertThrows<NotFoundException> { service.applyDelta(userId, 1) }
+        verify(dataService, never()).upsert(any())
+    }
+
+    @Test
+    fun `undo for an unknown user throws NotFoundException and writes nothing`() {
+        whenever(dataService.getByUserIdForUpdate(userId))
+            .thenThrow(NotFoundException(User::class.java, userId))
+
+        assertThrows<NotFoundException> { service.undo(userId) }
         verify(dataService, never()).upsert(any())
     }
 }

@@ -4,6 +4,7 @@ import de.seuhd.campuscoffee.data.integration.AbstractDataIntegrationTest
 import de.seuhd.campuscoffee.domain.exceptions.DuplicationException
 import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
 import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
+import de.seuhd.campuscoffee.domain.model.Role
 import de.seuhd.campuscoffee.domain.model.User
 import de.seuhd.campuscoffee.domain.ports.data.CoffeeConsumptionDataService
 import de.seuhd.campuscoffee.domain.ports.data.UserDataService
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeoutException
  * the timestamps and that an update keeps the creation time. Other tests check the [DuplicationException] for each
  * unique constraint and the [NotFoundException] for an unknown id, login name, or user. Further tests check that
  * deleting a user deletes the consumption of that user and that `getAll` keeps the creation order after an update.
+ * For the users, the tests check that `getAll` orders them by login name and that the database stores the role.
  * The lock tests check that `getByUserIdForUpdate` makes a second transaction wait until the first transaction ends
  * and that a call outside a transaction fails. A further test checks that the coffee times keep their order when a
  * consumption is stored and updated.
@@ -81,6 +83,13 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
         assertThat(updated.createdAt).isEqualTo(created.createdAt)
         assertThat(updated.updatedAt).isAfter(created.updatedAt)
         assertThat(userDataService.getById(requireNotNull(updated.id))).isEqualTo(updated)
+    }
+
+    @Test
+    fun `upsert of a user with the role ADMIN stores the role`() {
+        val created = userDataService.upsert(user("jane").copy(role = Role.ADMIN))
+
+        assertThat(userDataService.getById(requireNotNull(created.id)).role).isEqualTo(Role.ADMIN)
     }
 
     @Test
@@ -177,6 +186,13 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
         coffeeConsumptionDataService.upsert(first.copy(count = 1))
 
         assertThat(coffeeConsumptionDataService.getAll().map { it.user.id }).containsExactlyElementsOf(userIds)
+    }
+
+    @Test
+    fun `getAll of the users returns the users ordered by login name, whatever the order of their creation`() {
+        listOf("zoe", "adam", "mia").forEach { userDataService.upsert(user(it)) }
+
+        assertThat(userDataService.getAll().map { it.loginName }).containsExactly("adam", "mia", "zoe")
     }
 
     @Test

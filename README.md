@@ -146,7 +146,8 @@ On every start in the `dev` profile, the fixture loader deletes all users and co
 fixture users with a coffee count of zero. Their login names are `jane_doe`, `maxmustermann`, `student2023`,
 `lisa_lee`, and `olivia_lee`. The fixture users get random ids, which change with every restart. `GET /api/users` lists
 the current ids. `domain/src/main/kotlin/de/seuhd/campuscoffee/domain/tests/TestFixtures.kt` defines the fixture users,
-and the system and acceptance tests create the same users before each test.
+and the system and acceptance tests create the same users before each test. The file also defines a fixed time and
+consumptions in three states, which only the tests use.
 
 ## REST API
 

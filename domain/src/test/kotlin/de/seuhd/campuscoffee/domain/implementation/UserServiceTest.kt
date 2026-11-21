@@ -1,5 +1,6 @@
 package de.seuhd.campuscoffee.domain.implementation
 
+import de.seuhd.campuscoffee.domain.exceptions.DuplicationException
 import de.seuhd.campuscoffee.domain.exceptions.ForbiddenException
 import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
 import de.seuhd.campuscoffee.domain.exceptions.ValidationException
@@ -107,6 +108,14 @@ class UserServiceTest {
     }
 
     @Test
+    fun `create with a taken login name throws DuplicationException and stores no consumption`() {
+        whenever(userDataService.upsert(any())).thenThrow(DuplicationException(User::class.java, "login name", "fresh"))
+
+        assertThrows<DuplicationException> { service.create(newUser(loginName = "fresh")) }
+        verify(coffeeConsumptionDataService, never()).upsert(any())
+    }
+
+    @Test
     fun `create is transactional with REQUIRED propagation`() {
         // the test looks up create by its parameter types, because a second overload of create takes an acting user
         val create = UserServiceImpl::class.java.getMethod("create", User::class.java)
@@ -121,6 +130,15 @@ class UserServiceTest {
     fun `create with a malformed login name throws ValidationException and stores nothing`(loginName: String) {
         assertThrows<ValidationException> { service.create(newUser(loginName = loginName)) }
         verifyNothingStored()
+    }
+
+    @Test
+    fun `create with a login name of one character stores the user`() {
+        stubUpserts()
+
+        service.create(newUser(loginName = "a"))
+
+        verify(userDataService).upsert(newUser(loginName = "a"))
     }
 
     @Test

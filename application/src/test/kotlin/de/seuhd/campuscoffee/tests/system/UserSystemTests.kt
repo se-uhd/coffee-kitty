@@ -130,6 +130,31 @@ class UserSystemTests : AbstractSystemTest() {
     }
 
     @Test
+    fun `creating a user with a login name of 255 characters returns 201 Created`() {
+        val response = UserRequests.create(newUser(loginName = "a".repeat(255)))
+
+        assertThat(response.status).isEqualTo(201)
+        assertThat(response.body.loginName).hasSize(255)
+    }
+
+    @Test
+    fun `creating a user with a login name of 256 characters returns 400 Bad Request that names the limits`() {
+        val response = UserRequests.create(newUser(loginName = "a".repeat(256)))
+
+        assertThat(response.status).isEqualTo(400)
+        assertThat(response.error.message).isEqualTo("loginName must have 1 to 255 characters")
+        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+    }
+
+    @Test
+    fun `creating a user with capital letters in the email address returns 201 Created with a lowercase address`() {
+        val response = UserRequests.create(newUser(emailAddress = "New.User@SE.Uni-Heidelberg.DE"))
+
+        assertThat(response.status).isEqualTo(201)
+        assertThat(response.body.emailAddress).isEqualTo("new.user@se.uni-heidelberg.de")
+    }
+
+    @Test
     fun `creating a user with a blank login name returns 400 Bad Request`() {
         val response = UserRequests.create(newUser(loginName = ""))
 
@@ -259,6 +284,20 @@ class UserSystemTests : AbstractSystemTest() {
 
         assertThat(response.status).isEqualTo(201)
         assertThat(response.body.role).isEqualTo(Role.ADMIN)
+    }
+
+    @Test
+    fun `creating a user as an admin whom another admin created returns 201 Created`() {
+        UserRequests.create(newUser(loginName = "second_admin") + ("role" to "ADMIN")).requireStatus(201)
+
+        val response =
+            UserRequests.create(
+                newUser(loginName = "third_user", emailAddress = "third.user@se.uni-heidelberg.de"),
+                actingUser = "second_admin"
+            )
+
+        assertThat(response.status).isEqualTo(201)
+        assertThat(response.body.role).isEqualTo(Role.USER)
     }
 
     @Test

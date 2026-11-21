@@ -71,6 +71,12 @@ with a line "Avoid:", which lists words not to use for the concept.
   acceptance tests create them the same way before each test.
   Code: `TestFixtures`, `FixtureStartupLoader`, `campus-coffee.fixtures.*`.
   Avoid: seeded user.
+- **test fixture**: A test object with fixed values that several tests share, or the state that a test prepares before
+  it runs the code under test. `TestFixtures` holds the shared test objects: the fixture users, a fixed time with a
+  clock that shows it, and a consumption without a coffee, with a recent coffee, and with an old coffee, whose grace
+  period has passed at the fixed time. A function with `@BeforeEach` prepares the state that each test of a class
+  needs, such as a stored user.
+  Code: `TestFixtures`, `FIXED_TIME`, `fixedClock`, `consumptionWithRecentCoffee`.
 
 ## Architecture
 

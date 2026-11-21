@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
 /**
  * System tests for reading the coffee count of a user, adding a coffee, and undoing a coffee. The tests send their
  * requests through [ConsumptionRequests]. The tests for an unknown user use a random id, and all other tests use the
- * fixture user `maxmustermann`.
+ * fixture user `maxmustermann`. One test also reads the coffee count of the fixture user `lisa_lee`.
  */
 class ConsumptionSystemTests : AbstractSystemTest() {
     private val loginName = "maxmustermann"
@@ -46,6 +46,25 @@ class ConsumptionSystemTests : AbstractSystemTest() {
         ConsumptionRequests.applyDelta(fixtureUserId(), ConsumptionDeltaDto(1)).requireStatus(200)
 
         assertThat(consumption().count).isEqualTo(2)
+    }
+
+    @Test
+    fun `adding a coffee for one user leaves the coffee count of another user at zero`() {
+        ConsumptionRequests.applyDelta(fixtureUserId(), ConsumptionDeltaDto(1)).requireStatus(200)
+
+        val other = ConsumptionRequests.retrieveConsumption(fixtureUser("lisa_lee").persistedId)
+
+        assertThat(other.body.count).isEqualTo(0)
+    }
+
+    @Test
+    fun `undoing a coffee at a count of zero returns 409 Conflict with the message that there is no coffee`() {
+        val response = ConsumptionRequests.undo(fixtureUserId())
+
+        assertThat(response.status).isEqualTo(409)
+        assertThat(response.error.errorCode).isEqualTo("ConflictException")
+        assertThat(response.error.message).isEqualTo("There is no coffee to undo.")
+        assertThat(consumption().count).isEqualTo(0)
     }
 
     @Test

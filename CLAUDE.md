@@ -52,7 +52,7 @@ when a build script declares a repository.
   `APPLICATION_PRODUCTION_PACKAGES`.
 - The production classes of `api` and `application` must not depend on the data ports or on
   `domain/.../implementation/`.
-- No class in `api` may depend on the internal ports or on `TestFixtures` in `domain/.../tests/`.
+- No production class in `api` may depend on the internal ports or on `TestFixtures` in `domain/.../tests/`.
 - The port packages may hold only interfaces named `*Service`, and `ports/data/` only interfaces named `*DataService`.
 - No class in the controller package may be a plain `@Controller`.
 - No production class, `*Impl` classes included, may depend on a concrete `*Impl` class. Depend on the port instead.
@@ -226,18 +226,26 @@ constraints, such as a null in a NOT NULL column, passes the startup check and f
 
 ## Testing Strategy
 
-- Unit tests: the domain service tests in `domain/src/test/kotlin/`, such as `UserServiceTest`, and
-  `FixtureStartupLoaderTest` in `application/src/test/kotlin/`. They use Mockito mocks.
-- Integration tests: `CrudDataServiceIntegrationTest` and `ConstraintMappingRegistryIntegrationTest` in
-  `data/src/test/kotlin/`. They extend `AbstractDataIntegrationTest`, which runs each test in the Spring context of
-  `DataTestApplication` against PostgreSQL in Testcontainers. `ConstraintMappingRegistryIntegrationTest` fails unless
-  `ConstraintMapping.REGISTRY` lists exactly the unique constraints and unique indexes of the schema.
+- Unit tests: the tests in `domain/src/test/kotlin/`, such as `UserServiceTest` and `GracePeriodTest`, and the tests of
+  the startup tasks in `application/src/test/kotlin/`, such as `FixtureStartupLoaderTest`. The test of a class that
+  depends on ports, such as a domain service, replaces the ports with Mockito mocks. The api module has no test
+  sources. The unit tests of its classes, such as `GlobalExceptionHandlerTest` and `UserDtoMapperTest`, are in
+  `application/src/test/kotlin/de/seuhd/campuscoffee/api/`, in the package of the class under test. The test of a
+  mapper creates the implementation that MapStruct generates, such as `UserDtoMapperImpl`, with its constructor.
+  `UserControllerTest` uses its mocks as a stub, for a verification, and with an argument captor, and
+  `CoffeeConsumptionServiceTest` has a test with a spy.
+- Integration tests: `CrudDataServiceIntegrationTest`, `CoffeeConsumptionDataServiceIntegrationTest`, and
+  `ConstraintMappingRegistryIntegrationTest` in `data/src/test/kotlin/`. They extend `AbstractDataIntegrationTest`,
+  which runs each test in the Spring context of `DataTestApplication` against PostgreSQL in Testcontainers.
+  `ConstraintMappingRegistryIntegrationTest` fails unless `ConstraintMapping.REGISTRY` lists exactly the unique
+  constraints and unique indexes of the schema.
 - System tests: the classes in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/system/`, such as
   `UserSystemTests`. They extend `AbstractSystemTest` and send their requests through `UserRequests` and
   `ConsumptionRequests` in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/`, which use Spring's
   `RestTestClient`. A function for a system test returns a `Response` with the status code, the headers, and the body
   or the error response. `SystemTestUtils` holds the PostgreSQL container from Testcontainers that the system and
-  acceptance tests share.
+  acceptance tests share. The system tests run with the system clock. `UndoWithoutGracePeriodSystemTests` sets the
+  grace period to zero with `@TestPropertySource` and therefore runs in a Spring context of its own.
 - Acceptance tests: Cucumber scenarios for behavior-driven development (BDD). The step definitions and the Cucumber
   configuration are in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/acceptance/`, and the feature files,
   such as `consumption.feature`, are in `application/src/test/resources/de/seuhd/campuscoffee/tests/acceptance/`.
@@ -250,6 +258,16 @@ System tests and step definitions send every request through `UserRequests` and 
 an HTTP request themselves, so that a reader of a test does not need to know the REST API. The exceptions are the tests
 in which the request itself is under test. `ErrorResponseSystemTests` builds the requests for an unknown path and for a
 path that the firewall rejects, and `OpenApiSystemTests` builds the request for the OpenAPI definition.
+
+### Test Fixtures
+
+`TestFixtures` in `domain/src/main/kotlin/de/seuhd/campuscoffee/domain/tests/` holds the test objects that the tests of
+every module share: the fixture users with `admin()` and `regularUser()`, the fixed time `FIXED_TIME` with
+`fixedClock()`, and the consumptions of `consumptionWithoutCoffee`, `consumptionWithRecentCoffee`, and
+`consumptionWithOldCoffee`. Take a test object from `TestFixtures` when a test needs one of these states. Create the
+object in the test when the test checks its values one by one (see `UserDtoMapperTest`). Prepare the state that each
+test of a class needs anew, such as a stored user or the current request, in a function with `@BeforeEach` (see
+`CoffeeConsumptionDataServiceIntegrationTest.storeUser` and `UserControllerTest.setUp`).
 
 ### Test Naming
 

@@ -1,6 +1,8 @@
 package de.seuhd.campuscoffee.tests.system
 
 import de.seuhd.campuscoffee.api.exceptions.ErrorResponse
+import de.seuhd.campuscoffee.domain.model.persistedId
+import de.seuhd.campuscoffee.tests.ConsumptionRequests
 import de.seuhd.campuscoffee.tests.Response
 import de.seuhd.campuscoffee.tests.SystemTestUtils.client
 import de.seuhd.campuscoffee.tests.UserRequests
@@ -53,6 +55,17 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
         assertThat(response.status).isEqualTo(404)
         assertThat(response.error.errorCode).isEqualTo("NotFound")
         assertThat(response.error.message).isEqualTo("Not Found")
+    }
+
+    @Test
+    fun `posting a body that cannot be read returns 400 Bad Request with a message that does not quote the body`() {
+        val userId = fixtureUser("maxmustermann").persistedId
+
+        val response = ConsumptionRequests.applyDelta(userId, mapOf("delta" to "one coffee"))
+
+        assertThat(response.status).isEqualTo(400)
+        assertThat(response.error.errorCode).isEqualTo("BadRequest")
+        assertThat(response.error.message).isEqualTo("Bad Request")
     }
 
     @Test

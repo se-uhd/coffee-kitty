@@ -7,6 +7,28 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `TestFixtures` has test fixtures beyond the fixture users: `admin()` and `regularUser()` return one fixture user
+  each, `FIXED_TIME` and `fixedClock()` fix the time of a test, and `consumptionWithoutCoffee`,
+  `consumptionWithRecentCoffee`, and `consumptionWithOldCoffee` return a consumption in a named state. GLOSSARY.md
+  defines the term test fixture.
+- Unit tests of the domain: `AuthorizationUtilTest` for `requireAdmin`, `ConsumptionPropertiesTest`,
+  `DataResetServiceTest`, `IdentifiableTest`, `DomainExceptionsTest`, and `TestFixturesTest`. `GracePeriodTest`,
+  `CoffeeConsumptionServiceTest`, and `UserServiceTest` have further tests, such as an undo 4 minutes and 59 seconds
+  after the coffee, an undo of the only coffee, a login name of one character, and a test with a spy of the grace
+  period.
+- Unit tests of the api module in the test sources of the application module: `GlobalExceptionHandlerTest` checks the
+  status and the error response for each domain exception, `UserDtoMapperTest` and `ConsumptionDtoMapperTest` check
+  the DTO mappers, and `UserControllerTest` checks `UserController` with a stub, a verification, and an argument
+  captor.
+- Integration tests: `CoffeeConsumptionDataServiceIntegrationTest` checks how the database stores and deletes the
+  times of the coffees and that it refuses a negative coffee count. `CrudDataServiceIntegrationTest` checks that the
+  data adapter returns the users ordered by login name and stores the role of a user.
+- System tests for an undo at a coffee count of zero, an undo with a grace period of
+  zero (`UndoWithoutGracePeriodSystemTests`), a login name of 255 and of 256 characters, an email address with capital
+  letters, an admin whom another admin created, and a request body that cannot be read.
+
 ## [0.2.1] - 2026-11-17
 
 ### Added
