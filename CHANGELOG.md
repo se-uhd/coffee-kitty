@@ -13,6 +13,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and the error code `BadRequest`. Until now Jackson read the string as the number 1, and the request added a coffee.
   `application.yaml` sets `spring.jackson.mapper.allow-coercion-of-scalars` to false, so the same holds for every
   number and boolean field of a request body.
+- `POST /api/users` rejects a JSON number for the role, such as `"role": 1`, and a JSON number or boolean for a
+  `String` field, such as `"loginName": 12345`, with a 400 and the error code `BadRequest`. Until now Jackson read the
+  number 1 as the role `ADMIN`, the constant with the index 1, and stored a number or a boolean as its text, such as
+  the login name "12345". `application.yaml` sets `spring.jackson.datatype.enum.fail-on-numbers-for-enums` to true for
+  every enum field of a request body, and the new `JsonConfig` rejects a number or a boolean for every `String` field,
+  for which Spring Boot has no property.
 
 ## [0.2.1] - 2026-11-17
 
