@@ -129,8 +129,12 @@ gradle :application:bootRun --args='--spring.profiles.active=dev'
 ```
 
 Scope a `--tests` filter to one subproject, because Gradle fails the test task of every subproject without a matching
-test. Quote the filter, because the backtick names of test methods contain spaces. In `:application:test`, a filter that
-starts with `*` also runs the Cucumber scenarios, which need Docker. Without Docker, run the rest of the build with
+test. Quote the filter, because the backtick names of test methods contain spaces. In `:application:test`, start the
+filter with a class name or a package, as in `--tests "ArchitectureTests"` or
+`--tests "de.seuhd.campuscoffee.tests.system*"`, and never with `*`. With `--tests "*ArchitectureTests"`, the matching
+tests run, but the task fails with `CucumberTests > initializationError`: Gradle then also passes the suite class
+`CucumberTests` to JUnit, the filter removes all its scenarios, and JUnit fails a suite without tests
+(`NoTestsDiscoveredException`). Without Docker, run the rest of the build with
 `gradle build -x :application:test -x :data:test`.
 
 The root `gradle.properties` turns on the Gradle configuration cache. A task action must not reference a top-level value
