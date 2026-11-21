@@ -165,7 +165,8 @@ curl http://localhost:8081/api/users
 with a coffee count of zero and returns 201 Created with the new user and a `Location` header. Only an admin may create
 a user. The header `X-Acting-User` has to contain the login name of an admin. The endpoint returns 401 Unauthorized
 without the header or for an unknown login name, 403 Forbidden when the acting user is not an admin, 400 Bad Request for
-a missing or malformed field or an `id` in the body, and 409 Conflict when the login name or the email address is taken.
+a missing or malformed field, such as a number for the login name or the role, or an `id` in the body, and 409 Conflict
+when the login name or the email address is taken.
 Because a filter checks the acting user before the controller reads the body, a request without a known acting user gets
 401 even with an invalid body. Every 401 has the header `WWW-Authenticate: X-Acting-User realm="Coffee Kitty"`, as RFC
 9110 requires. In the `dev` profile, the fixture loader creates `jane_doe` as an admin. When no admin exists, the app

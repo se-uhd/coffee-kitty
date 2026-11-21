@@ -269,6 +269,33 @@ class UserSystemTests : AbstractSystemTest() {
         assertThat(userService.getAll()).hasSize(fixtureUsers.size)
     }
 
+    @Test
+    fun `creating a user with a number as the role returns 400 Bad Request and creates no user`() {
+        val response = UserRequests.create(newUser() + ("role" to 1))
+
+        assertThat(response.status).isEqualTo(400)
+        assertThat(response.error.errorCode).isEqualTo("BadRequest")
+        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+    }
+
+    @Test
+    fun `creating a user with a number as the login name returns 400 Bad Request and creates no user`() {
+        val response = UserRequests.create(newUser() + ("loginName" to 12345))
+
+        assertThat(response.status).isEqualTo(400)
+        assertThat(response.error.errorCode).isEqualTo("BadRequest")
+        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+    }
+
+    @Test
+    fun `creating a user with a boolean as the first name returns 400 Bad Request and creates no user`() {
+        val response = UserRequests.create(newUser() + ("firstName" to true))
+
+        assertThat(response.status).isEqualTo(400)
+        assertThat(response.error.errorCode).isEqualTo("BadRequest")
+        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+    }
+
     private companion object {
         /** The challenge of Coffee Kitty in the header WWW-Authenticate, which RFC 9110 requires in a 401. */
         const val CHALLENGE = "X-Acting-User realm=\"Coffee Kitty\""

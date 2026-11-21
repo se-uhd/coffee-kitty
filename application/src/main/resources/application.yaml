@@ -29,6 +29,8 @@ spring:
       # request causes, and Hibernate would log the same error a second time.
       hibernate.jdbc.log.errors: false
   jackson:
+    # The settings below make Jackson reject a value of the wrong JSON type in a request body instead of converting
+    # it. JsonConfig in the api module adds the setting for String fields, for which Spring Boot has no property.
     mapper:
       # Jackson rejects a JSON string for a number or a boolean field, and the request gets a 400. With the default
       # true, Jackson would read a delta of "1" as 1, and the request would add a coffee.
@@ -37,6 +39,11 @@ spring:
       # Jackson rejects a JSON number with a fraction for an integer field, and the request gets a 400. With the
       # default true, Jackson would truncate a delta of 1.9 to 1, and the request would add a coffee.
       accept-float-as-int: false
+    datatype:
+      enum:
+        # Jackson rejects a JSON number for an enum field, and the request gets a 400. With the default false,
+        # Jackson would read a role of 1 as ADMIN, the constant of Role with the index 1.
+        fail-on-numbers-for-enums: true
   flyway:
     enabled: true
     locations: classpath:db/migration
