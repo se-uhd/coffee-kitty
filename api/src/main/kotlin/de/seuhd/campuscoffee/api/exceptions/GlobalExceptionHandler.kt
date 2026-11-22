@@ -81,6 +81,11 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
      * `require`. Every such response has the fixed message "An unexpected error occurred." The log line at ERROR
      * contains the method and path of the request and the exception with its stack trace.
      *
+     * One `IllegalArgumentException` is an error of the client: Spring throws it while it reads a request with a
+     * wildcard in the `Content-Type` header (an asterisk as the type or as the subtype), before it asks a message
+     * converter. Such a request gets a 415 with the error code `UnsupportedMediaType`, like every other media type
+     * that the API does not read, and the handler logs it at INFO.
+     *
      * @param exception the unexpected exception
      * @param request   the current web request
      */
@@ -89,6 +94,11 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         exception: Exception,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
+        if (exception is IllegalArgumentException && hasWildcardContentType(request)) {
+            val status = HttpStatus.UNSUPPORTED_MEDIA_TYPE
+            log.info { "Wildcard Content-Type -> $status on ${describe(request)}" }
+            return respond(status, errorBody(status, request, status.reasonPhrase))
+        }
         log.error(exception) { "Unexpected error on ${describe(request)}" }
         return respond(
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -177,6 +187,17 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             timestamp = LocalDateTime.now(ZoneOffset.UTC),
             path = extractPath(request)
         )
+
+    /**
+     * Returns whether the `Content-Type` header of [request] has an asterisk as its type or as its subtype, also
+     * before a suffix such as `+json`. A header that is absent or is not a media type is not a wildcard.
+     */
+    private fun hasWildcardContentType(request: WebRequest): Boolean =
+        request
+            .getHeader(HttpHeaders.CONTENT_TYPE)
+            ?.let { header -> runCatching { MediaType.parseMediaType(header) }.getOrNull() }
+            ?.let { mediaType -> mediaType.isWildcardType || mediaType.isWildcardSubtype }
+            ?: false
 
     /** Returns the method and path of [request] for a log line, without the query string. */
     private fun describe(request: WebRequest): String =
