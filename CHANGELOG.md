@@ -7,6 +7,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- A request with a wildcard in its `Content-Type`, such as `*/*` or `application/*`, gets a 415 with the error code
+  `UnsupportedMediaType`. Until now it got a 500, because Spring rejects such a header with an
+  `IllegalArgumentException` while it reads the request, and `GlobalExceptionHandler` mapped that exception like a
+  failed `require`.
+
 ## [0.2.2] - 2026-11-22
 
 ### Fixed

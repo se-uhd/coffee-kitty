@@ -11,6 +11,7 @@ import de.seuhd.campuscoffee.tests.toResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -91,6 +92,29 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
 
         assertThat(response.status).isEqualTo(415)
         assertThat(response.error.errorCode).isEqualTo("UnsupportedMediaType")
+        assertThat(UserRequests.retrieveAll().body).isEqualTo(usersBefore)
+    }
+
+    @Test
+    fun `creating a user with a wildcard Content-Type returns 415 Unsupported Media Type and creates no user`() {
+        val usersBefore = UserRequests.retrieveAll().body
+
+        for (contentType in listOf("*/*", "application/*", "application/*+json")) {
+            val response: Response<ErrorResponse> =
+                client()
+                    .post()
+                    .uri("/api/users")
+                    .header(HttpHeaders.CONTENT_TYPE, contentType)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .header(CurrentUserProvider.ACTING_USER_HEADER, ConsumptionRequests.ADMIN_LOGIN_NAME)
+                    .body(
+                        """{"loginName":"wildcard_user","emailAddress":"w@example.com","firstName":"W","lastName":"U"}"""
+                    ).exchange()
+                    .toResponse()
+
+            assertThat(response.status).`as`(contentType).isEqualTo(415)
+            assertThat(response.error.errorCode).`as`(contentType).isEqualTo("UnsupportedMediaType")
+        }
         assertThat(UserRequests.retrieveAll().body).isEqualTo(usersBefore)
     }
 
