@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-22
+
 ### Fixed
 
 - `POST /api/users/{userId}/consumption` rejects a delta that is a JSON string, such as `{"delta": "1"}`, with a 400
@@ -123,6 +125,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A REST API that lists and creates users, adds a coffee to a user's coffee count, and stores the users and their
   coffee counts in PostgreSQL. A multi-module Gradle build runs ktlint, detekt, and the tests.
 
+[0.2.2]: https://github.com/se-uhd/coffee-kitty/releases/tag/v0.2.2
 [0.2.1]: https://github.com/se-uhd/coffee-kitty/releases/tag/v0.2.1
 [0.2.0]: https://github.com/se-uhd/coffee-kitty/releases/tag/v0.2.0
 [0.1.0]: https://github.com/se-uhd/coffee-kitty/releases/tag/v0.1.0
