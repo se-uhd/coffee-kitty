@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-11-22
+
 ### Fixed
 
 - A request with a wildcard in its `Content-Type`, such as `*/*` or `application/*`, gets a 415 with the error code
@@ -132,6 +134,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A REST API that lists and creates users, adds a coffee to a user's coffee count, and stores the users and their
   coffee counts in PostgreSQL. A multi-module Gradle build runs ktlint, detekt, and the tests.
 
+[0.2.3]: https://github.com/se-uhd/coffee-kitty/releases/tag/v0.2.3
 [0.2.2]: https://github.com/se-uhd/coffee-kitty/releases/tag/v0.2.2
 [0.2.1]: https://github.com/se-uhd/coffee-kitty/releases/tag/v0.2.1
 [0.2.0]: https://github.com/se-uhd/coffee-kitty/releases/tag/v0.2.0
