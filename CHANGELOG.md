@@ -19,6 +19,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the login name "12345". `application.yaml` sets `spring.jackson.datatype.enum.fail-on-numbers-for-enums` to true for
   every enum field of a request body, and the new `JsonConfig` rejects a number or a boolean for every `String` field,
   for which Spring Boot has no property.
+- The REST API reads and writes only JSON, as the README states. A request with a YAML body, such as `POST /api/users`
+  with `Content-Type: application/yaml`, gets a 415 with the error code `UnsupportedMediaType`, and a request with
+  `Accept: application/yaml` gets a 406. Until now such a body got a 500, and such an `Accept` header got a YAML
+  response, because springdoc puts the YAML module of Jackson on the classpath and Spring registered a YAML message
+  converter for it. `ApiWebConfig` removes this message converter as it removes the XML message converters.
 
 ## [0.2.1] - 2026-11-17
 
