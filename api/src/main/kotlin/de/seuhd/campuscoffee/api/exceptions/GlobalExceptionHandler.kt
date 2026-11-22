@@ -94,7 +94,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         exception: Exception,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        if (exception is IllegalArgumentException && hasWildcardContentType(request)) {
+        if (exception is IllegalArgumentException && request.hasWildcardContentType()) {
             val status = HttpStatus.UNSUPPORTED_MEDIA_TYPE
             log.info { "Wildcard Content-Type -> $status on ${describe(request)}" }
             return respond(status, errorBody(status, request, status.reasonPhrase))
@@ -188,17 +188,6 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             path = extractPath(request)
         )
 
-    /**
-     * Returns whether the `Content-Type` header of [request] has an asterisk as its type or as its subtype, also
-     * before a suffix such as `+json`. A header that is absent or is not a media type is not a wildcard.
-     */
-    private fun hasWildcardContentType(request: WebRequest): Boolean =
-        request
-            .getHeader(HttpHeaders.CONTENT_TYPE)
-            ?.let { header -> runCatching { MediaType.parseMediaType(header) }.getOrNull() }
-            ?.let { mediaType -> mediaType.isWildcardType || mediaType.isWildcardSubtype }
-            ?: false
-
     /** Returns the method and path of [request] for a log line, without the query string. */
     private fun describe(request: WebRequest): String =
         (request as? ServletWebRequest)?.request?.let { "${it.method} ${loggableText(it.requestURI)}" }
@@ -264,3 +253,13 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         private const val MAX_LOGGED_LENGTH = 500
     }
 }
+
+/**
+ * Returns whether the `Content-Type` header of the request has an asterisk as its type or as its subtype, also before
+ * a suffix such as `+json`. A header that is absent or is not a media type is not a wildcard.
+ */
+private fun WebRequest.hasWildcardContentType(): Boolean =
+    getHeader(HttpHeaders.CONTENT_TYPE)
+        ?.let { header -> runCatching { MediaType.parseMediaType(header) }.getOrNull() }
+        ?.let { mediaType -> mediaType.isWildcardType || mediaType.isWildcardSubtype }
+        ?: false
