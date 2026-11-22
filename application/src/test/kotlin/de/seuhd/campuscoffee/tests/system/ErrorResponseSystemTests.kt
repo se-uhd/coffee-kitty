@@ -1,8 +1,11 @@
 package de.seuhd.campuscoffee.tests.system
 
 import de.seuhd.campuscoffee.api.exceptions.ErrorResponse
+import de.seuhd.campuscoffee.api.security.CurrentUserProvider
+import de.seuhd.campuscoffee.tests.ConsumptionRequests
 import de.seuhd.campuscoffee.tests.Response
 import de.seuhd.campuscoffee.tests.SystemTestUtils.client
+import de.seuhd.campuscoffee.tests.SystemTestUtils.statusCode
 import de.seuhd.campuscoffee.tests.UserRequests
 import de.seuhd.campuscoffee.tests.toResponse
 import org.assertj.core.api.Assertions.assertThat
@@ -65,7 +68,49 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
         assertThat(response.error.path).isEqualTo("/api/users;x=1")
     }
 
+    @Test
+    fun `creating a user with a YAML request body returns 415 Unsupported Media Type and creates no user`() {
+        val usersBefore = UserRequests.retrieveAll().body
+
+        val response: Response<ErrorResponse> =
+            client()
+                .post()
+                .uri("/api/users")
+                .contentType(YAML)
+                .accept(MediaType.APPLICATION_JSON)
+                .header(CurrentUserProvider.ACTING_USER_HEADER, ConsumptionRequests.ADMIN_LOGIN_NAME)
+                .body(
+                    """
+                    loginName: yaml_user
+                    emailAddress: yaml.user@example.com
+                    firstName: Yaml
+                    lastName: User
+                    """.trimIndent()
+                ).exchange()
+                .toResponse()
+
+        assertThat(response.status).isEqualTo(415)
+        assertThat(response.error.errorCode).isEqualTo("UnsupportedMediaType")
+        assertThat(UserRequests.retrieveAll().body).isEqualTo(usersBefore)
+    }
+
+    @Test
+    fun `getting the users with the Accept header for YAML returns 406 Not Acceptable`() {
+        val status =
+            client()
+                .get()
+                .uri("/api/users")
+                .accept(YAML)
+                .exchange()
+                .statusCode()
+
+        assertThat(status).isEqualTo(406)
+    }
+
     private companion object {
+        /** The media type of a YAML body, which the API neither reads nor writes. */
+        val YAML: MediaType = MediaType.parseMediaType("application/yaml")
+
         /** The tolerance for comparing the UTC timestamp of an error response with the current UTC time. */
         val byLessThanOneMinute = within(1, ChronoUnit.MINUTES)
     }
