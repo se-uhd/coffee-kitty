@@ -65,8 +65,9 @@ architecture. ArchUnit tests check the boundaries between the four modules:
 
 The included build `build-logic/` holds the convention plugins, which configure Java, Kotlin, ktlint, and detekt in the
 same way for every module (see `doc/adr/001-multi-module-gradle-build-with-convention-plugins.md`). The `detekt-rules`
-subproject holds the custom detekt rules that require KDoc. `CLAUDE.md` describes the architecture and the conventions
-in detail, and `GLOSSARY.md` defines the terms of the project.
+subproject holds the custom detekt rules that require KDoc, and the `coverage` subproject creates the coverage report of
+all modules. `CLAUDE.md` describes the architecture and the conventions in detail, and `GLOSSARY.md` defines the terms
+of the project.
 
 ## Prerequisites
 
@@ -289,14 +290,14 @@ The domain unit tests use Mockito. Docker must be running for the data integrati
 Cucumber acceptance tests, because they run against PostgreSQL in Testcontainers. ArchUnit tests check the layer rules,
 and detekt checks that the classes and functions of the main sources have KDoc.
 
-Compile every module, run ktlint and detekt, and run every test. Gradle prints `BUILD SUCCESSFUL` when every check
-and every test passes:
+Compile every module, run ktlint, detekt, CPD, and every test, and check the code coverage. Gradle prints
+`BUILD SUCCESSFUL` when every check and every test passes:
 
 ```shell
 gradle build
 ```
 
-Run the tests without ktlint and detekt:
+Run the tests without ktlint, detekt, CPD, and the coverage gate:
 
 ```shell
 gradle test
@@ -306,6 +307,28 @@ Let ktlint fix formatting violations in place:
 
 ```shell
 gradle ktlintFormat
+```
+
+Create the coverage report of all modules, `coverage/build/reports/jacoco/testCodeCoverageReport/html/index.html`.
+`gradle build` also creates it and fails below 90% of the lines or 80% of the branches:
+
+```shell
+gradle :coverage:testCodeCoverageReport
+```
+
+Run the mutation tests of the domain module. PIT changes the code, e.g., it negates a condition, and runs the unit
+tests of the domain module against each changed version (mutant). The report `domain/build/reports/pitest/index.html`
+lists the mutants that no test detects. The task needs no Docker and fails when the tests detect fewer than 85% of the
+mutants that they execute. `gradle build` does not run it:
+
+```shell
+gradle :domain:pitest
+```
+
+Search the production code for duplicates with CPD, the copy-paste detector of PMD. `gradle build` also runs it:
+
+```shell
+gradle cpd
 ```
 
 On every push to `main` and on every pull request, the GitHub Actions workflow `.github/workflows/build.yml` runs

@@ -1,19 +1,20 @@
 plugins {
     id("de.seuhd.campuscoffee.java-conventions")
     id("de.seuhd.campuscoffee.kotlin-conventions")
+    id("de.seuhd.campuscoffee.jacoco-conventions")
     alias(libs.plugins.spring.boot)
 }
 
 dependencies {
     implementation(project(":domain"))
     implementation(project(":api"))
-    // No source in this module imports the data module. The data module is still a compile dependency, because
-    // IntelliJ resolves the keys of a `@ConfigurationProperties` class in application.yaml only from compile
-    // dependencies. The data module does not declare such a class yet.
+    // No source in this module imports the data module, and the data module does not declare a
+    // `@ConfigurationProperties` class yet. The data module is still a compile dependency, because IntelliJ resolves
+    // the keys of such a class in application.yaml only from compile dependencies.
     implementation(project(":data"))
 
     implementation(libs.spring.boot.starter.webmvc)
-    // FixtureStartupLoader logs through kotlin-logging, which wraps SLF4J in a Kotlin API.
+    // FixtureStartupLoader and BootstrapAdminLoader log through kotlin-logging, which wraps SLF4J in a Kotlin API.
     implementation(libs.kotlin.logging)
 
     // No source imports the PostgreSQL driver. The driver is still a compile dependency, because IntelliJ resolves
@@ -39,7 +40,7 @@ springBoot {
     }
 }
 
-// Disables the plain jar, because only the executable jar that bootJar builds is used.
+// Disables the plain jar, because the project needs only the executable jar that bootJar builds.
 tasks.named("jar") {
     enabled = false
 }

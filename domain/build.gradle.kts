@@ -1,6 +1,8 @@
 plugins {
     id("de.seuhd.campuscoffee.java-conventions")
     id("de.seuhd.campuscoffee.kotlin-conventions")
+    id("de.seuhd.campuscoffee.jacoco-conventions")
+    id("de.seuhd.campuscoffee.pitest-conventions")
 }
 
 dependencies {
