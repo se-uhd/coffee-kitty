@@ -14,7 +14,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.NullAndEmptySource
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argThat
@@ -281,9 +280,8 @@ class CoffeeConsumptionServiceTest {
     }
 
     @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = ["   ", "\t\n"])
-    fun `correctCount throws ValidationException for a missing or blank note`(blankNote: String?) {
+    @ValueSource(strings = ["", "   ", "\t\n"])
+    fun `correctCount throws ValidationException for a blank note`(blankNote: String) {
         assertThrows<ValidationException> { service.correctCount(userId, 1, blankNote, admin) }
 
         verifyNothingStored()

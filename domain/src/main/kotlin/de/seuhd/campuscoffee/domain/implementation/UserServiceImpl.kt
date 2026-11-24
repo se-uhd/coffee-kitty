@@ -13,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 /**
- * Domain implementation of [UserService] and [UserInternalService]. [create] checks every new user, including the
- * fixture users, which Bean Validation does not check. [create] stores the user and the user's consumption in one
- * transaction. If [create] cannot store the consumption, the rollback removes the user too.
+ * Domain implementation of [UserService] and [UserInternalService]. [create] checks the values of every new user,
+ * including the fixture users and the bootstrap admin, which no request creates. [create] stores the user and the
+ * user's consumption in one transaction. If [create] cannot store the consumption, the rollback removes the user too.
  */
 @Service
 class UserServiceImpl(
@@ -90,7 +90,7 @@ class UserServiceImpl(
 
     /**
      * Checks that [emailAddress] has at most [User.MAX_EMAIL_LENGTH] characters and matches
-     * [User.EMAIL_ADDRESS_PATTERN]. The pattern requires at least [User.MIN_EMAIL_LENGTH] characters.
+     * [User.EMAIL_ADDRESS_PATTERN].
      *
      * @param emailAddress the email address of the new user, trimmed and in lowercase
      * @throws ValidationException if the email address is too long or does not match the pattern

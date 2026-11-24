@@ -115,8 +115,8 @@ class ConsumptionController(
     /**
      * Corrects the coffee count of the user with [userId] to the total in [dto], stores the correction with the note in
      * [dto] (FR-8), and returns the corrected coffee count. The response is 401 Unauthorized without a known acting
-     * user and 403 Forbidden if the acting user is not an admin. It is 400 Bad Request for a missing or negative total,
-     * for a total above 1,000,000, and for a note that breaks a rule of [ConsumptionCorrectionDto]. The coffee app of
+     * user and 403 Forbidden if the acting user is not an admin. It is 400 Bad Request for a body without a total or
+     * a note (see [ConsumptionCorrectionDto]) and for a total or a note that the domain rejects. The coffee app of
      * SE@UHD has an endpoint with the same HTTP method, path, and function name.
      *
      * @param userId the id of the user whose coffee count the admin corrects
@@ -144,7 +144,7 @@ class ConsumptionController(
             coffeeConsumptionService.correctCount(
                 userId,
                 requireNotNull(dto.total),
-                dto.note,
+                requireNotNull(dto.note),
                 currentUserProvider.currentUser()
             )
         return ResponseEntity.ok(consumptionDtoMapper.toDto(corrected))

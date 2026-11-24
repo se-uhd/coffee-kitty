@@ -6,8 +6,8 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
 /**
- * MapStruct mapper from a [CountCorrection] to a [CountCorrectionDto]. The mapper converts only in this direction and
- * does not extend [DtoMapper] (see [ConsumptionDtoMapper]).
+ * MapStruct mapper from a [CountCorrection] to a [CountCorrectionDto]. The mapper converts only in this direction (see
+ * [ConsumptionDtoMapper]).
  */
 @Mapper(componentModel = "spring")
 interface CountCorrectionDtoMapper {

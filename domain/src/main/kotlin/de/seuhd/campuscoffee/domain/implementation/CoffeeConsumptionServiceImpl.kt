@@ -93,7 +93,7 @@ class CoffeeConsumptionServiceImpl(
     override fun correctCount(
         userId: UUID,
         total: Int,
-        note: String?,
+        note: String,
         actingUser: User
     ): CoffeeConsumption {
         requireAdmin(actingUser, "correct a coffee count")
@@ -138,11 +138,11 @@ class CoffeeConsumptionServiceImpl(
      * Returns [note] if it is not blank, has at most [CountCorrection.MAX_NOTE_LENGTH] characters, and does not
      * contain the NUL character, which PostgreSQL cannot store in a `varchar` column. A note can contain line breaks.
      *
-     * @param note the note of a correction, or null if the request has no note
-     * @throws ValidationException if [note] is null, blank, or too long or contains the NUL character
+     * @param note the note of a correction
+     * @throws ValidationException if [note] is blank or too long or contains the NUL character
      */
-    private fun requireValidNote(note: String?): String {
-        if (note.isNullOrBlank()) {
+    private fun requireValidNote(note: String): String {
+        if (note.isBlank()) {
             throw ValidationException("The note of a correction must not be blank.")
         }
         if (note.length > CountCorrection.MAX_NOTE_LENGTH || note.contains('\u0000')) {

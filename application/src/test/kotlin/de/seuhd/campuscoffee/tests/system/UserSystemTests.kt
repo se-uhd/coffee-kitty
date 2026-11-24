@@ -170,7 +170,7 @@ class UserSystemTests : AbstractSystemTest() {
         val response = userRequests.create(newUser(loginName = "a".repeat(256)))
 
         assertThat(response.status).isEqualTo(400)
-        assertThat(response.error.errorCode).isEqualTo("BadRequest")
+        assertThat(response.error.errorCode).isEqualTo("ValidationException")
         assertThat(userService.getAll()).hasSize(fixtureUsers.size)
     }
 
@@ -195,7 +195,7 @@ class UserSystemTests : AbstractSystemTest() {
         val response = userRequests.create(newUser(firstName = "   "))
 
         assertThat(response.status).isEqualTo(400)
-        assertThat(response.error.errorCode).isEqualTo("BadRequest")
+        assertThat(response.error.errorCode).isEqualTo("ValidationException")
     }
 
     @Test
@@ -203,8 +203,8 @@ class UserSystemTests : AbstractSystemTest() {
         val response = userRequests.create(newUser(loginName = "jane doe"))
 
         assertThat(response.status).isEqualTo(400)
-        assertThat(response.error.errorCode).isEqualTo("BadRequest")
-        assertThat(response.error.message).contains("loginName").doesNotContain("jane doe")
+        assertThat(response.error.errorCode).isEqualTo("ValidationException")
+        assertThat(response.error.message).doesNotContain("jane doe")
     }
 
     @Test
@@ -214,8 +214,24 @@ class UserSystemTests : AbstractSystemTest() {
         val response = userRequests.create(body)
 
         assertThat(response.status).isEqualTo(400)
-        assertThat(response.error.errorCode).isEqualTo("ValidationException")
+        assertThat(response.error.errorCode).isEqualTo("BadRequest")
         assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+    }
+
+    @Test
+    fun `creating a user with a misspelled field returns 400 Bad Request`() {
+        val response = userRequests.create(newUser() + ("rol" to "ADMIN"))
+
+        assertThat(response.status).isEqualTo(400)
+        assertThat(response.error.errorCode).isEqualTo("BadRequest")
+        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+    }
+
+    @Test
+    fun `creating a user without an email address names the missing field in the message`() {
+        val response = userRequests.create(newUser() - "emailAddress")
+
+        assertThat(response.error.message).contains("emailAddress")
     }
 
     @Test

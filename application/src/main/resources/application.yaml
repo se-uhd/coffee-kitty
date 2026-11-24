@@ -37,6 +37,10 @@ spring:
       # true, Jackson would read a delta of "1" as 1, and the request would add a coffee.
       allow-coercion-of-scalars: false
     deserialization:
+      # Jackson rejects a request body with a field that the DTO does not have, and the request gets a 400. With the
+      # default false, Jackson would ignore the field: POST /api/users would accept a body with an id or with a
+      # misspelled optional field, such as "rol", and create the user without it.
+      fail-on-unknown-properties: true
       # Jackson rejects a JSON number with a fraction for an integer field, and the request gets a 400. With the
       # default true, Jackson would truncate a delta of 1.9 to 1, and the request would add a coffee.
       accept-float-as-int: false
