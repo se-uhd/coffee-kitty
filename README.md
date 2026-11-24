@@ -5,10 +5,11 @@
 
 # Coffee Kitty
 
-Coffee Kitty counts the coffees that the users in a group drink from a shared coffee machine. The group buys new coffee
-beans from a shared cash box, the kitty. A user can also buy coffee with their own money and declare the purchase as an
-expense. So far, the app is a minimal REST API that stores users and their coffee counts, which change by one coffee at
-a time. Prices, payments, expenses, a user interface, and authentication are still missing.
+Coffee Kitty counts the coffees that the users in a group drink from a shared coffee machine. The group pays for new
+coffee beans from a shared cash box, the kitty. A user can also buy coffee beans with their own money and record the
+amount as an expense. So far, the app is a minimal REST API that stores users and their coffee counts, which change by
+one coffee at a time and which an admin can correct. The database already has the tables for prices, payments, expenses,
+beans, ratings, and balances, but no endpoint uses them yet. A user interface and authentication are still missing.
 
 Coffee Kitty is the running example of a software engineering course at Heidelberg University. Students first see the
 app in the lectures on agentic software engineering and extend it over the semester, for example with a price per cup
@@ -151,11 +152,13 @@ another Gradle version, ignore the offer and select the local installation.
 
 ## Test fixtures (dev)
 
-On every start in the `dev` profile, the fixture loader deletes all users and consumptions and then creates five
-fixture users with a coffee count of zero. Their login names are `jane_doe`, `maxmustermann`, `student2023`,
-`lisa_lee`, and `olivia_lee`. The fixture users get random ids, which change with every restart. `GET /api/users` lists
-the current ids. `domain/src/main/kotlin/de/seuhd/campuscoffee/domain/tests/TestFixtures.kt` defines the fixture users,
-and the system and acceptance tests create the same users before each test.
+On every start in the `dev` profile, the fixture loader runs a data reset, which deletes the users, their consumptions
+and corrections, the payments, the beans, the ratings, and the price. The fixture loader then creates five fixture users
+with a coffee count of zero. Their login names are `jane_doe`, `maxmustermann`, `student2023`, `lisa_lee`, and
+`olivia_lee`. The fixture users get random ids, which change with every restart. `GET /api/users` lists the current ids.
+`domain/src/main/kotlin/de/seuhd/campuscoffee/domain/tests/TestFixtures.kt` defines the fixture users, and the system
+and acceptance tests create the same users before each test. The file also defines a fixed time and consumptions in
+three states, which only the tests use.
 
 ## REST API
 

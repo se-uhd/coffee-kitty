@@ -64,8 +64,10 @@ when a build script declares a repository.
 The ports are in `domain/src/main/kotlin/de/seuhd/campuscoffee/domain/ports/`:
 
 - API ports (`ports/api/`), which the controllers call, such as `UserService`.
-- Data ports (`ports/data/`), which the data module implements, such as `UserDataService`. Each entity has a
-  `*DataService` that extends the generic `CrudDataService<DOMAIN, ID>`.
+- Data ports (`ports/data/`), which the data module implements, such as `UserDataService`. Each entity with a domain
+  model has a `*DataService` that extends the generic `CrudDataService<DOMAIN, ID>`. Except for the data reset, no
+  domain service uses the data ports of the price, the payments, the beans, and the ratings yet (see Tables Without an
+  Endpoint).
 - Internal ports (`ports/internal/`), which the fixture loader, the bootstrap admin loader, and the test setup call,
   such as `DataResetService` and `UserInternalService`.
 
@@ -113,6 +115,43 @@ The generic MapStruct interfaces `DtoMapper` and `EntityMapper` take the domain 
 `UserDtoMapper : DtoMapper<User, UserDto>`. Every entity mapper overrides `updateEntity` to ignore the id and the
 timestamps (see `UserEntityMapper`). Without the override, an update copies the id and the timestamps from the domain
 object.
+
+### Tables Without an Endpoint
+
+The migrations V6 to V11 create the tables of later features, which the coffee app of SE@UHD has. No endpoint and no
+domain service except the data reset uses them yet, and their columns and constraints follow that app without its event
+log. The KDoc of each JPA entity explains the columns, the CHECK constraints, and the `ON DELETE` action of each foreign
+key.
+
+- The price per cup (`coffee_prices`, at most one row), the payments (`payments`, a deposit with a user or a kitty
+  adjustment without one), the beans (`coffee_beans`, with a unique name among the live beans and, for a merged bean,
+  the id of the bean that it was merged into), and the ratings (`coffee_ratings`, a score from 1 to 5 of a bean by a
+  user) have the full data layer: the domain models `CoffeePrice`, `Payment`, `CoffeeBean`, and `CoffeeRating`, a data
+  port, an entity mapper, a data adapter, and the call in `DataResetServiceImpl.clearAll`.
+  `EntityReferenceResolver.beanReference` resolves the bean of a rating. An API port, a domain service, DTOs, and a
+  controller are missing.
+- The expenses (`expenses`) and the balances (`user_balance` and `kitty_balance`) have only a JPA entity and a
+  repository with the queries and locks that a data adapter needs. A domain model, a data port, an entity mapper, and a
+  data adapter are missing. `ExpenseEntity.expenseType` is a `String` with the values `BEANS` and `OTHER`, which
+  MapStruct can map to the constants of a domain enum with these names. `UserBalanceEntity` and `KittyBalanceEntity` do
+  not extend `Entity`, because their tables have neither a random id nor timestamps. `EntityMapper` and
+  `CrudDataServiceImpl` accept only subclasses of `Entity` and do not apply to them. The data reset does not clear these
+  three tables. While `expenses` has a row, the data reset deletes the ratings, payments, corrections, and consumptions
+  and then fails at the users, and with `reset-on-startup` the app does not start. Add the call for each new data port
+  to `DataResetServiceImpl.clearAll`.
+- No migration stores a price, and a data reset deletes the stored price. `CoffeePriceDataService.findCurrent` then
+  returns null. The startup and the test setup have to store the start price, as `BootstrapAdminLoader` stores the
+  bootstrap admin.
+- A balance cannot be computed from the stored data afterwards, because Coffee Kitty does not store the price of each
+  past coffee. Every operation that moves money, such as adding or undoing a coffee, a correction, a deposit, or an
+  expense, therefore has to change the balances in the same transaction. A domain service locks a row with
+  `UserBalanceRepository.findForUpdateByUserId` or `KittyBalanceRepository.findForUpdateById` through its data adapter,
+  as `applyDelta` locks a consumption. No migration inserts a row. The first operation that changes a balance has to
+  insert its row, unless `UserServiceImpl.create` creates the row of a new user together with the consumption. Coffee
+  Kitty stores only the time of a recent coffee, not its price, so an undo and a correction can credit only the current
+  price. When the price changed after a coffee and within its grace period, an undo of that coffee credits a price that
+  differs from the charged price. A requirement has to specify that this difference is acceptable, or `coffee_times`
+  needs a column for the price.
 
 ### Naming and File Conventions
 
@@ -243,12 +282,34 @@ constraints, such as a null in a NOT NULL column, passes the startup check and f
 
 ## Testing Strategy
 
-- Unit tests: the domain service tests in `domain/src/test/kotlin/`, such as `UserServiceTest`, and
-  `FixtureStartupLoaderTest` in `application/src/test/kotlin/`. They use Mockito mocks.
-- Integration tests: `CrudDataServiceIntegrationTest` and `ConstraintMappingRegistryIntegrationTest` in
-  `data/src/test/kotlin/`. They extend `AbstractDataIntegrationTest`, which runs each test in the Spring context of
-  `DataTestApplication` against PostgreSQL in Testcontainers. `ConstraintMappingRegistryIntegrationTest` fails unless
-  `ConstraintMapping.REGISTRY` lists exactly the unique constraints and unique indexes of the schema.
+Test each part of the code at the level that can detect its faults:
+
+- Controllers have no unit tests. Keep a controller as thin as possible: It reads the request, calls an API port, and
+  maps the result to a DTO. System and acceptance tests check it.
+- Write unit tests primarily for code with logic of its own: the domain module, helper functions, and a mapper with
+  significant logic. A mapper that only copies properties is checked by the system tests.
+- Write integration tests for the data module, for the behavior that only the database can show, such as constraints,
+  queries, locks, and `ON DELETE` actions. System tests also run the data adapters, so an integration test does not
+  repeat what a system test checks. A table without an endpoint has only its integration tests.
+
+The tests are in these places:
+
+- Unit tests: the tests in `domain/src/test/kotlin/`, such as `UserServiceTest` and `GracePeriodTest`, and the tests of
+  the startup tasks in `application/src/test/kotlin/`, such as `FixtureStartupLoaderTest`. The test of a class that
+  depends on ports, such as a domain service, replaces the ports with Mockito mocks. The api module has no test sources.
+  The unit tests of its classes, such as `RequestRejectedExceptionHandlerTest`, are in
+  `application/src/test/kotlin/de/seuhd/campuscoffee/api/`, in the package of the class under test. The test of a mapper
+  with significant logic creates the implementation that MapStruct generates, such as `UserDtoMapperImpl`, with its
+  constructor. `FixtureStartupLoaderTest` uses its mocks as a stub, for a verification, and with an argument captor.
+  `StartupTest` starts the startup tasks in a Spring context with `application.yaml` and mocked ports.
+- Integration tests: the classes in `data/src/test/kotlin/`. `CrudDataServiceIntegrationTest` tests the base class and
+  the data adapters of the users, the consumptions, and the corrections. `CoffeeConsumptionDataServiceIntegrationTest`
+  has further tests of the data adapter of the consumptions, and each data adapter of Tables Without an Endpoint has a
+  test class of its own, such as `PaymentDataServiceIntegrationTest`. `ExpenseAndBalanceRepositoryIntegrationTest` tests
+  the tables without a data port through their repositories and deletes their rows after each test, because the data
+  reset does not clear them. `DataResetIntegrationTest` checks that the data reset clears every table with a data port.
+  The integration tests extend `AbstractDataIntegrationTest`, which runs each test in the Spring context of
+  `DataTestApplication` against PostgreSQL in Testcontainers.
 - System tests: the classes in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/system/`, such as
   `UserSystemTests`. They extend `AbstractSystemTest` and send their requests through `UserRequests` and
   `ConsumptionRequests` in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/`, which use Spring's
@@ -349,7 +410,9 @@ profile, springdoc is off.
 
 In this order, `gradle build` passes after each step. The ports come first, because a port without an implementation
 does not break the build. The data adapter (step 7) comes before the implementation of the API port (step 8), because
-a `@Service` needs a bean for each port that it uses.
+a `@Service` needs a bean for each port that it uses. For the tables of Tables Without an Endpoint, steps 4 and 5 are
+done. For the price, the payments, the beans, and the ratings, steps 1, 3, 6, 7, and 9 are done as well, and the next
+step is the API port (step 2).
 
 1. Create the domain model in `domain/.../model/`. The domain model implements `DomainModel<UUID>` and has a nullable
    `id`, `createdAt`, and `updatedAt` (see `User`).

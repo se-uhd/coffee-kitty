@@ -19,14 +19,14 @@ import java.util.UUID
  * repository and converts between domain objects and JPA entities with a MapStruct [EntityMapper].
  *
  * [upsert] and [delete] each run in a transaction and flush before they return. The database therefore reports a
- * constraint violation inside these methods and not at the commit. [upsert] converts the violation of a unique
- * constraint that `ConstraintMapping.REGISTRY` lists into a [DuplicationException], which the API reports as a 409.
- * Any other violation reaches the caller unchanged.
+ * constraint violation inside these methods and not at the commit. [upsert] throws a [DuplicationException] (409) for
+ * the violation of a unique constraint that `ConstraintMapping.REGISTRY` lists. Any other violation reaches the caller
+ * unchanged.
  *
  * @param DOMAIN     the domain model type
  * @param ENTITY     the JPA entity type
  * @param REPOSITORY the type of the Spring Data repository for [ENTITY]
- * @param ID         the type of the id, which is [UUID] for every entity (see `PersistableEntity`)
+ * @param ID         the type of the id, which is [UUID] for every subclass of [Entity] (see `PersistableEntity`)
  */
 abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, REPOSITORY, ID : Any>(
     protected val repository: REPOSITORY,
@@ -40,8 +40,8 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
     }
 
     /**
-     * Returns all objects ordered by creation time and then by id. An update keeps the position of an object in the
-     * list, because the update does not change the creation time.
+     * Returns all objects ordered by creation time and then by id. An update does not change the position of an object
+     * in the list, because it does not change the creation time.
      */
     override fun getAll(): List<DOMAIN> = repository.findAll(CREATION_ORDER).map { mapper.fromEntity(it) }
 

@@ -17,6 +17,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   migration V5 creates the table `count_corrections`, which stores each correction with the count before and after, the
   note, and the admin. `GET /api/users/{userId}/consumption/corrections` lists the corrections of a user, newest first,
   and returns 403 Forbidden when the acting user is not an admin.
+- The database has the tables of later features, which no endpoint uses yet. The migrations V6 to V9 create the tables
+  `coffee_prices` (the price per cup, at most one row), `payments` (deposits and kitty adjustments), `coffee_beans`
+  (beans with a unique name among the live beans), and `coffee_ratings` (scores from 1 to 5). For these tables, the
+  data module implements the new data ports `CoffeePriceDataService`, `PaymentDataService`, `CoffeeBeanDataService`,
+  and `CoffeeRatingDataService` with the domain models `CoffeePrice`, `Payment`, `CoffeeBean`, and `CoffeeRating`, and
+  the data reset clears them. The migrations V10 and V11 create the tables `expenses`, `user_balance`, and
+  `kitty_balance`, which have only a JPA entity and a repository so far. The section "Tables Without an Endpoint" in
+  `CLAUDE.md` lists what each feature still needs, and GLOSSARY.md defines the new terms.
 - A client can read the undo status of a user (FR-9 in `requirements/FR-9-undo-status.md`).
   `GET /api/users/{userId}/consumption/undo` returns `undoable` and `undoableUntil`, the end of the grace period of the
   most recent coffee or null. `undoable` is true exactly when `POST` to the same path would undo a coffee at that time.

@@ -1,9 +1,13 @@
 package de.seuhd.campuscoffee.data.persistence
 
+import de.seuhd.campuscoffee.data.persistence.entities.CoffeeBeanEntity
 import de.seuhd.campuscoffee.data.persistence.entities.CoffeeConsumptionEntity
+import de.seuhd.campuscoffee.data.persistence.entities.CoffeePriceEntity
 import de.seuhd.campuscoffee.data.persistence.entities.UserEntity
 import de.seuhd.campuscoffee.domain.exceptions.DuplicationException
+import de.seuhd.campuscoffee.domain.model.CoffeeBean
 import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
+import de.seuhd.campuscoffee.domain.model.CoffeePrice
 import de.seuhd.campuscoffee.domain.model.DomainModel
 import de.seuhd.campuscoffee.domain.model.User
 import org.hibernate.exception.ConstraintViolationException
@@ -12,9 +16,9 @@ import org.springframework.dao.DataIntegrityViolationException
 /**
  * Links a unique constraint to the domain model and the field that must be unique. `CrudDataServiceImpl.upsert` uses
  * the mapping to convert a violation of the constraint into a [DuplicationException] (409) with the field and the
- * duplicate value. Every unique constraint and unique index of a table needs an entry in [REGISTRY].
- * `ConstraintMappingRegistryIntegrationTest` checks the entries against the schema. A violation of a constraint
- * without an entry reaches `GlobalExceptionHandler` as a `DataIntegrityViolationException` and becomes a 500.
+ * duplicate value. Every unique constraint and unique index of a table needs an entry in [REGISTRY]. A violation of a
+ * constraint without an entry reaches `GlobalExceptionHandler` as a `DataIntegrityViolationException` and becomes a
+ * 500.
  *
  * @param D the domain model with the unique field
  * @property constraintName the name of the constraint or unique index, as the migration declares it
@@ -51,7 +55,12 @@ class ConstraintMapping<D : DomainModel<*>>(
                     CoffeeConsumptionEntity.USER_UNIQUE_CONSTRAINT,
                     CoffeeConsumption::class.java,
                     "user ID"
-                ) { it.user.id.toString() }
+                ) { it.user.id.toString() },
+                // is_singleton is true in every row of coffee_prices, and a second price repeats this value
+                ConstraintMapping(CoffeePriceEntity.SINGLETON_UNIQUE_CONSTRAINT, CoffeePrice::class.java, "singleton") {
+                    "true"
+                },
+                ConstraintMapping(CoffeeBeanEntity.NAME_UNIQUE_CONSTRAINT, CoffeeBean::class.java, "name") { it.name }
             )
 
         private val BY_NAME = REGISTRY.associateBy { it.constraintName.lowercase() }

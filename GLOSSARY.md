@@ -65,7 +65,10 @@ with a line "Avoid:", which lists words not to use for the concept.
   `CoffeeConsumptionService.correctCount`, `CountCorrection`, `count_corrections`.
   Avoid: adjustment, override, reset (for a coffee count).
 - **note**: The text with which an admin explains a correction, such as "Double tap on 16.11." A correction needs a
-  note that is not blank.
+  note that is not blank and has at most 500 characters. A note can span several lines. A payment and an expense can
+  have an optional note of at most 500 characters.
+  API: `ConsumptionCorrectionDto.note`, `CountCorrectionDto.note`. Code: `CountCorrection.note`,
+  `CountCorrection.MAX_NOTE_LENGTH`, `count_corrections.note`, `Payment.note`, `payments.note`, `expenses.note`.
   Avoid: comment, reason (for the field).
 - **role**: What a user may do in Coffee Kitty, either `USER` or `ADMIN`. An admin may also create users.
   API: `UserDto.role`. Code: `Role`, `User.role`, `users.role`, `requireAdmin`.
@@ -105,7 +108,8 @@ with a line "Avoid:", which lists words not to use for the concept.
   Code: `UserController`, `UserDataServiceImpl`.
 - **entity**: A kind of domain object that the app stores in a table of its own, such as users and consumptions. Each
   kind needs several parts, such as a domain model, a data port, a JPA entity, an entity mapper, and a migration
-  (CLAUDE.md, Adding a New Entity).
+  (CLAUDE.md, Adding a New Entity). For the tables of later features, such as payments and expenses, some of these
+  parts already exist (CLAUDE.md, Tables Without an Endpoint).
 - **domain model**: A class in `domain/.../model/` that represents a concept of the business logic, such as a user, and
   has no annotations or code for the web or the database. An instance of such a class is a domain object.
   Code: `DomainModel`, `User`, `CoffeeConsumption`, `CountCorrection`.
@@ -131,9 +135,12 @@ with a line "Avoid:", which lists words not to use for the concept.
   file that it has not applied to the database before, in version order. A migration that others have applied, such as
   a pushed migration, must not change (CLAUDE.md, Database).
   Code: `V1__create_users_table.sql`, `V2__create_coffee_consumptions_table.sql`.
-- **data reset**: The deletion of all consumptions and then all users through the internal port `DataResetService`.
-  The fixture loader runs this deletion when `reset-on-startup` is true, and the data integration, system, and
-  acceptance tests run it before each test. A client cannot delete the data through the API.
+- **data reset**: The deletion of all ratings, payments, corrections, consumptions, and users, then all beans, and then
+  the price through the internal port `DataResetService`. The fixture loader runs this deletion when `reset-on-startup`
+  is true, and the data integration, system, and acceptance tests run it before each test. A client cannot delete the
+  data through the API. The tables `expenses`, `user_balance`, and `kitty_balance` have no data port yet. Deleting a
+  user deletes the balance of the user, and the kitty balance stays. While `expenses` has a row, the data reset fails
+  at the users, after it has deleted the ratings, payments, corrections, and consumptions.
   Code: `DataResetService.clearAll`.
 - **fixture loader**: The Spring component that creates the fixture users through `UserInternalService.create` at
   startup when `campus-coffee.fixtures.load-on-startup` is true. With `campus-coffee.fixtures.reset-on-startup` set to
