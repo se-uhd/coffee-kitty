@@ -9,16 +9,17 @@ and a first and a last name. Each user has exactly one consumption, which holds 
 REST API lists, creates, and reads users, reads a coffee count, adds one coffee at a time, undoes the most recent coffee
 within 5 minutes, and reads the undo status, which states whether that undo is possible. An admin can also correct a
 coffee count with a note and list the corrections of a user. `requirements/` holds the functional requirements, such as
-FR-3 for the undo, FR-8 for the correction, and FR-9 for the undo status. FR-4, FR-4b, and FR-6 specify deposits and
-expenses, which the app does not implement yet. Every user has a role, `USER` or `ADMIN`, and only an admin may create a
-user, correct a coffee count, or list the corrections. The app has no authentication yet: The header `X-Acting-User` of
-a request contains the login name of the acting user. `ActingUserAuthenticationFilter` in `api/.../security/` resolves
-the login name in this header to a `User` before the controllers run, and `CurrentUserProvider` returns that user to the
-controllers. The controllers pass that user to the domain, which checks the role with `requireAdmin` in
-`AuthorizationUtil.kt`, as the coffee app of SE@UHD does. The app has no frontend. In the dev profile, Swagger UI
-documents the API. The data module already holds the tables of later features, such as the price per cup, deposits,
-expenses, beans, ratings, and balances, which no endpoint uses yet (see Tables Without an Endpoint). `GLOSSARY.md`
-defines one term for each concept. Use these terms in code, messages, and documentation.
+FR-3 for the undo, FR-8 for the correction, and FR-9 for the undo status. FR-4, FR-4b, FR-5, FR-5b, and FR-6 specify
+deposits, the price of a coffee, and expenses, which the app does not implement yet. Every user has a role, `USER` or
+`ADMIN`, and only an admin may create a user, correct a coffee count, or list the corrections. The app has no
+authentication yet: The header `X-Acting-User` of a request contains the login name of the acting user.
+`ActingUserAuthenticationFilter` in `api/.../security/` resolves the login name in this header to a `User` before the
+controllers run, and `CurrentUserProvider` returns that user to the controllers. The controllers pass that user to the
+domain, which checks the role with `requireAdmin` in `AuthorizationUtil.kt`, as the coffee app of SE@UHD does. The app
+has no frontend. In the dev profile, Swagger UI documents the API. The data module already holds the tables of later
+features, such as the price per cup, deposits, expenses, beans, ratings, and balances, which no endpoint uses yet (see
+Tables Without an Endpoint). `GLOSSARY.md` defines one term for each concept. Use these terms in code, messages, and
+documentation.
 
 ## Architecture
 
@@ -134,10 +135,10 @@ Without the override, an update copies the id and the timestamps from the domain
 
 ### Tables Without an Endpoint
 
-The migrations V6 to V11 create the tables of later features, which the coffee app of SE@UHD has. No endpoint and no
-domain service uses them yet, and their columns and constraints follow that app without its event
-log. The KDoc of each JPA entity explains the columns, the CHECK constraints, and the `ON DELETE` action of each foreign
-key.
+The migrations V6 to V11 create the tables of later features, which the coffee app of SE@UHD has, and V12 adds the
+column `coffee_times.price_cents`. No endpoint and no domain service uses them yet, and their columns and constraints
+follow that app without its event log. The KDoc of each JPA entity explains the columns, the CHECK constraints, and the
+`ON DELETE` action of each foreign key.
 
 - The price per cup (`coffee_prices`, at most one row), the payments (`payments`, a deposit with a user or a kitty
   adjustment without one), the beans (`coffee_beans`, with a unique name among the live beans and, for a merged bean,
@@ -159,11 +160,13 @@ key.
   expense, therefore has to change the balances in the same transaction. A domain service locks a row with
   `UserBalanceRepository.findForUpdateByUserId` or `KittyBalanceRepository.findForUpdateById` through its data adapter,
   as `applyDelta` locks a consumption. No migration inserts a row. The first operation that changes a balance has to
-  insert its row, unless `UserServiceImpl.create` creates the row of a new user together with the consumption. Coffee
-  Kitty stores only the time of a recent coffee, not its price, so an undo and a correction can credit only the current
-  price. When the price changed after a coffee and within its grace period, an undo of that coffee credits a price that
-  differs from the charged price. A requirement has to specify that this difference is acceptable, or `coffee_times`
-  needs a column for the price.
+  insert its row, unless `UserServiceImpl.create` creates the row of a new user together with the consumption.
+- An undo has to credit the price that the coffee was charged, also when the price per cup changed in between (FR-5b).
+  The column `coffee_times.price_cents` (migration V12) is for this price. No JPA entity maps it yet. The
+  implementation of FR-5 has to store the price with the time of each coffee, and the implementation of FR-5b has to
+  credit it. Coffee Kitty drops the time and the price of a coffee outside its grace period when the user adds a coffee,
+  so a correction that removes such a coffee cannot credit the price that the coffee was charged. FR-5b lists this
+  question as an open TBD with a proposal.
 
 ### Naming and File Conventions
 

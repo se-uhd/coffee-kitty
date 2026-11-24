@@ -12,6 +12,7 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.jdbc.core.JdbcTemplate
 
 /**
@@ -77,6 +78,27 @@ class CoffeeConsumptionDataServiceIntegrationTest : AbstractDataIntegrationTest(
 
         assertThatThrownBy { coffeeConsumptionDataService.upsert(consumption) }
             .isInstanceOf(DataConstraintException::class.java)
+    }
+
+    @Test
+    fun `setting a negative price for a coffee time throws DataIntegrityViolationException`() {
+        coffeeConsumptionDataService.upsert(TestFixtures.consumptionWithRecentCoffee(user))
+
+        // no entity maps the column price_cents yet, so the test writes it with SQL
+        assertThatThrownBy { jdbcTemplate.update("UPDATE coffee_times SET price_cents = -1") }
+            .isInstanceOf(DataIntegrityViolationException::class.java)
+    }
+
+    @Test
+    fun `setting a price of 0 or 50 cents for a coffee time stores the price`() {
+        coffeeConsumptionDataService.upsert(TestFixtures.consumptionWithRecentCoffee(user))
+
+        for (priceCents in listOf(0, 50)) {
+            jdbcTemplate.update("UPDATE coffee_times SET price_cents = ?", priceCents)
+
+            assertThat(jdbcTemplate.queryForObject("SELECT price_cents FROM coffee_times", Int::class.java))
+                .isEqualTo(priceCents)
+        }
     }
 
     @Test

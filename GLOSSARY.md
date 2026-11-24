@@ -75,9 +75,11 @@ with a line "Avoid:", which lists words not to use for the concept.
   Code: `amountCents`, `balanceCents`, `amount_cents`, `balance_cents`.
 - **price per cup**: The one price of a coffee in euro cents, which applies to every user and which an admin sets. Each
   coffee lowers the balance of its user by the price per cup at the time of the coffee, so a new price applies only to
-  the coffees added after the change. Coffee Kitty stores at most one price, and no endpoint reads or sets it yet. No
-  price is stored after the migrations, so the startup has to store the start price.
-  Code: `CoffeePrice`, `CoffeePriceDataService`, `coffee_prices`.
+  the coffees added after the change (FR-5 in `requirements/FR-5-charge-price-per-cup.md`). An undo credits the price
+  that the coffee was charged (FR-5b in `requirements/FR-5b-credit-undone-coffee.md`). Coffee Kitty stores at most one
+  price, and no endpoint reads or sets it yet. No price is stored after the migrations, so the startup has to store the
+  start price.
+  Code: `CoffeePrice`, `CoffeePriceDataService`, `coffee_prices`, `coffee_times.price_cents`.
 - **balance**: A user's amount of money in euro cents, negative when the user owes the kitty money and positive when the
   kitty owes the user money. Coffees lower the balance, and deposits and the private shares of the user's expenses
   raise it. The table `user_balance` holds the balance of each user, but no code writes it yet.

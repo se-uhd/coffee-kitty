@@ -33,7 +33,7 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
 ## Supporting Information
 
 - Parent, from the team assistant: "When someone pays me cash, I record it as a deposit for that person."
-- Depends on the balance of a user (GLOSSARY.md). FR-5 (a coffee lowers the balance of its user by the price per cup)
-  is not in `requirements/` yet.
+- Depends on the balance of a user (GLOSSARY.md). FR-5 specifies that a coffee lowers the balance of its user by the
+  price per cup.
 - Related: FR-4b, which raises the kitty balance by the deposit amount.
 - A note is optional and has at most 500 characters (GLOSSARY.md).
