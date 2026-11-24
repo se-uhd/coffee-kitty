@@ -43,6 +43,12 @@ and the corrections of their coffee counts.
 - The REST API accepts and returns only JSON.
 - A Spring Boot backend in Kotlin stores the users and their coffee counts in PostgreSQL through Jakarta Persistence
   (JPA). Flyway migrations define the database schema.
+- The migrations V6 to V11 add the tables of later features: the price per cup, the payments (deposits and kitty
+  adjustments), the beans, the ratings, the expenses, and the balances of the users and of the kitty. For the price, the
+  payments, the beans, and the ratings, the data module also implements the data ports. For the expenses and the
+  balances, it has only the JPA entities and the repositories. No endpoint uses these tables yet. The section "Tables
+  Without an Endpoint" in `CLAUDE.md` lists what each feature still needs. Two of these features have requirements in
+  `requirements/`: FR-4 and FR-4b for deposits, and FR-6 for an expense that a user paid with their own money.
 
 ## Architecture
 

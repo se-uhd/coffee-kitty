@@ -25,6 +25,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the data reset clears them. The migrations V10 and V11 create the tables `expenses`, `user_balance`, and
   `kitty_balance`, which have only a JPA entity and a repository so far. The section "Tables Without an Endpoint" in
   `CLAUDE.md` lists what each feature still needs, and GLOSSARY.md defines the new terms.
+- The requirements FR-4 (record a deposit), FR-4b (raise the kitty balance), and FR-6 (record own expenses) in
+  `requirements/`. Coffee Kitty does not implement them yet.
 - A client can read the undo status of a user (FR-9 in `requirements/FR-9-undo-status.md`).
   `GET /api/users/{userId}/consumption/undo` returns `undoable` and `undoableUntil`, the end of the grace period of the
   most recent coffee or null. `undoable` is true exactly when `POST` to the same path would undo a coffee at that time.
