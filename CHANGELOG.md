@@ -27,6 +27,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `CLAUDE.md` lists what each feature still needs, and GLOSSARY.md defines the new terms.
 - The requirements FR-4 (record a deposit), FR-4b (raise the kitty balance), and FR-6 (record own expenses) in
   `requirements/`. Coffee Kitty does not implement them yet.
+- The requirements FR-5 (charge the price per cup) and FR-5b (credit an undone coffee) in `requirements/`. FR-5b
+  specifies that an undo credits the price that the coffee was charged, also when the price per cup changed in between.
+  The migration V12 adds the column `coffee_times.price_cents` for this price. Until now, the table stored only the
+  time of a coffee, so an undo could have credited only the price at the time of the undo. Coffee Kitty does not
+  implement FR-5 and FR-5b yet, and no JPA entity maps the column.
 - A client can read the undo status of a user (FR-9 in `requirements/FR-9-undo-status.md`).
   `GET /api/users/{userId}/consumption/undo` returns `undoable` and `undoableUntil`, the end of the grace period of the
   most recent coffee or null. `undoable` is true exactly when `POST` to the same path would undo a coffee at that time.
@@ -71,7 +76,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   code `ValidationException` for a value that breaks a rule. The error code therefore changes from `BadRequest` to
   `ValidationException` for a login name that is too long or has a character that is not allowed, a blank first or last
   name, a total of a correction that is negative or above 1,000,000, and a note that is blank or longer than 500
-  characters. Until now, both layers checked these rules, and the email address had to pass two different checks.
+  characters. Until now, both modules checked these rules, and the email address had to pass two different checks.
 - Breaking: A request body with an unknown field returns 400 with the error code `BadRequest`
   (`spring.jackson.deserialization.fail-on-unknown-properties`). `POST /api/users` with an `id` returned 400 with the
   error code `ValidationException` until now, and the server ignored the fields `createdAt` and `updatedAt` and any
