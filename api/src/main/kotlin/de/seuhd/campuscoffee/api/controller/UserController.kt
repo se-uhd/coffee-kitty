@@ -56,7 +56,7 @@ class UserController(
     @Operation(summary = "Get a user by ID.")
     @GetMapping("/{id}")
     fun getById(
-        @Parameter(description = "Unique identifier of the user to retrieve.", required = true)
+        @Parameter(description = "The id of the user.", required = true)
         @PathVariable id: UUID
     ): ResponseEntity<UserDto> = ResponseEntity.ok(userDtoMapper.toDto(userService.getById(id)))
 
@@ -76,7 +76,7 @@ class UserController(
     @Parameter(
         `in` = ParameterIn.HEADER,
         name = CurrentUserProvider.ACTING_USER_HEADER,
-        description = "Login name of the acting user, who has to be an admin.",
+        description = "The login name of the acting user, who has to be an admin.",
         required = true
     )
     @ResponseStatus(HttpStatus.CREATED)

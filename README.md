@@ -39,7 +39,7 @@ and the corrections of their coffee counts.
   `requirements/FR-8-correct-coffee-count.md`.
 - Every user has a role, `USER` or `ADMIN`. Only an admin may create a user, correct a coffee count, or list the
   corrections of a user. Coffee Kitty has no authentication yet: The header `X-Acting-User` of a request contains the
-  login name of the acting user, and any client can act as any user. The fixture user `jane_doe` is an admin.
+  login name of the acting user, and any client can act as any user. The user fixture `jane_doe` is an admin.
 - The REST API accepts and returns only JSON.
 - A Spring Boot backend in Kotlin stores the users and their coffee counts in PostgreSQL through Jakarta Persistence
   (JPA). Flyway migrations define the database schema.
@@ -63,7 +63,7 @@ architecture. ArchUnit tests check the boundaries between the four modules:
 - `data`: the JPA entities and repositories, the MapStruct entity mappers, the implementations of the data ports, and
   the Flyway migrations.
 - `application`: the Spring Boot application that wires the modules together and the configuration profiles. Its test
-  sources hold the dev application, which creates the fixture users.
+  sources hold the dev application, which creates the user fixtures.
 
 The included build `build-logic/` holds the convention plugins, which configure Java, Kotlin, ktlint, and detekt in the
 same way for every module (see `doc/adr/001-multi-module-gradle-build-with-convention-plugins.md`). The `detekt-rules`
@@ -117,7 +117,7 @@ name. The following command starts the existing container again, for example aft
 docker start campus-coffee-db
 ```
 
-Start the dev application, that is, the app in the `dev` profile with the fixture users (see Test fixtures). The command
+Start the dev application, that is, the app in the `dev` profile with the user fixtures (see Test fixtures). The command
 keeps running and prints the log of the app until you stop it:
 
 ```shell
@@ -162,16 +162,16 @@ another Gradle version, ignore the offer and select the local installation.
 
 ## Test fixtures
 
-On every start, the dev application deletes the rows of every table and then creates five fixture users with a coffee
+On every start, the dev application deletes the rows of every table and then creates five user fixtures with a coffee
 count of zero. Their login names are `jane_doe`, `maxmustermann`, `student2023`, `lisa_lee`, and `olivia_lee`. The
-fixture users get random ids, which change with every restart. `GET /api/users` lists the current ids.
+user fixtures get random ids, which change with every restart. `GET /api/users` lists the current ids.
 
-`domain/src/testFixtures/kotlin/de/seuhd/campuscoffee/domain/tests/TestFixtures.kt` defines the fixture users, a fixed
+`domain/src/testFixtures/kotlin/de/seuhd/campuscoffee/domain/tests/TestFixtures.kt` defines the user fixtures, a fixed
 time, and consumptions in three states, and the tests of every module use them. The system and acceptance tests create
-the same fixture users before each test. The production jar contains neither the fixture users nor code that deletes
+the same user fixtures before each test. The production jar contains neither the user fixtures nor code that deletes
 data. The `main` function of the dev application is therefore in the test sources of the application module
 (`DevApplication.kt`), and `bootTestRun` starts it. To keep the data of a run, start the app without the database
-cleaner and the fixture users:
+cleaner and the user fixtures:
 
 ```shell
 gradle :application:bootRun --args='--spring.profiles.active=dev'
@@ -181,7 +181,7 @@ gradle :application:bootRun --args='--spring.profiles.active=dev'
 
 The paths in this section are relative to `/api`, and Swagger UI documents every endpoint. Each command requires the
 dev application on port 8081. Because the ids change with every restart, a command that needs an id first
-looks up the id of the fixture user `jane_doe` with `python3`. A request with an unknown login name in the header
+looks up the id of the user fixture `jane_doe` with `python3`. A request with an unknown login name in the header
 `X-Acting-User` gets 401 Unauthorized on every route.
 
 `GET /users` returns all users as a JSON array, ordered by login name:

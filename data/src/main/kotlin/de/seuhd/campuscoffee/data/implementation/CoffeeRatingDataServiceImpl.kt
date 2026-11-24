@@ -1,4 +1,4 @@
-package de.seuhd.campuscoffee.data.implementations
+package de.seuhd.campuscoffee.data.implementation
 
 import de.seuhd.campuscoffee.data.mapper.CoffeeRatingEntityMapper
 import de.seuhd.campuscoffee.data.persistence.entities.CoffeeRatingEntity

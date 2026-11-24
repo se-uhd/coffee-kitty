@@ -7,16 +7,16 @@ import org.springframework.context.annotation.Bean
 import javax.sql.DataSource
 
 /**
- * Adds the [DevDataSeeder] to the dev application. The component scan of a Spring Boot application leaves out a
- * `@TestConfiguration`, so no test context contains the seeder. Only `main` in `DevApplication.kt` registers this
+ * Adds the [DevFixtureLoader] to the dev application. The component scan of a Spring Boot application leaves out a
+ * `@TestConfiguration`, so no test context contains the fixture loader. Only `main` in `DevApplication.kt` registers this
  * class.
  */
 @TestConfiguration(proxyBeanMethods = false)
 class DevDataConfiguration {
-    /** Returns the seeder, which cleans the database of [dataSource] and creates the fixture users. */
+    /** Returns the fixture loader, which cleans the database of [dataSource] and creates the user fixtures. */
     @Bean
-    fun devDataSeeder(
+    fun devFixtureLoader(
         dataSource: DataSource,
         userInternalService: UserInternalService
-    ): DevDataSeeder = DevDataSeeder(DatabaseCleaner(dataSource), userInternalService)
+    ): DevFixtureLoader = DevFixtureLoader(DatabaseCleaner(dataSource), userInternalService)
 }

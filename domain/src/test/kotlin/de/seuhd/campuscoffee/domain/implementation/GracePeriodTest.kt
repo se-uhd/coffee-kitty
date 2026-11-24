@@ -42,8 +42,8 @@ class GracePeriodTest {
 
     @Test
     fun `isOpen returns true for a coffee added 6 minutes ago with a grace period of 10 minutes`() {
-        val tenMinutes = GracePeriod(ConsumptionProperties(Duration.ofMinutes(10)), clock)
+        val tenMinuteGracePeriod = GracePeriod(ConsumptionProperties(Duration.ofMinutes(10)), clock)
 
-        assertThat(tenMinutes.isOpen(LocalDateTime.parse("2026-01-15T11:54:00"))).isTrue()
+        assertThat(tenMinuteGracePeriod.isOpen(LocalDateTime.parse("2026-01-15T11:54:00"))).isTrue()
     }
 }

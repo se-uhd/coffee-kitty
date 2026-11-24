@@ -16,8 +16,8 @@ import org.springframework.stereotype.Component
  * admin. This case occurs after the migration V4, which gives every existing user the role `USER`. The coffee app of
  * SE@UHD has a loader with the same name.
  *
- * [StartupDataInitializer] calls [createBootstrapAdmin] on startup. The dev application creates the fixture users, and
- * the fixture user `jane_doe` is an admin.
+ * [StartupDataInitializer] calls [createBootstrapAdmin] on startup. The dev application creates the user fixtures, and
+ * the user fixture `jane_doe` is an admin.
  */
 @Component
 class BootstrapAdminLoader(
@@ -44,9 +44,9 @@ class BootstrapAdminLoader(
         val admin =
             User(
                 loginName = loginName,
-                emailAddress = required(properties.emailAddress, "email-address"),
-                firstName = required(properties.firstName, "first-name"),
-                lastName = required(properties.lastName, "last-name"),
+                emailAddress = requireConfigured(properties.emailAddress, "email-address"),
+                firstName = requireConfigured(properties.firstName, "first-name"),
+                lastName = requireConfigured(properties.lastName, "last-name"),
                 role = Role.ADMIN
             )
         val stored =
@@ -82,7 +82,7 @@ class BootstrapAdminLoader(
      * Returns [value], or throws an exception with the key under [PREFIX] in its message if [value] is missing or
      * blank.
      */
-    private fun required(
+    private fun requireConfigured(
         value: String?,
         key: String
     ): String =

@@ -91,8 +91,8 @@ The ports are in `domain/src/main/kotlin/de/seuhd/campuscoffee/domain/ports/`:
 The implementations of the API and internal ports are in `domain/.../implementation/`. `UserServiceImpl.create` trims
 the email address, converts it to lowercase, and checks the new user against the limits in the companion object of
 `User`. In one transaction, the function then stores the user and the consumption of the user with a coffee count of
-zero. The test setup and the dev application create the fixture users through `UserInternalService.create`, which checks
-the fixture users like any other new user.
+zero. The test setup and the dev application create the user fixtures through `UserInternalService.create`, which checks
+the user fixtures like any other new user.
 
 `CoffeeConsumptionServiceImpl.applyDelta` accepts only a delta of `+1` and reads the consumption with
 `getByUserIdForUpdate`, which locks the row until the transaction ends. A second request that adds a coffee for the same
@@ -136,8 +136,9 @@ adapter for a JPA entity with a lazy association must therefore read and map the
 function.
 
 The generic MapStruct interface `EntityMapper` takes the domain type first, as in
-`UserEntityMapper : EntityMapper<User, UserEntity>`. Every entity mapper overrides `updateEntity` to ignore the id and the timestamps (see `UserEntityMapper`).
-Without the override, an update copies the id and the timestamps from the domain object.
+`UserEntityMapper : EntityMapper<User, UserEntity>`. Every entity mapper overrides `updateEntity` to ignore the id and
+the timestamps (see `UserEntityMapper`). Without the override, an update copies the id and the timestamps from the
+domain object.
 
 ### Tables Without an Endpoint
 
@@ -202,7 +203,7 @@ gradle :coverage:testCodeCoverageReport                      # the coverage repo
 gradle :domain:pitest                                        # mutation testing of the domain services
 gradle cpd                                                   # duplicates in the production code
 docker run -d --name campus-coffee-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p ${DB_PORT:-5433}:5432 postgres:18-alpine
-gradle :application:bootTestRun                              # the dev application with the fixture users
+gradle :application:bootTestRun                              # the dev application with the user fixtures
 ```
 
 Scope a `--tests` filter to one subproject, because Gradle fails the test task of every subproject without a matching
@@ -363,15 +364,15 @@ path that the firewall rejects, and with a `Content-Type` or `Accept` header tha
 The system and acceptance tests are clients of the REST API and use no class of the api module, which an architecture
 test checks. A request body is a map with the JSON field names, such as `mapOf("delta" to 1)`. The tests parse a
 response into a class of `Json.kt`, such as `UserJson`, with a mapper that fails on an unknown or a missing field. A
-timestamp is a `String` that `utc` parses. If a test used a DTO for both directions, a renamed JSON field would change
-the request of the test and the response of the server together, and the test would still pass. When an endpoint gets a
-new field, add it to the class in `Json.kt`. The names of the header `X-Acting-User` and of its challenge are literals
-in `SystemTestUtils` for the same reason.
+timestamp is a `String` that `parseUtc` parses. If a test used a DTO for both directions, a renamed JSON field would
+change the request of the test and the response of the server together, and the test would still pass. When an endpoint
+gets a new field, add it to the class in `Json.kt`. The names of the header `X-Acting-User` and of its challenge are
+literals in `SystemTestUtils` for the same reason.
 
 ### Test Fixtures
 
 `TestFixtures` in `domain/src/testFixtures/kotlin/de/seuhd/campuscoffee/domain/tests/` holds the test objects that the
-tests of every module share: the fixture users with `admin()` and `regularUser()`, the fixed time `FIXED_TIME` with
+tests of every module share: the user fixtures with `admin()` and `regularUser()`, the fixed time `FIXED_TIME` with
 `fixedClock()`, and the consumptions of `consumptionWithoutCoffee`, `consumptionWithRecentCoffee`, and
 `consumptionWithOldCoffee`. Take a test object from `TestFixtures` when a test needs one of these objects. Create the
 object in the test class when the tests need values that these objects do not have, such as an id and timestamps.
@@ -385,7 +386,7 @@ of the tables from the PostgreSQL catalog and truncates them in one statement, s
 
 `TestFixtures` and `DatabaseCleaner` are in the Gradle source set `src/testFixtures` of their module (plugin
 `java-test-fixtures`). The other modules add them with `testImplementation(testFixtures(project(":domain")))`. The
-production jar contains neither the fixture users nor code that deletes data, so no configuration of a deployed app can
+production jar contains neither the user fixtures nor code that deletes data, so no configuration of a deployed app can
 delete its data.
 
 ### Test Naming
@@ -452,10 +453,10 @@ datasource to `localhost:${DB_PORT:5433}`, the server port to `${SERVER_PORT:808
 profile, the API is at `http://localhost:8081/api` and Swagger UI at `http://localhost:8081/api/swagger-ui.html`.
 Outside the dev profile, springdoc is off.
 
-`gradle :application:bootTestRun` starts the dev application: the app in the dev profile with the fixture users. Its
+`gradle :application:bootTestRun` starts the dev application: the app in the dev profile with the user fixtures. Its
 `main` function is in `application/src/test/kotlin/de/seuhd/campuscoffee/dev/DevApplication.kt` and adds
-`DevDataConfiguration` to the app. On every start, `DevDataSeeder` cleans the database with the `DatabaseCleaner` and
-creates the fixture users before the web server accepts requests. The dev application is in the test sources, because
+`DevDataConfiguration` to the app. On every start, `DevFixtureLoader` cleans the database with the `DatabaseCleaner` and
+creates the user fixtures before the web server accepts requests. The dev application is in the test sources, because
 it uses the test fixtures, which the production jar does not contain. `gradle :application:bootRun` with
 `--args='--spring.profiles.active=dev'` starts the app in the dev profile on the data of the previous run, without
 cleaning the database.
@@ -527,9 +528,8 @@ is the API port (step 2).
    `id`, `createdAt`, and `updatedAt` (see `User`).
 2. Create the API port in `domain/.../ports/api/`. An operation that only the startup tasks or the test setup calls
    belongs to an internal port in `domain/.../ports/internal/`.
-3. Create the data port in `domain/.../ports/data/`. Extend `CrudDataService<DOMAIN, UUID>` if the domain may change and
-   delete the objects. For objects that never change after the app stores them, declare only the operations that the
-   domain needs (see `CountCorrectionDataService`).
+3. Create the data port in `domain/.../ports/data/`. Ports and Adapters states when a data port extends
+   `CrudDataService<DOMAIN, UUID>`.
 4. In one step, create the Flyway migration in `data/src/main/resources/db/migration/`, the JPA entity in
    `data/.../persistence/entities/` (extend `Entity`), and a `ConstraintMapping.REGISTRY` entry for each unique
    constraint. Hibernate checks every JPA entity against the schema at startup. Without its registry entry, a violated
@@ -548,7 +548,7 @@ is the API port (step 2).
    `updateEntity`. Without these mappings, MapStruct maps the nested domain object, such as the `User` in a
    `CoffeeConsumption`, through the referenced mapper. An update then writes the fields of the nested domain object over
    the referenced row.
-7. Create the data adapter in `data/.../implementations/` (extend `CrudDataServiceImpl`).
+7. Create the data adapter in `data/.../implementation/` (extend `CrudDataServiceImpl`).
 8. Create the implementation of the API port in `domain/.../implementation/`.
 9. Create the DTOs in `api/.../dtos/` and the DTO mapper in `api/.../mapper/`. A response DTO has only non-null
    properties, including `id`, `createdAt`, and `updatedAt`, and marks each as required for the OpenAPI definition with

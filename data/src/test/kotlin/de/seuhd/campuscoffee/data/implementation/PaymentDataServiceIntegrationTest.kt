@@ -1,4 +1,4 @@
-package de.seuhd.campuscoffee.data.implementations
+package de.seuhd.campuscoffee.data.implementation
 
 import de.seuhd.campuscoffee.data.integration.AbstractDataIntegrationTest
 import de.seuhd.campuscoffee.domain.exceptions.DataConstraintException
@@ -39,15 +39,15 @@ class PaymentDataServiceIntegrationTest : AbstractDataIntegrationTest() {
         val longNote = "Cash".padEnd(Payment.MAX_NOTE_LENGTH, '.')
 
         val deposit = paymentDataService.upsert(Payment(user = user, amountCents = 1000, note = longNote))
-        val adjustment = paymentDataService.upsert(Payment(amountCents = -250))
+        val kittyAdjustment = paymentDataService.upsert(Payment(amountCents = -250))
 
         assertThat(deposit.id).isNotNull()
-        assertThat(paymentDataService.getAll()).containsExactly(deposit, adjustment)
+        assertThat(paymentDataService.getAll()).containsExactly(deposit, kittyAdjustment)
         assertThat(deposit)
             .usingRecursiveComparison()
             .ignoringFields("id", "createdAt", "updatedAt")
             .isEqualTo(Payment(user = user, amountCents = 1000, note = longNote))
-        assertThat(adjustment)
+        assertThat(kittyAdjustment)
             .usingRecursiveComparison()
             .ignoringFields("id", "createdAt", "updatedAt")
             .isEqualTo(Payment(amountCents = -250))

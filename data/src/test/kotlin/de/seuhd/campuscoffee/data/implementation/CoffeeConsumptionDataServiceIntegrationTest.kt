@@ -1,4 +1,4 @@
-package de.seuhd.campuscoffee.data.implementations
+package de.seuhd.campuscoffee.data.implementation
 
 import de.seuhd.campuscoffee.data.integration.AbstractDataIntegrationTest
 import de.seuhd.campuscoffee.domain.exceptions.DataConstraintException
@@ -18,7 +18,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 /**
  * Integration tests of the data adapter [CoffeeConsumptionDataServiceImpl] against PostgreSQL, with the consumptions
  * of [TestFixtures]. Every consumption needs a stored user. Before each test, the base class cleans the database, and
- * [storeUser] then stores a fixture user.
+ * [storeUser] then stores a user fixture.
  */
 class CoffeeConsumptionDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     @Autowired
@@ -30,7 +30,7 @@ class CoffeeConsumptionDataServiceIntegrationTest : AbstractDataIntegrationTest(
     @Autowired
     private lateinit var jdbcTemplate: JdbcTemplate
 
-    /** The stored fixture user of the current test. */
+    /** The stored user fixture of the current test. */
     private lateinit var user: User
 
     @BeforeEach

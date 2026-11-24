@@ -10,7 +10,7 @@ import java.util.UUID
 
 /**
  * API port for the users. The controllers call it. `UserServiceImpl` in the domain module implements it and stores
- * the users through the data port [UserDataService]. The tests and the dev application create the fixture users
+ * the users through the data port [UserDataService]. The tests and the dev application create the user fixtures
  * through the internal port `UserInternalService`, which checks them like any other new user.
  */
 interface UserService {

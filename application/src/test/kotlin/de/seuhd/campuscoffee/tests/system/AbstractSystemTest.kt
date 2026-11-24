@@ -22,7 +22,7 @@ import javax.sql.DataSource
 /**
  * The base class of the system tests. The Spring Boot test context uses the shared PostgreSQL container and serves the
  * API on a random port. Before each test, [beforeEach] deletes the rows of every table with the [DatabaseCleaner],
- * creates the fixture users at a coffee count of zero, and creates [userRequests] and [consumptionRequests] for the
+ * creates the user fixtures at a coffee count of zero, and creates [userRequests] and [consumptionRequests] for the
  * port of this context.
  */
 @SpringBootTest(
@@ -42,8 +42,8 @@ abstract class AbstractSystemTest {
     @LocalServerPort
     private var port: Int = 0
 
-    /** The fixture users that [beforeEach] created for the current test. */
-    protected lateinit var fixtureUsers: List<User>
+    /** The user fixtures that [beforeEach] created for the current test. */
+    protected lateinit var userFixtures: List<User>
 
     /** The client of the server of this context, for a test that builds a request itself. */
     protected lateinit var client: RestTestClient
@@ -57,14 +57,14 @@ abstract class AbstractSystemTest {
     @BeforeEach
     fun beforeEach() {
         DatabaseCleaner(dataSource).clean()
-        fixtureUsers = TestFixtures.createUserFixtures(userInternalService)
+        userFixtures = TestFixtures.createUserFixtures(userInternalService)
         client = SystemTestUtils.clientFor(port)
         userRequests = UserRequests(client)
         consumptionRequests = ConsumptionRequests(client)
     }
 
-    /** Returns the fixture user with [loginName]. */
-    protected fun fixtureUser(loginName: String): User = fixtureUsers.first { it.loginName == loginName }
+    /** Returns the user fixture with [loginName]. */
+    protected fun userFixture(loginName: String): User = userFixtures.first { it.loginName == loginName }
 
     protected companion object {
         @JvmStatic

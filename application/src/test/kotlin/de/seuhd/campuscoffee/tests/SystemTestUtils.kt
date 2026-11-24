@@ -20,7 +20,7 @@ object SystemTestUtils {
      */
     const val AUTHENTICATION_CHALLENGE = "X-Acting-User realm=\"Coffee Kitty\""
 
-    /** The login name of the fixture user who is an admin. */
+    /** The login name of the user fixture who is an admin. */
     const val ADMIN_LOGIN_NAME = "jane_doe"
 
     private val clients = ConcurrentHashMap<Int, RestTestClient>()

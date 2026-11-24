@@ -97,14 +97,14 @@ class CoffeeConsumptionServiceTest {
 
     @Test
     fun `applyDelta removes the times of the coffees outside their grace period`() {
-        val expired = coffeeAddedAt.minusMinutes(5).minusSeconds(1)
-        val open = coffeeAddedAt.minusMinutes(5)
-        whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(consumption(2, expired, open))
+        val expiredCoffeeAt = coffeeAddedAt.minusMinutes(5).minusSeconds(1)
+        val openCoffeeAt = coffeeAddedAt.minusMinutes(5)
+        whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(consumption(2, expiredCoffeeAt, openCoffeeAt))
         whenever(dataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
 
         service.applyDelta(userId, 1)
 
-        verify(dataService).upsert(consumption(3, open, coffeeAddedAt))
+        verify(dataService).upsert(consumption(3, openCoffeeAt, coffeeAddedAt))
     }
 
     @Test

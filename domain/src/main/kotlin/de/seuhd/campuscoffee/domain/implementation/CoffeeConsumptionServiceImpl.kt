@@ -70,7 +70,7 @@ class CoffeeConsumptionServiceImpl(
         // correction added it, or applyDelta dropped its time after the grace period.
         val lastCoffeeAt = current.coffeeTimes.lastOrNull()
         if (lastCoffeeAt == null || !gracePeriod.isOpen(lastCoffeeAt)) {
-            throw ConflictException("The grace period to undo this coffee has passed.")
+            throw ConflictException("The grace period of the most recent coffee has passed.")
         }
         return coffeeConsumptionDataService.upsert(
             current.copy(count = current.count - 1, coffeeTimes = current.coffeeTimes.dropLast(1))
@@ -97,10 +97,10 @@ class CoffeeConsumptionServiceImpl(
     ): CoffeeConsumption {
         requireAdmin(actingUser, "correct a coffee count")
         if (total < 0) {
-            throw ValidationException("The coffee count cannot be negative.")
+            throw ValidationException("The coffee count must not be negative.")
         }
         if (total > CountCorrection.MAX_TOTAL) {
-            throw ValidationException("The coffee count cannot exceed ${CountCorrection.MAX_TOTAL}.")
+            throw ValidationException("The coffee count must not exceed ${CountCorrection.MAX_TOTAL}.")
         }
         val validNote = requireValidNote(note)
         val current = coffeeConsumptionDataService.getByUserIdForUpdate(userId)

@@ -6,7 +6,7 @@ import java.util.UUID
 /**
  * Domain model of a person whose coffees the app counts. Instances are immutable. The constants in the companion
  * object are the limits for a new user. `UserServiceImpl.create` checks these limits for every new user, including
- * the fixture users and the bootstrap admin. It also refuses a blank name and a name with a control character. The api
+ * the user fixtures and the bootstrap admin. It also refuses a blank name and a name with a control character. The api
  * module checks only that a request contains every field. `CreateUserDto` repeats the limits in `@Schema` annotations
  * to document them in the OpenAPI definition.
  *

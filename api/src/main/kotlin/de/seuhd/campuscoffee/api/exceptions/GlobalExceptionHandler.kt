@@ -96,13 +96,13 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
      * message at INFO.
      */
     override fun handleMethodArgumentNotValid(
-        ex: MethodArgumentNotValidException,
+        exception: MethodArgumentNotValidException,
         headers: HttpHeaders,
         status: HttpStatusCode,
         request: WebRequest
     ): ResponseEntity<Any>? {
         val message =
-            ex.bindingResult.fieldErrors.joinToString("; ") { error -> "${error.field} ${error.defaultMessage}" }
+            exception.bindingResult.fieldErrors.joinToString("; ") { error -> "${error.field} ${error.defaultMessage}" }
         log.info { "Request validation failed on ${describe(request)}: ${loggableText(message)}" }
         return respond(status, errorBody(status, request, message), headers)
     }
@@ -119,17 +119,17 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
      * request. It logs the message of the exception at DEBUG. It logs a 5xx at ERROR with the stack trace.
      */
     override fun handleExceptionInternal(
-        ex: Exception,
+        exception: Exception,
         body: Any?,
         headers: HttpHeaders,
         statusCode: HttpStatusCode,
         request: WebRequest
     ): ResponseEntity<Any>? {
         if (statusCode.is5xxServerError) {
-            log.error(ex) { "${ex.javaClass.simpleName} -> $statusCode on ${describe(request)}" }
+            log.error(exception) { "${exception.javaClass.simpleName} -> $statusCode on ${describe(request)}" }
         } else {
-            log.info { "${ex.javaClass.simpleName} -> $statusCode on ${describe(request)}" }
-            log.debug { "${ex.javaClass.simpleName} detail: ${loggableText("${ex.message}")}" }
+            log.info { "${exception.javaClass.simpleName} -> $statusCode on ${describe(request)}" }
+            log.debug { "${exception.javaClass.simpleName} detail: ${loggableText("${exception.message}")}" }
         }
         val reason = HttpStatus.valueOf(statusCode.value()).reasonPhrase
         return respond(statusCode, errorBody(statusCode, request, reason), headers)

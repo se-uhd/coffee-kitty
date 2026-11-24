@@ -91,21 +91,22 @@ class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest()
 
     @Test
     fun `findAllByBuyerIdOrderByCreatedAtDesc returns the expenses of the buyer, newest first`() {
-        val purchase = expenseRepository.saveAndFlush(beanPurchase(kittyAmountCents = 299).apply { id = randomId() })
+        val savedBeanPurchase =
+            expenseRepository.saveAndFlush(beanPurchase(kittyAmountCents = 299).apply { id = randomId() })
         val other = expenseRepository.saveAndFlush(otherExpense().apply { id = randomId() })
 
         val stored = expenseRepository.findAllByBuyerIdOrderByCreatedAtDesc(requireNotNull(buyer.id))
 
-        assertThat(stored.map { it.id }).containsExactly(other.id, purchase.id)
-        val storedPurchase = stored.last()
-        assertThat(storedPurchase.buyer?.loginName).isEqualTo("bert")
-        assertThat(storedPurchase.expenseType).isEqualTo("BEANS")
-        assertThat(storedPurchase.bean?.name).isEqualTo("Ethiopia Sidamo")
-        assertThat(storedPurchase.weightGrams).isEqualTo(500)
-        assertThat(storedPurchase.amountCents).isEqualTo(1299)
-        assertThat(storedPurchase.privateAmountCents).isEqualTo(1000)
-        assertThat(storedPurchase.kittyAmountCents).isEqualTo(299)
-        assertThat(storedPurchase.note).isNull()
+        assertThat(stored.map { it.id }).containsExactly(other.id, savedBeanPurchase.id)
+        val storedBeanPurchase = stored.last()
+        assertThat(storedBeanPurchase.buyer?.loginName).isEqualTo("bert")
+        assertThat(storedBeanPurchase.expenseType).isEqualTo("BEANS")
+        assertThat(storedBeanPurchase.bean?.name).isEqualTo("Ethiopia Sidamo")
+        assertThat(storedBeanPurchase.weightGrams).isEqualTo(500)
+        assertThat(storedBeanPurchase.amountCents).isEqualTo(1299)
+        assertThat(storedBeanPurchase.privateAmountCents).isEqualTo(1000)
+        assertThat(storedBeanPurchase.kittyAmountCents).isEqualTo(299)
+        assertThat(storedBeanPurchase.note).isNull()
         assertThat(stored.first().note).isEqualTo("Filters")
     }
 

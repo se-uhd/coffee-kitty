@@ -27,14 +27,18 @@ class BootstrapAdminLoaderTest {
 
     @Test
     fun `createBootstrapAdmin creates no admin without a login name and an email address`() {
-        loader(complete.copy(loginName = " ", emailAddress = null)).createBootstrapAdmin()
+        loader(completeProperties.copy(loginName = " ", emailAddress = null)).createBootstrapAdmin()
 
         verify(userInternalService, never()).createInitialAdmin(any())
     }
 
     @Test
     fun `createBootstrapAdmin throws IllegalArgumentException for an email address without a login name`() {
-        assertThrows<IllegalArgumentException> { loader(complete.copy(loginName = null)).createBootstrapAdmin() }
+        assertThrows<IllegalArgumentException> {
+            loader(
+                completeProperties.copy(loginName = null)
+            ).createBootstrapAdmin()
+        }
 
         verify(userInternalService, never()).createInitialAdmin(any())
     }
@@ -44,7 +48,7 @@ class BootstrapAdminLoaderTest {
         whenever(userInternalService.createInitialAdmin(any()))
             .thenThrow(ValidationException("The login name is invalid."))
 
-        assertThrows<IllegalArgumentException> { loader(complete).createBootstrapAdmin() }
+        assertThrows<IllegalArgumentException> { loader(completeProperties).createBootstrapAdmin() }
     }
 
     @Test
@@ -53,7 +57,7 @@ class BootstrapAdminLoaderTest {
             .thenThrow(DuplicationException(User::class.java, "login name", "admin"))
             .thenReturn(null)
 
-        assertDoesNotThrow { loader(complete).createBootstrapAdmin() }
+        assertDoesNotThrow { loader(completeProperties).createBootstrapAdmin() }
     }
 
     @Test
@@ -61,7 +65,7 @@ class BootstrapAdminLoaderTest {
         whenever(userInternalService.createInitialAdmin(any()))
             .thenThrow(DuplicationException(User::class.java, "email address", "admin@se.de"))
 
-        assertThrows<IllegalArgumentException> { loader(complete).createBootstrapAdmin() }
+        assertThrows<IllegalArgumentException> { loader(completeProperties).createBootstrapAdmin() }
     }
 
     @ParameterizedTest
@@ -75,7 +79,7 @@ class BootstrapAdminLoaderTest {
     }
 
     private companion object {
-        private val complete =
+        private val completeProperties =
             BootstrapAdminProperties(
                 loginName = "admin",
                 emailAddress = "admin@se.de",
@@ -83,9 +87,13 @@ class BootstrapAdminLoaderTest {
                 lastName = "Admin"
             )
 
-        /** Returns copies of [complete], each without a value that a configuration with a login name needs. */
+        /** Returns copies of [completeProperties], each without a value that a configuration with a login name needs. */
         @JvmStatic
         fun incompleteProperties() =
-            listOf(complete.copy(emailAddress = null), complete.copy(firstName = null), complete.copy(lastName = " "))
+            listOf(
+                completeProperties.copy(emailAddress = null),
+                completeProperties.copy(firstName = null),
+                completeProperties.copy(lastName = " ")
+            )
     }
 }

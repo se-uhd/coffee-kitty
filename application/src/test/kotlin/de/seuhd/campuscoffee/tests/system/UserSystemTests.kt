@@ -5,7 +5,7 @@ import de.seuhd.campuscoffee.tests.ConsumptionRequests
 import de.seuhd.campuscoffee.tests.SystemTestUtils.AUTHENTICATION_CHALLENGE
 import de.seuhd.campuscoffee.tests.UserJson
 import de.seuhd.campuscoffee.tests.UserRequests
-import de.seuhd.campuscoffee.tests.utc
+import de.seuhd.campuscoffee.tests.parseUtc
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
@@ -43,7 +43,7 @@ class UserSystemTests : AbstractSystemTest() {
         )
 
     @Test
-    fun `listing users returns 200 OK with the fixture users ordered by login name`() {
+    fun `listing users returns 200 OK with the user fixtures ordered by login name`() {
         val response = userRequests.retrieveAll()
 
         assertThat(response.status).isEqualTo(200)
@@ -69,7 +69,9 @@ class UserSystemTests : AbstractSystemTest() {
         assertThat(created.emailAddress).isEqualTo("new.user@se.uni-heidelberg.de")
         assertThat(created.firstName).isEqualTo("New")
         assertThat(created.lastName).isEqualTo("User")
-        assertThat(utc(created.createdAt)).isCloseTo(LocalDateTime.now(ZoneOffset.UTC), within(1, ChronoUnit.MINUTES))
+        assertThat(
+            parseUtc(created.createdAt)
+        ).isCloseTo(LocalDateTime.now(ZoneOffset.UTC), within(1, ChronoUnit.MINUTES))
         val location = requireNotNull(response.headers.location)
         assertThat(userRequests.retrieveAt(location).body).isEqualTo(created)
     }
@@ -83,7 +85,7 @@ class UserSystemTests : AbstractSystemTest() {
 
     @Test
     fun `getting a user by id returns 200 OK with the user`() {
-        val lisa = fixtureUser("lisa_lee")
+        val lisa = userFixture("lisa_lee")
 
         val response = userRequests.retrieveById(lisa.persistedId)
 
@@ -100,8 +102,8 @@ class UserSystemTests : AbstractSystemTest() {
                 role = "USER"
             )
         assertThat(response.body).isEqualTo(expected)
-        assertThat(utc(response.body.createdAt)).isEqualTo(lisa.createdAt)
-        assertThat(utc(response.body.updatedAt)).isEqualTo(lisa.updatedAt)
+        assertThat(parseUtc(response.body.createdAt)).isEqualTo(lisa.createdAt)
+        assertThat(parseUtc(response.body.updatedAt)).isEqualTo(lisa.updatedAt)
     }
 
     @Test
@@ -171,7 +173,7 @@ class UserSystemTests : AbstractSystemTest() {
 
         assertThat(response.status).isEqualTo(400)
         assertThat(response.error.errorCode).isEqualTo("ValidationException")
-        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+        assertThat(userService.getAll()).hasSize(userFixtures.size)
     }
 
     @Test
@@ -215,7 +217,7 @@ class UserSystemTests : AbstractSystemTest() {
 
         assertThat(response.status).isEqualTo(400)
         assertThat(response.error.errorCode).isEqualTo("BadRequest")
-        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+        assertThat(userService.getAll()).hasSize(userFixtures.size)
     }
 
     @Test
@@ -224,7 +226,7 @@ class UserSystemTests : AbstractSystemTest() {
 
         assertThat(response.status).isEqualTo(400)
         assertThat(response.error.errorCode).isEqualTo("BadRequest")
-        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+        assertThat(userService.getAll()).hasSize(userFixtures.size)
     }
 
     @Test
@@ -241,7 +243,7 @@ class UserSystemTests : AbstractSystemTest() {
         assertThat(response.status).isEqualTo(401)
         assertThat(response.error.errorCode).isEqualTo("Unauthorized")
         assertThat(response.headers.getFirst("WWW-Authenticate")).isEqualTo(AUTHENTICATION_CHALLENGE)
-        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+        assertThat(userService.getAll()).hasSize(userFixtures.size)
     }
 
     @Test
@@ -250,7 +252,7 @@ class UserSystemTests : AbstractSystemTest() {
 
         assertThat(response.status).isEqualTo(403)
         assertThat(response.error.errorCode).isEqualTo("ForbiddenException")
-        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+        assertThat(userService.getAll()).hasSize(userFixtures.size)
     }
 
     @Test
@@ -261,7 +263,7 @@ class UserSystemTests : AbstractSystemTest() {
         assertThat(response.error.errorCode).isEqualTo("Unauthorized")
         assertThat(response.error.message).doesNotContain("nobody")
         assertThat(response.headers.getFirst("WWW-Authenticate")).isEqualTo(AUTHENTICATION_CHALLENGE)
-        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+        assertThat(userService.getAll()).hasSize(userFixtures.size)
     }
 
     @Test
@@ -269,7 +271,7 @@ class UserSystemTests : AbstractSystemTest() {
         val response = userRequests.create(newUser(), actingUser = "JANE_DOE")
 
         assertThat(response.status).isEqualTo(401)
-        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+        assertThat(userService.getAll()).hasSize(userFixtures.size)
     }
 
     @Test
@@ -325,7 +327,7 @@ class UserSystemTests : AbstractSystemTest() {
         val response = userRequests.create(newUser() + ("role" to "OWNER"))
 
         assertThat(response.status).isEqualTo(400)
-        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+        assertThat(userService.getAll()).hasSize(userFixtures.size)
     }
 
     @Test
@@ -334,7 +336,7 @@ class UserSystemTests : AbstractSystemTest() {
 
         assertThat(response.status).isEqualTo(400)
         assertThat(response.error.errorCode).isEqualTo("BadRequest")
-        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+        assertThat(userService.getAll()).hasSize(userFixtures.size)
     }
 
     @Test
@@ -343,7 +345,7 @@ class UserSystemTests : AbstractSystemTest() {
 
         assertThat(response.status).isEqualTo(400)
         assertThat(response.error.errorCode).isEqualTo("BadRequest")
-        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+        assertThat(userService.getAll()).hasSize(userFixtures.size)
     }
 
     @Test
@@ -352,6 +354,6 @@ class UserSystemTests : AbstractSystemTest() {
 
         assertThat(response.status).isEqualTo(400)
         assertThat(response.error.errorCode).isEqualTo("BadRequest")
-        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+        assertThat(userService.getAll()).hasSize(userFixtures.size)
     }
 }

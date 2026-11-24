@@ -22,7 +22,7 @@ server can read it, and a value breaks a rule, such as a login name of 256 chara
 Validation on the DTOs and the domain services both checked the rules for values. The two checks of the email address
 accepted different addresses (`@Email` and a regular expression). The error code of a 400 depended on the module that
 rejected the value: `BadRequest` for a note of 501 characters and `ValidationException` for a note with a NUL
-character. The domain needed its own checks in any case, because the bootstrap admin and the fixture users reach the
+character. The domain needed its own checks in any case, because the bootstrap admin and the user fixtures reach the
 domain without a request.
 
 ## Considered Options

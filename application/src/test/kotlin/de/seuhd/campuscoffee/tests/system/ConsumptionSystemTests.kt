@@ -14,18 +14,18 @@ import java.util.concurrent.TimeUnit
 /**
  * System tests for reading the coffee count and the undo status of a user, adding a coffee, and undoing a coffee. The
  * tests send their requests through [ConsumptionRequests]. The tests for an unknown user use a random id, and all other
- * tests use the fixture user `maxmustermann`.
+ * tests use the user fixture `maxmustermann`.
  */
 class ConsumptionSystemTests : AbstractSystemTest() {
     private val loginName = "maxmustermann"
 
-    private fun fixtureUserId(): UUID = fixtureUser(loginName).persistedId
+    private fun userFixtureId(): UUID = userFixture(loginName).persistedId
 
-    private fun consumption(): ConsumptionJson = consumptionRequests.retrieveConsumption(fixtureUserId()).body
+    private fun consumption(): ConsumptionJson = consumptionRequests.retrieveConsumption(userFixtureId()).body
 
     @Test
-    fun `getting the consumption of a fixture user returns 200 OK with a count of zero`() {
-        val response = consumptionRequests.retrieveConsumption(fixtureUserId())
+    fun `getting the consumption of a user fixture returns 200 OK with a count of zero`() {
+        val response = consumptionRequests.retrieveConsumption(userFixtureId())
 
         assertThat(response.status).isEqualTo(200)
         assertThat(response.body.loginName).isEqualTo(loginName)
@@ -34,7 +34,7 @@ class ConsumptionSystemTests : AbstractSystemTest() {
 
     @Test
     fun `adding a coffee returns 200 OK with a count of 1`() {
-        val response = consumptionRequests.addCoffee(fixtureUserId())
+        val response = consumptionRequests.addCoffee(userFixtureId())
 
         assertThat(response.status).isEqualTo(200)
         assertThat(response.body.count).isEqualTo(1)
@@ -42,16 +42,16 @@ class ConsumptionSystemTests : AbstractSystemTest() {
 
     @Test
     fun `adding a coffee does not change the coffee count of another user`() {
-        consumptionRequests.addCoffee(fixtureUserId()).requireStatus(200)
+        consumptionRequests.addCoffee(userFixtureId()).requireStatus(200)
 
-        val other = consumptionRequests.retrieveConsumption(fixtureUser("lisa_lee").persistedId)
+        val other = consumptionRequests.retrieveConsumption(userFixture("lisa_lee").persistedId)
 
         assertThat(other.body.count).isEqualTo(0)
     }
 
     @Test
     fun `undoing a coffee at a count of zero returns 409 Conflict`() {
-        val response = consumptionRequests.undo(fixtureUserId())
+        val response = consumptionRequests.undo(userFixtureId())
 
         assertThat(response.status).isEqualTo(409)
         assertThat(response.error.errorCode).isEqualTo("ConflictException")
@@ -60,7 +60,7 @@ class ConsumptionSystemTests : AbstractSystemTest() {
 
     @Test
     fun `adding coffees concurrently counts every coffee`() {
-        val userId = fixtureUserId()
+        val userId = userFixtureId()
         val start = CountDownLatch(1)
         val executor = Executors.newFixedThreadPool(CONCURRENT_REQUESTS)
         try {
@@ -82,9 +82,9 @@ class ConsumptionSystemTests : AbstractSystemTest() {
 
     @Test
     fun `undoing a coffee returns 200 OK with the login name and the lowered count`() {
-        repeat(3) { consumptionRequests.addCoffee(fixtureUserId()).requireStatus(200) }
+        repeat(3) { consumptionRequests.addCoffee(userFixtureId()).requireStatus(200) }
 
-        val response = consumptionRequests.undo(fixtureUserId())
+        val response = consumptionRequests.undo(userFixtureId())
 
         assertThat(response.status).isEqualTo(200)
         assertThat(response.body).isEqualTo(ConsumptionJson(loginName = loginName, count = 2))
@@ -92,21 +92,21 @@ class ConsumptionSystemTests : AbstractSystemTest() {
 
     @Test
     fun `undoing and adding coffees concurrently counts every undo and every coffee`() {
-        val userId = fixtureUserId()
+        val userId = userFixtureId()
         repeat(CONCURRENT_REQUESTS) {
             assertThat(consumptionRequests.addCoffee(userId).status).isEqualTo(200)
         }
         val start = CountDownLatch(1)
         val executor = Executors.newFixedThreadPool(2 * CONCURRENT_REQUESTS)
         try {
-            val adds =
+            val addRequests =
                 (1..CONCURRENT_REQUESTS).map {
                     executor.submit<Int> {
                         start.await()
                         consumptionRequests.addCoffee(userId).status
                     }
                 }
-            val undos =
+            val undoRequests =
                 (1..CONCURRENT_REQUESTS).map {
                     executor.submit<Int> {
                         start.await()
@@ -115,7 +115,7 @@ class ConsumptionSystemTests : AbstractSystemTest() {
                 }
             start.countDown()
 
-            assertThat((adds + undos).map { it.get(TIMEOUT_SECONDS, TimeUnit.SECONDS) }).containsOnly(200)
+            assertThat((addRequests + undoRequests).map { it.get(TIMEOUT_SECONDS, TimeUnit.SECONDS) }).containsOnly(200)
         } finally {
             executor.shutdownNow()
         }
@@ -129,7 +129,7 @@ class ConsumptionSystemTests : AbstractSystemTest() {
 
     @Test
     fun `posting a delta of 2 returns 400 Bad Request`() {
-        val response = consumptionRequests.applyDelta(fixtureUserId(), mapOf("delta" to 2))
+        val response = consumptionRequests.applyDelta(userFixtureId(), mapOf("delta" to 2))
 
         assertThat(response.status).isEqualTo(400)
         assertThat(response.error.errorCode).isEqualTo("ValidationException")
@@ -138,7 +138,7 @@ class ConsumptionSystemTests : AbstractSystemTest() {
 
     @Test
     fun `posting a fractional delta returns 400 Bad Request`() {
-        val response = consumptionRequests.applyDelta(fixtureUserId(), mapOf("delta" to 1.9))
+        val response = consumptionRequests.applyDelta(userFixtureId(), mapOf("delta" to 1.9))
 
         assertThat(response.status).isEqualTo(400)
         assertThat(response.error.errorCode).isEqualTo("BadRequest")
@@ -147,7 +147,7 @@ class ConsumptionSystemTests : AbstractSystemTest() {
 
     @Test
     fun `posting a delta as a JSON string returns 400 Bad Request`() {
-        val response = consumptionRequests.applyDelta(fixtureUserId(), mapOf("delta" to "1"))
+        val response = consumptionRequests.applyDelta(userFixtureId(), mapOf("delta" to "1"))
 
         assertThat(response.status).isEqualTo(400)
         assertThat(response.error.errorCode).isEqualTo("BadRequest")
@@ -156,7 +156,7 @@ class ConsumptionSystemTests : AbstractSystemTest() {
 
     @Test
     fun `posting a body without a delta returns 400 Bad Request`() {
-        val response = consumptionRequests.applyDelta(fixtureUserId(), emptyMap())
+        val response = consumptionRequests.applyDelta(userFixtureId(), emptyMap())
 
         assertThat(response.status).isEqualTo(400)
         assertThat(response.error.errorCode).isEqualTo("BadRequest")

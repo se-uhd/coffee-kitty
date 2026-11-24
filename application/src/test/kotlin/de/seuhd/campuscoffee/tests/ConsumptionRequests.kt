@@ -10,7 +10,7 @@ import java.util.UUID
  * The requests for the coffee count of a user, so that a step definition or a system test does not have to build an
  * HTTP request. Each function takes the id of the user, so that a test can also send a request for an unknown user. It
  * returns the [Response] with the status code, the headers, and the body or the error response. [userId] looks up the
- * id of a fixture user for a step definition, which names users by login name.
+ * id of a user fixture for a step definition, which names users by login name.
  *
  * Every request body is a map with the JSON field names, such as `mapOf("delta" to 1)`, and never a DTO of the api
  * module. A renamed field in a DTO therefore fails the tests.
