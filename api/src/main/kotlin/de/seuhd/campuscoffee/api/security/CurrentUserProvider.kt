@@ -38,7 +38,7 @@ class CurrentUserProvider {
          */
         const val AUTHENTICATION_CHALLENGE = "$ACTING_USER_HEADER realm=\"Coffee Kitty\""
 
-        /** The message of a 401 for a request without the header [ACTING_USER_HEADER]. */
-        const val MISSING_HEADER_MESSAGE = "The header $ACTING_USER_HEADER is missing."
+        /** The message of a 401 for a request without the header [ACTING_USER_HEADER] or with a blank value in it. */
+        const val MISSING_HEADER_MESSAGE = "The header $ACTING_USER_HEADER is missing or blank."
     }
 }

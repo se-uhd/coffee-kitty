@@ -33,6 +33,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `GracePeriod.closesAt` returns the end of a grace period, and `ConsumptionRequests.retrieveUndoStatus` sends the
   request for the system tests. GLOSSARY.md defines the term undo status.
 
+### Fixed
+
+- Every error message is in English. Until now, `POST /api/users` with `Accept-Language: de` returned a message that
+  mixed German and English, because Spring took the locale from this header and Hibernate Validator translates its
+  default messages. `application.yaml` now sets the locale to English for every request.
+- The message of a 401 for a blank `X-Acting-User` header is "The header X-Acting-User is missing or blank." Until now,
+  the message was "The header X-Acting-User is missing."
+
 ## [0.2.3] - 2026-11-22
 
 ### Fixed

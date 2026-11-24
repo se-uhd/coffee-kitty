@@ -392,8 +392,10 @@ profile, springdoc is off.
 - Request bodies: Jackson rejects a value of the wrong JSON type instead of converting it, and the request gets a 400
   with the error code `BadRequest`. The `spring.jackson` settings in `application.yaml` reject a number with a fraction
   for an integer field, a JSON string for a number or a boolean field, and a JSON number for an enum field. `JsonConfig`
-  in `api/.../configuration/` rejects a JSON number or boolean for a `String` field, because Spring Boot has no
-  property for this setting. A new DTO gets these checks without any code.
+  in `api/.../configuration/` rejects a JSON number or boolean for a `String` field, because Spring Boot has no property
+  for this setting. A new DTO gets these checks without any code. The API responds only in English:
+  `spring.web.locale-resolver` in `application.yaml` fixes the locale, so that the messages of Bean Validation do not
+  depend on the header `Accept-Language`.
 - MapStruct: The `kotlin-kapt-conventions` plugin runs MapStruct through kapt with the option
   `mapstruct.unmappedTargetPolicy=ERROR`. With this option, the build fails when a target property has neither a
   source nor `ignore = true`.
