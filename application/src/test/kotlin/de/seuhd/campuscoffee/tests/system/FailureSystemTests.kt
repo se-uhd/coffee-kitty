@@ -2,7 +2,6 @@ package de.seuhd.campuscoffee.tests.system
 
 import de.seuhd.campuscoffee.domain.ports.data.CoffeeConsumptionDataService
 import de.seuhd.campuscoffee.domain.ports.data.UserDataService
-import de.seuhd.campuscoffee.tests.UserRequests
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -32,7 +31,7 @@ class FailureSystemTests : AbstractSystemTest() {
                 "lastName" to "User"
             )
 
-        val response = UserRequests.create(newUser)
+        val response = userRequests.create(newUser)
 
         assertThat(response.status).isEqualTo(500)
         assertThat(userService.getAll()).hasSize(fixtureUsers.size)
@@ -42,7 +41,7 @@ class FailureSystemTests : AbstractSystemTest() {
     fun `listing users returns 500 Internal Server Error when looking up the acting user fails`() {
         doThrow(IllegalArgumentException("The lookup failed.")).whenever(userDataService).getByLoginName(any())
 
-        val response = UserRequests.retrieveAll(actingUser = "jane_doe")
+        val response = userRequests.retrieveAll(actingUser = "jane_doe")
 
         assertThat(response.status).isEqualTo(500)
         assertThat(response.error.errorCode).isEqualTo("InternalServerError")

@@ -1,7 +1,6 @@
 package de.seuhd.campuscoffee.tests.acceptance
 
 import de.seuhd.campuscoffee.tests.ConsumptionRequests
-import de.seuhd.campuscoffee.tests.ConsumptionRequests.Correction
 import io.cucumber.java.DataTableType
 import io.cucumber.java.ParameterType
 import io.cucumber.java.en.Given
@@ -16,8 +15,17 @@ import java.time.LocalTime
  * coffees of a single user, the steps of the undo, and the parameter type `{time}`.
  */
 class CucumberCorrectionSteps(
-    private val clock: SettableClock
+    private val clock: SettableClock,
+    private val requests: ConsumptionRequests
 ) {
+    /** One correction in a table of a scenario, without the time of the correction. */
+    data class Correction(
+        val countBefore: Int,
+        val countAfter: Int,
+        val note: String,
+        val adminLoginName: String
+    )
+
     private var lastStatus: Int = 0
 
     /** Converts "without a note" into null and "with the note "..."" into the text of the note. */
@@ -41,7 +49,7 @@ class CucumberCorrectionSteps(
         count: Int,
         note: String?
     ) {
-        lastStatus = ConsumptionRequests.correctCoffeeCount(actingUser, loginName, count, note)
+        lastStatus = requests.correctCount(requests.userId(loginName), count, note, actingUser).status
     }
 
     @Given("{string} corrected the coffee count of {string} to {int} {note} at {time}")
@@ -53,9 +61,7 @@ class CucumberCorrectionSteps(
         time: LocalTime
     ) {
         clock.setTime(time)
-        assertThat(ConsumptionRequests.correctCoffeeCount(actingUser, loginName, count, note))
-            .`as`("status of the correction")
-            .isEqualTo(200)
+        requests.correctCount(requests.userId(loginName), count, note, actingUser).requireStatus(200)
     }
 
     @Then("the correction returns the status {int}")
@@ -68,7 +74,7 @@ class CucumberCorrectionSteps(
         loginName: String,
         count: Int
     ) {
-        assertThat(ConsumptionRequests.coffeeCount(loginName)).isEqualTo(count)
+        assertThat(requests.retrieveConsumption(requests.userId(loginName)).body.count).isEqualTo(count)
     }
 
     @Then("the corrections of {string} are:")
@@ -76,11 +82,18 @@ class CucumberCorrectionSteps(
         loginName: String,
         expected: List<Correction>
     ) {
-        assertThat(ConsumptionRequests.corrections(loginName)).containsExactlyElementsOf(expected)
+        assertThat(corrections(loginName)).containsExactlyElementsOf(expected)
     }
 
     @Then("{string} has no corrections")
     fun hasNoCorrections(loginName: String) {
-        assertThat(ConsumptionRequests.corrections(loginName)).isEmpty()
+        assertThat(corrections(loginName)).isEmpty()
     }
+
+    /** Returns the corrections of the coffee count of the user with [loginName], newest first, as the admin reads them. */
+    private fun corrections(loginName: String): List<Correction> =
+        requests
+            .retrieveCorrections(requests.userId(loginName))
+            .body
+            .map { Correction(it.countBefore, it.countAfter, it.note, it.adminLoginName) }
 }

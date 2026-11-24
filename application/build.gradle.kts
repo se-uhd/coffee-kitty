@@ -24,6 +24,8 @@ dependencies {
     // TestFixtures and DatabaseCleaner, for the tests and for the dev application in src/test (see DevApplication.kt).
     testImplementation(testFixtures(project(":domain")))
     testImplementation(testFixtures(project(":data")))
+    // The tests parse the responses with a JSON mapper of their own, which needs the Kotlin module (see Json.kt).
+    testImplementation(libs.jackson3.module.kotlin)
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.junit.platform.suite)
     testImplementation(libs.cucumber.java)
