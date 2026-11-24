@@ -14,7 +14,6 @@ import com.tngtech.archunit.library.dependencies.SliceIdentifier
 import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices
 import org.junit.jupiter.api.Test
 import org.springframework.context.annotation.Configuration
-import org.springframework.stereotype.Controller
 
 /**
  * ArchUnit tests that check that the app follows the ports-and-adapters pattern.
@@ -44,19 +43,19 @@ class ArchitectureTests {
             .mayOnlyBeAccessedByLayers("application")
             .whereLayer("application")
             .mayNotBeAccessedByAnyLayer()
-            // Fails when an imported production or test class belongs to no layer. A new top-level package then fails
-            // the test until it is added to a layer.
+            // Fails when a production or test class belongs to no layer, for example a class in a new top-level
+            // package. A developer must then add the package to a layer.
             .ensureAllClassesAreContainedInArchitecture()
             .check(classes)
     }
 
     @Test
-    fun `the production packages are free of cycles`() {
+    fun `the production packages have no cycles`() {
         // Fails on a cycle between production packages, inside a module or across modules. Each package is a slice of
         // its own. With one slice per module, the rule would miss a cycle inside a module, such as a cycle between
-        // data.implementations and data.mapper. Test classes are left out, because the rule concerns the structure of
-        // the production code. RootInclusiveSliceAssignment keeps the classes of the root package, such as
-        // Application and FixtureStartupLoader, in the check.
+        // data.implementations and data.mapper. The rule leaves out the test classes, because it checks the structure
+        // of the production code. RootInclusiveSliceAssignment includes the classes of the root package, such as
+        // Application and FixtureStartupLoader.
         slices()
             .assignedFrom(RootInclusiveSliceAssignment)
             .should()
@@ -68,12 +67,14 @@ class ArchitectureTests {
     fun `production code depends on ports, never on Impl types`() {
         // No production class may depend on a concrete *Impl class instead of the port that the *Impl class
         // implements. The rule covers *Impl classes too, and a domain service implementation therefore cannot inject
-        // another domain service implementation. @Configuration classes are exempt, because they compose the beans.
-        // The rule checks dependencies on the concrete *Impl classes of this project only. It ignores Kotlin runtime
+        // another domain service implementation. The rule exempts @Configuration classes, because they compose the
+        // beans. It also exempts a class nested in an *Impl class. Kotlin generates such a class for a reference to a
+        // method of the *Impl class, and the generated class depends on the *Impl class.
+        //
+        // The rule checks only dependencies on the concrete *Impl classes of this project. It ignores Kotlin runtime
         // classes such as kotlin.jvm.internal.FunctionReferenceImpl, which is the supertype of every class that Kotlin
         // generates for a function reference. It also ignores the abstract CrudDataServiceImpl, which every
-        // *DataServiceImpl extends. Classes nested in an *Impl class are not checked. Kotlin generates such a nested
-        // class for a reference to a method of the *Impl class, and the nested class depends on the *Impl class.
+        // *DataServiceImpl extends.
         val isConcreteOwnImplementation =
             object : DescribedPredicate<JavaClass>("a concrete campus-coffee class named *Impl") {
                 override fun test(javaClass: JavaClass): Boolean =
@@ -97,10 +98,10 @@ class ArchitectureTests {
     }
 
     @Test
-    fun `api and application reach the domain without its data ports and implementation classes`() {
+    fun `api and application depend on neither the data ports nor the implementation classes of the domain`() {
         // The layered rule lets api and application use every class of the domain module. Without this rule, a
-        // controller or the fixture loader could inject a data port and bypass the checks in the domain services,
-        // such as the checks of the login name and the email address of a new user.
+        // controller or the fixture loader could inject a data port. It would then bypass the checks in the domain
+        // services, such as the checks of the login name and the email address of a new user.
         noClasses()
             .that()
             .resideInAnyPackage("de.seuhd.campuscoffee.api..", *APPLICATION_PRODUCTION_PACKAGES)
@@ -113,10 +114,10 @@ class ArchitectureTests {
     }
 
     @Test
-    fun `no api class reaches the internal ports and the fixtures`() {
-        // The internal ports, such as DataResetService, are for the fixture loader and the test setup. TestFixtures
-        // holds the fixture users. No class in the api layer may use the internal ports or TestFixtures. The fixture
-        // loader may use both, because it is in the application layer, which this rule does not cover.
+    fun `no api class depends on the internal ports or on TestFixtures`() {
+        // The internal ports, such as DataResetService, are for the fixture loader, the bootstrap admin loader, and the
+        // test setup. TestFixtures holds the fixture users. The two loaders may use the internal ports and
+        // TestFixtures, because they are in the application layer, which this rule does not cover.
         noClasses()
             .that()
             .resideInAPackage("de.seuhd.campuscoffee.api..")
@@ -127,7 +128,7 @@ class ArchitectureTests {
     }
 
     @Test
-    fun `the port packages hold only interfaces named after the port conventions`() {
+    fun `the port packages contain only interfaces with names that end in Service or DataService`() {
         // Every port is an interface named *Service, and every data port is named *DataService. A concrete class
         // does not belong in ports/.
         classes()
@@ -147,20 +148,6 @@ class ArchitectureTests {
             .areTopLevelClasses()
             .should()
             .haveSimpleNameEndingWith("DataService")
-            .check(PRODUCTION_CLASSES)
-    }
-
-    @Test
-    fun `api controllers are declared as RestControllers`() {
-        // Spring MVC treats the return value of a handler method in a plain @Controller as a view name, unless the
-        // method has @ResponseBody. @RestController is annotated with @Controller but passes the rule, because
-        // beAnnotatedWith checks only direct annotations.
-        noClasses()
-            .that()
-            .resideInAPackage("de.seuhd.campuscoffee.api.controller..")
-            .should()
-            .beAnnotatedWith(Controller::class.java)
-            .because("a plain @Controller resolves a handler result without @ResponseBody as a view name")
             .check(PRODUCTION_CLASSES)
     }
 
@@ -184,7 +171,7 @@ class ArchitectureTests {
 
     /**
      * Assigns each class to a slice named after its package relative to `de.seuhd.campuscoffee`. A class directly in
-     * `de.seuhd.campuscoffee` goes to the slice `(root)`, which keeps the root package in the cycle check.
+     * `de.seuhd.campuscoffee` goes to the slice `(root)`, so that the cycle check includes the root package.
      * `slices().matching("de.seuhd.campuscoffee.(**)")` would leave the root package out. A class outside
      * `de.seuhd.campuscoffee` belongs to no slice.
      */

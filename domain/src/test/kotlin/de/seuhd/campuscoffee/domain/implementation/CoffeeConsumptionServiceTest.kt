@@ -248,7 +248,7 @@ class CoffeeConsumptionServiceTest {
     }
 
     @Test
-    fun `correctCount stores a correction for the current count`() {
+    fun `correctCount stores a correction to the current count`() {
         stubCorrection(consumption(3, coffeeAddedAt))
 
         val result = service.correctCount(userId, 3, note, admin)

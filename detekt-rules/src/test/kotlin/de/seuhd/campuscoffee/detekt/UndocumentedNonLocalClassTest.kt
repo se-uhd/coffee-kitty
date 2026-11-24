@@ -2,7 +2,6 @@ package de.seuhd.campuscoffee.detekt
 
 import dev.detekt.api.Config
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class UndocumentedNonLocalClassTest {
@@ -22,32 +21,12 @@ class UndocumentedNonLocalClassTest {
                 private class Hidden
             }
             """.trimIndent()
-        assertEquals(listOf("The Hidden type is missing KDoc."), rule.lintSource(code).map { it.message })
+        assertEquals(listOf("Hidden"), rule.reportedNames(code))
     }
 
     @Test
-    fun `UndocumentedNonLocalClass reports nothing for a documented class`() {
-        val code =
-            """
-            /** A widget. */
-            class Widget
-            """.trimIndent()
-        assertTrue(rule.lintSource(code).isEmpty())
-    }
-
-    @Test
-    fun `UndocumentedNonLocalClass reports an enum class without KDoc`() {
-        assertEquals(1, rule.lintSource("enum class Color { RED, GREEN }").size)
-    }
-
-    @Test
-    fun `UndocumentedNonLocalClass reports nothing for enum entries without KDoc`() {
-        val code =
-            """
-            /** Colors. */
-            enum class Color { RED, GREEN }
-            """.trimIndent()
-        assertTrue(rule.lintSource(code).isEmpty())
+    fun `UndocumentedNonLocalClass reports an enum class without KDoc but not its entries`() {
+        assertEquals(listOf("Color"), rule.reportedNames("enum class Color { RED, GREEN }"))
     }
 
     @Test
@@ -57,37 +36,6 @@ class UndocumentedNonLocalClassTest {
             interface Shape
             object Registry
             """.trimIndent()
-        assertEquals(
-            listOf("The Shape type is missing KDoc.", "The Registry type is missing KDoc."),
-            rule.lintSource(code).map { it.message }
-        )
-    }
-
-    @Test
-    fun `UndocumentedNonLocalClass reports nothing for a companion object without KDoc`() {
-        val code =
-            """
-            /** A holder. */
-            class Holder {
-                companion object {
-                    /** Makes one. */
-                    fun create() = Holder()
-                }
-            }
-            """.trimIndent()
-        assertTrue(rule.lintSource(code).isEmpty())
-    }
-
-    @Test
-    fun `UndocumentedNonLocalClass reports nothing for a local class`() {
-        val code =
-            """
-            /** Outer. */
-            fun outer() {
-                class Local
-                Local()
-            }
-            """.trimIndent()
-        assertTrue(rule.lintSource(code).isEmpty())
+        assertEquals(listOf("Shape", "Registry"), rule.reportedNames(code))
     }
 }

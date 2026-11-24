@@ -43,7 +43,7 @@ dependencyManagement {
 }
 
 dependencies {
-    // Test dependencies of every module. spring-boot-starter-test brings JUnit 6, Mockito, and AssertJ, and
+    // Test dependencies of every module. spring-boot-starter-test adds JUnit 6, Mockito, and AssertJ, and
     // mockito-kotlin adds Kotlin helpers for Mockito. Gradle needs the JUnit Platform launcher on the test runtime
     // classpath. The Spring Boot BOM manages the version of the launcher but does not add the dependency. Production
     // dependencies, such as spring-boot-starter-webmvc, are in the build files of the modules that use them.
@@ -72,6 +72,9 @@ tasks.withType<Test>().configureEach {
         exceptionFormat = TestExceptionFormat.FULL
     }
     jvmArgs(
+        // Run the tests in a time zone other than UTC. A test then fails when the production code uses the time zone of
+        // the JVM for a time that must be in UTC. On GitHub Actions, which runs in UTC, the test would otherwise pass.
+        "-Duser.timezone=Asia/Tokyo",
         // Turn off class data sharing. With class data sharing on, the JVM prints "Sharing is only supported for boot
         // loader classes" when the Mockito agent appends to the boot class path.
         "-Xshare:off",

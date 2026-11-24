@@ -1,31 +1,43 @@
 package de.seuhd.campuscoffee.api.security
 
-import org.assertj.core.api.Assertions.assertThat
+import de.seuhd.campuscoffee.api.exceptions.GlobalExceptionHandler
+import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
-import org.springframework.mock.web.MockHttpServletRequest
-import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.security.web.firewall.RequestRejectedException
+import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RestController
 import tools.jackson.databind.json.JsonMapper
 
 /**
- * Unit test for [RequestRejectedExceptionHandler], which responds to a request that the firewall of Spring Security
- * rejects while Spring MVC reads it, such as one with a control character in a header. HTTP clients refuse to send such
- * a header, which rules out a system test.
+ * Unit test for [RequestRejectedExceptionHandler]. The firewall rejects some requests only while Spring MVC reads them,
+ * such as a request with a control character in a header. In the test, a route throws the [RequestRejectedException]
+ * of the firewall. MockMvc runs the route with the handler and [GlobalExceptionHandler], so that the test fails when
+ * the handler does not take precedence.
  */
 class RequestRejectedExceptionHandlerTest {
+    @RestController
+    private class ExampleController {
+        @GetMapping("/api/example")
+        fun example(): String = throw RequestRejectedException("header value with a bell character")
+    }
+
+    private val mockMvc =
+        MockMvcBuilders
+            .standaloneSetup(ExampleController())
+            .setControllerAdvice(
+                GlobalExceptionHandler(),
+                RequestRejectedExceptionHandler(JsonMapper.builder().build())
+            ).build()
+
     @Test
-    fun `handleRequestRejected turns a RequestRejectedException into 400 Bad Request without the rejected value`() {
-        val response = MockHttpServletResponse()
-
-        RequestRejectedExceptionHandler(JsonMapper.builder().build()).handleRequestRejected(
-            RequestRejectedException("header value with a bell character"),
-            MockHttpServletRequest("POST", "/api/users"),
-            response
-        )
-
-        assertThat(response.status).isEqualTo(400)
-        assertThat(response.contentAsString)
-            .contains("\"errorCode\":\"BadRequest\"", "\"message\":\"The request could not be read.\"")
-            .doesNotContain("bell")
+    fun `a request that the firewall rejects returns 400 Bad Request without the message of the exception`() {
+        mockMvc.get("/api/example").andExpect {
+            status { isBadRequest() }
+            jsonPath("$.errorCode") { value("BadRequest") }
+            content { string(not(containsString("bell"))) }
+        }
     }
 }

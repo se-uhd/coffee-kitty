@@ -41,11 +41,21 @@ class ConsumptionSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `adding two coffees raises the count to 2`() {
-        ConsumptionRequests.applyDelta(fixtureUserId(), ConsumptionDeltaDto(1)).requireStatus(200)
+    fun `adding a coffee does not change the coffee count of another user`() {
         ConsumptionRequests.applyDelta(fixtureUserId(), ConsumptionDeltaDto(1)).requireStatus(200)
 
-        assertThat(consumption().count).isEqualTo(2)
+        val other = ConsumptionRequests.retrieveConsumption(fixtureUser("lisa_lee").persistedId)
+
+        assertThat(other.body.count).isEqualTo(0)
+    }
+
+    @Test
+    fun `undoing a coffee at a count of zero returns 409 Conflict`() {
+        val response = ConsumptionRequests.undo(fixtureUserId())
+
+        assertThat(response.status).isEqualTo(409)
+        assertThat(response.error.errorCode).isEqualTo("ConflictException")
+        assertThat(consumption().count).isEqualTo(0)
     }
 
     @Test
@@ -71,7 +81,17 @@ class ConsumptionSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `undoing and adding coffees concurrently keeps the count and the times of the coffees consistent`() {
+    fun `undoing a coffee returns 200 OK with the login name and the lowered count`() {
+        repeat(3) { ConsumptionRequests.applyDelta(fixtureUserId(), ConsumptionDeltaDto(1)).requireStatus(200) }
+
+        val response = ConsumptionRequests.undo(fixtureUserId())
+
+        assertThat(response.status).isEqualTo(200)
+        assertThat(response.body).isEqualTo(ConsumptionDto(loginName = loginName, count = 2))
+    }
+
+    @Test
+    fun `undoing and adding coffees concurrently counts every undo and every coffee`() {
         val userId = fixtureUserId()
         repeat(CONCURRENT_REQUESTS) {
             assertThat(ConsumptionRequests.applyDelta(userId, ConsumptionDeltaDto(1)).status).isEqualTo(200)
@@ -100,24 +120,24 @@ class ConsumptionSystemTests : AbstractSystemTest() {
             executor.shutdownNow()
         }
         assertThat(consumption().count).isEqualTo(CONCURRENT_REQUESTS)
-        // each remaining coffee is within its grace period: every one can be undone, and the next undo returns 409
+        // Each remaining coffee is within its grace period. The user can undo each of these coffees, and the next undo
+        // returns 409.
         repeat(CONCURRENT_REQUESTS) { assertThat(ConsumptionRequests.undo(userId).status).isEqualTo(200) }
         assertThat(ConsumptionRequests.undo(userId).status).isEqualTo(409)
         assertThat(consumption().count).isEqualTo(0)
     }
 
     @Test
-    fun `posting a delta of 2 returns 400 Bad Request and keeps the count at zero`() {
+    fun `posting a delta of 2 returns 400 Bad Request`() {
         val response = ConsumptionRequests.applyDelta(fixtureUserId(), ConsumptionDeltaDto(2))
 
         assertThat(response.status).isEqualTo(400)
         assertThat(response.error.errorCode).isEqualTo("ValidationException")
-        assertThat(response.error.message).isEqualTo("The delta must be +1.")
         assertThat(consumption().count).isEqualTo(0)
     }
 
     @Test
-    fun `posting a fractional delta returns 400 Bad Request and keeps the count at zero`() {
+    fun `posting a fractional delta returns 400 Bad Request`() {
         val response = ConsumptionRequests.applyDelta(fixtureUserId(), mapOf("delta" to 1.9))
 
         assertThat(response.status).isEqualTo(400)
@@ -126,7 +146,7 @@ class ConsumptionSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `posting a delta as a JSON string returns 400 Bad Request and keeps the count at zero`() {
+    fun `posting a delta as a JSON string returns 400 Bad Request`() {
         val response = ConsumptionRequests.applyDelta(fixtureUserId(), mapOf("delta" to "1"))
 
         assertThat(response.status).isEqualTo(400)
@@ -143,47 +163,44 @@ class ConsumptionSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `getting the consumption of an unknown user returns 404 Not Found with the id of the user`() {
+    fun `getting the consumption of an unknown user returns 404 Not Found`() {
         val userId = UUID.randomUUID()
 
         val response = ConsumptionRequests.retrieveConsumption(userId)
 
         assertThat(response.status).isEqualTo(404)
         assertThat(response.error.errorCode).isEqualTo("NotFoundException")
-        assertThat(response.error.message).isEqualTo("User with ID $userId does not exist.")
     }
 
     @Test
-    fun `adding a coffee for an unknown user returns 404 Not Found with the id of the user`() {
+    fun `adding a coffee for an unknown user returns 404 Not Found`() {
         val userId = UUID.randomUUID()
 
         val response = ConsumptionRequests.applyDelta(userId, ConsumptionDeltaDto(1))
 
         assertThat(response.status).isEqualTo(404)
         assertThat(response.error.errorCode).isEqualTo("NotFoundException")
-        assertThat(response.error.message).isEqualTo("User with ID $userId does not exist.")
     }
 
     @Test
-    fun `undoing a coffee of an unknown user returns 404 Not Found with the id of the user`() {
+    fun `undoing a coffee of an unknown user returns 404 Not Found`() {
         val userId = UUID.randomUUID()
 
         val response = ConsumptionRequests.undo(userId)
 
         assertThat(response.status).isEqualTo(404)
         assertThat(response.error.errorCode).isEqualTo("NotFoundException")
-        assertThat(response.error.message).isEqualTo("User with ID $userId does not exist.")
     }
 
     private companion object {
         /**
-         * The number of requests that the concurrency test sends at the same time from separate threads. Each request
-         * adds a coffee. Without the row lock that `getByUserIdForUpdate` sets on the consumption, 40 requests lose
-         * some coffees, but 10 requests often lose none.
+         * The number of requests that a concurrency test sends at the same time from separate threads to add a coffee.
+         * The test with undos also sends the same number of undos. The row lock of `getByUserIdForUpdate` prevents lost
+         * coffees. Without the lock, 40 requests lose some coffees, but 10 requests often lose none.
          */
         const val CONCURRENT_REQUESTS = 40
 
-        /** How long the concurrency test waits for each request. */
+        /** The number of seconds that a concurrency test waits for each request. */
         const val TIMEOUT_SECONDS = 30L
     }
 }

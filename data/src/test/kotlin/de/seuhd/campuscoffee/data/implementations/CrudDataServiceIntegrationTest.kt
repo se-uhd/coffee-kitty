@@ -158,7 +158,7 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `upsert stores and replaces the coffee times in order`() {
+    fun `upsert stores the coffee times oldest first, also after an update`() {
         val user = userDataService.upsert(user("ida"))
         val userId = requireNotNull(user.id)
         val first = LocalDateTime.of(2026, 11, 16, 10, 0, 0)
@@ -217,7 +217,7 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `getByLoginName returns the user with exactly this login name`() {
+    fun `getByLoginName returns the user with the same login name among users with similar login names`() {
         val grace = userDataService.upsert(user("grace"))
         userDataService.upsert(user("Grace", emailAddress = "other@se.de"))
         userDataService.upsert(user("grace_2"))
@@ -234,7 +234,7 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `getByUserIdForUpdate makes a second transaction wait for the first one`() {
+    fun `getByUserIdForUpdate makes a second transaction wait until the first transaction ends`() {
         val userId = storeUserWithConsumption("lena")
         val locked = CountDownLatch(1)
         val release = CountDownLatch(1)
@@ -282,7 +282,7 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `upsert of a stored correction changes neither createdAt nor the users`() {
+    fun `upsert of a stored correction changes neither createdAt nor the user nor the admin`() {
         val user = userDataService.upsert(user("rosa"))
         val admin = storeAdmin("sam")
         val created = countCorrectionDataService.upsert(correction(user, admin))
@@ -329,7 +329,7 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `deleting a user deletes the corrections of the coffee count`() {
+    fun `deleting a user deletes the corrections of the user`() {
         val user = userDataService.upsert(user("walter"))
         val admin = storeAdmin("xenia")
         countCorrectionDataService.upsert(correction(user, admin))

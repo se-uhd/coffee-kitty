@@ -56,9 +56,8 @@ when a build script declares a repository.
   `APPLICATION_PRODUCTION_PACKAGES`.
 - The production classes of `api` and `application` must not depend on the data ports or on
   `domain/.../implementation/`.
-- No class in `api` may depend on the internal ports or on `TestFixtures` in `domain/.../tests/`.
+- No production class in `api` may depend on the internal ports or on `TestFixtures` in `domain/.../tests/`.
 - The port packages may hold only interfaces named `*Service`, and `ports/data/` only interfaces named `*DataService`.
-- No class in the controller package may be a plain `@Controller`.
 - No production class, `*Impl` classes included, may depend on a concrete `*Impl` class. Depend on the port instead.
   The test `production code depends on ports, never on Impl types` exempts the `@Configuration` classes and ignores
   abstract classes, which lets each `*DataServiceImpl` extend the abstract base `CrudDataServiceImpl`.
@@ -319,7 +318,10 @@ The tests are in these places:
   `ConsumptionRequests` in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/`, which use Spring's
   `RestTestClient`. A function for a system test returns a `Response` with the status code, the headers, and the body
   or the error response. `SystemTestUtils` holds the PostgreSQL container from Testcontainers that the system and
-  acceptance tests share.
+  acceptance tests share. The system tests run with the system clock. `UndoWithoutGracePeriodSystemTests` sets the
+  grace period to zero with `@TestPropertySource` and therefore runs in a Spring context of its own.
+  `FailureSystemTests` also runs in a Spring context of its own, because Mockito spies wrap two data adapters, so that a
+  test can make one of their functions fail.
 - Acceptance tests: Cucumber scenarios for behavior-driven development (BDD). The step definitions and the Cucumber
   configuration are in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/acceptance/`, and the feature files,
   such as `consumption.feature`, are in `application/src/test/resources/de/seuhd/campuscoffee/tests/acceptance/`.
@@ -328,19 +330,37 @@ The tests are in these places:
   status code or the values to check.
 - Architecture tests: `ArchitectureTests` (see Layer Rules).
 
-System tests and step definitions send every request through `UserRequests` and `ConsumptionRequests` and never build
-an HTTP request themselves, so that a reader of a test does not need to know the REST API. The exceptions are the tests
-in which the request itself is under test. `ErrorResponseSystemTests` builds the requests for an unknown path and for a
-path that the firewall rejects, and `OpenApiSystemTests` builds the request for the OpenAPI definition.
+System tests and step definitions send every request through `UserRequests` and `ConsumptionRequests` and never build an
+HTTP request themselves, so that a reader of a test does not need to know the REST API. The exception is
+`ErrorResponseSystemTests`, in which the request itself is under test. It builds the requests for an unknown path, for a
+path that the firewall rejects, and with a `Content-Type` or `Accept` header that the API does not support.
+
+### Test Fixtures
+
+`TestFixtures` in `domain/src/main/kotlin/de/seuhd/campuscoffee/domain/tests/` holds the test objects that the tests of
+every module share: the fixture users with `admin()` and `regularUser()`, the fixed time `FIXED_TIME` with
+`fixedClock()`, and the consumptions of `consumptionWithoutCoffee`, `consumptionWithRecentCoffee`, and
+`consumptionWithOldCoffee`. Take a test object from `TestFixtures` when a test needs one of these states. Create the
+object in the test class when the tests need values that these objects do not have, such as an id and timestamps.
+Prepare the state that each test of a class needs anew, such as a stored user, in a function with `@BeforeEach` (see
+`CoffeeConsumptionDataServiceIntegrationTest.storeUser`).
 
 ### Test Naming
 
 A test method (annotated with `@Test` or `@ParameterizedTest`) has a Kotlin backtick name that reads as a sentence in
-active voice and present tense. The name states the subject under test first and then, as a fact, the outcome that the
-test asserts, such as an HTTP status, an exception type, or a returned value. Avoid `should`. Examples are
-``fun `posting a delta of 2 returns 400 Bad Request and keeps the count at zero`()`` and
-``fun `applyDelta with a delta other than +1 throws ValidationException and writes nothing`()``. Other functions
-keep camelCase names.
+active voice and present tense. The subject and the verb come first, and the condition follows. The name contains one
+outcome that the test asserts, such as an HTTP status, an exception type, or a returned value. Do not add that a refused
+operation changes nothing, although the test asserts it. Avoid `should`, and use a verb instead of a noun
+(`deleting a user`, not `delete of a user`). Examples are
+``fun `undo throws ConflictException for a coffee added one hour ago`()`` and
+``fun `posting a delta of 2 returns 400 Bad Request`()``. Other functions have camelCase names.
+
+A test checks behavior that a caller can observe, such as the status, the error code, the exception type, or the stored
+state. It never checks an implementation detail, that is, anything that can change while the behavior stays the same,
+such as the wording of a message, an annotation, a configuration setting, the calls between domain classes, or the
+number and order of calls. It does not check a framework either, such as the messages of Bean Validation or the rule of
+Spring that a lock needs a transaction. A test may check which values a message contains or leaves out, such as the name
+of an invalid field, a rejected value, or a login name in a log message.
 
 ## Key Technologies
 
@@ -407,10 +427,12 @@ profile, springdoc is off.
   `@PreUpdate` and truncates them to microseconds, because a PostgreSQL `timestamp` column stores microseconds. A
   timestamp that `upsert` returns then equals the timestamp that a later query reads.
 - Time: Every timestamp in the database, the code, and the API is in UTC, and the API serves timestamps without an
-  offset. A domain service that compares times reads the current time from the injected `Clock`, so that a test can
-  fix the time (see `CoffeeConsumptionServiceTest`). Other code reads the current time with
-  `LocalDateTime.now(ZoneOffset.UTC)`, never in the system time zone. A client converts a timestamp to a local time
-  zone only for display.
+  offset. A domain service that compares times reads the current time from the injected `Clock`, so that a test can fix
+  the time (see `CoffeeConsumptionServiceTest`). Other code reads the current time with
+  `LocalDateTime.now(ZoneOffset.UTC)`, never in the system time zone. A client converts a timestamp to a local time zone
+  only for display. The tests run in the time zone Asia/Tokyo (`java-conventions.gradle.kts`), so that a test fails when
+  the production code uses the time zone of the JVM for a time in UTC. In UTC, the time zone of GitHub Actions, the same
+  test would pass.
 
 ## Adding a New Entity
 
@@ -427,12 +449,11 @@ step is the API port (step 2).
 3. Create the data port in `domain/.../ports/data/` (extend `CrudDataService<DOMAIN, UUID>`).
 4. In one step, create the Flyway migration in `data/src/main/resources/db/migration/`, the JPA entity in
    `data/.../persistence/entities/` (extend `Entity`), and a `ConstraintMapping.REGISTRY` entry for each unique
-   constraint. Hibernate checks every JPA entity against the schema at startup, and
-   `ConstraintMappingRegistryIntegrationTest` fails while the registry and the unique constraints of the schema differ
-   (see Testing Strategy). Write the annotation of the JPA entity fully qualified as `@jakarta.persistence.Entity`,
-   because an import of `jakarta.persistence.Entity` would hide the base class `Entity`. Choose the `ON DELETE` action
-   of each foreign key. Use `CASCADE` only for a row that belongs to the referenced row, such as a consumption, which
-   belongs to its user. Under the default `NO ACTION`, deleting a referenced row throws a
+   constraint. Hibernate checks every JPA entity against the schema at startup. Without its registry entry, a violated
+   unique constraint becomes a 500 instead of a 409. Write the annotation of the JPA entity fully qualified as
+   `@jakarta.persistence.Entity`, because an import of `jakarta.persistence.Entity` would hide the base class `Entity`.
+   Choose the `ON DELETE` action of each foreign key. Use `CASCADE` only for a row that belongs to the referenced row,
+   such as a consumption, which belongs to its user. Under the default `NO ACTION`, deleting a referenced row throws a
    `DataIntegrityViolationException`, and the client gets a 500. An operation that deletes a row must therefore check
    for references first and, for a referenced row, throw a new domain exception that `GlobalExceptionHandler` maps to
    409 Conflict.
@@ -450,11 +471,11 @@ step is the API port (step 2).
    that reference the new entity and before the calls for the entities that the new entity references.
 10. Create the DTO in `api/.../dtos/` and the DTO mapper in `api/.../mapper/`. The DTO implements `Dto<UUID>` and has
     a nullable `id`, `createdAt`, and `updatedAt`, which the OpenAPI definition marks as read-only (see `UserDto`).
-11. Create the controller in `api/.../controller/`. An endpoint that creates an object rejects a body with an `id` and
-    returns 201 Created with a `Location` header (see `UserController.create`).
-12. Add tests: a domain unit test modeled on `UserServiceTest`, cases in `CrudDataServiceIntegrationTest`, and a system
-    test class that extends `AbstractSystemTest`. The integration cases include an update without timestamps, which
-    fails when the entity mapper copies the timestamps.
+11. Create the controller in `api/.../controller/` and keep it thin (see Testing Strategy). An endpoint that creates an
+    object rejects a body with an `id` and returns 201 Created with a `Location` header (see `UserController.create`).
+12. Add tests: a domain unit test modeled on `UserServiceTest`, an integration test class for the data adapter, such as
+    `PaymentDataServiceIntegrationTest`, and a system test class that extends `AbstractSystemTest`. The integration
+    cases include an update without timestamps, which fails when the entity mapper copies the timestamps.
 13. Update Ports and Adapters in this file for the new ports, and add the new terms to `GLOSSARY.md`. List the new
     endpoints in the REST API section of `README.md`, with one runnable curl block per endpoint. Update the texts that
     summarize the entities, such as the README introduction, the description in `OpenApiConfig`, and the glossary

@@ -4,6 +4,7 @@ import de.seuhd.campuscoffee.api.dtos.UserDto
 import de.seuhd.campuscoffee.api.security.CurrentUserProvider
 import de.seuhd.campuscoffee.tests.SystemTestUtils.client
 import org.springframework.http.MediaType
+import java.net.URI
 import java.util.UUID
 
 /**
@@ -33,8 +34,7 @@ object UserRequests {
     fun retrieveById(id: UUID): Response<UserDto> = retrieveById(id.toString())
 
     /**
-     * Reads the user with [id]. A test can pass a text that is not a UUID, such as `not-a-uuid`, to check the response
-     * to an invalid id.
+     * Reads the user with [id]. A test can pass a text that is not a UUID, such as `not-a-uuid`.
      *
      * @param id the id of the user
      */
@@ -47,10 +47,23 @@ object UserRequests {
             .toResponse()
 
     /**
+     * Reads the user at [location], the URL in the `Location` header of a response.
+     *
+     * @param location the URL to read
+     */
+    fun retrieveAt(location: URI): Response<UserDto> =
+        client()
+            .get()
+            .uri(location)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .toResponse()
+
+    /**
      * Creates a user from [body]. By default, the admin [ConsumptionRequests.ADMIN_LOGIN_NAME] is the acting user.
      *
-     * @param body        the fields of the new user, such as `loginName`. A map lets a test leave out a field or add
-     *   one, such as an `id`, which the server rejects.
+     * @param body        the fields of the new user, such as `loginName`. A map lets a test send a body
+     *   that the server rejects, such as a body without an email address or with an `id`.
      * @param actingUser  the login name of the acting user, or null to send the request without an acting user
      * @param queryString a query string that the request appends to the path, such as `source=test`, or null for none
      */

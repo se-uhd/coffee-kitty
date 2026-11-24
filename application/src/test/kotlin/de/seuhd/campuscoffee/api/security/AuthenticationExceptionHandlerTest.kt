@@ -1,36 +1,39 @@
 package de.seuhd.campuscoffee.api.security
 
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
+import de.seuhd.campuscoffee.api.exceptions.GlobalExceptionHandler
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
-import org.springframework.mock.web.MockHttpServletRequest
-import org.springframework.mock.web.MockHttpServletResponse
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException
-import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RestController
 import tools.jackson.databind.json.JsonMapper
 
 /**
- * Unit tests for [CurrentUserProvider] and [AuthenticationExceptionHandler] on a route without a rule in
- * `SecurityConfig`: without a principal, [CurrentUserProvider.currentUser] throws, and the handler turns the exception
- * into the 401 of [JsonAuthenticationEntryPoint].
+ * Unit test for [AuthenticationExceptionHandler] on a route without a rule in `SecurityConfig`. MockMvc runs the route
+ * with the handler and [GlobalExceptionHandler], so that the test fails when the handler does not take precedence.
  */
 class AuthenticationExceptionHandlerTest {
-    private val handler = AuthenticationExceptionHandler(JsonAuthenticationEntryPoint(JsonMapper.builder().build()))
+    @RestController
+    private class ExampleController {
+        @GetMapping("/api/example")
+        fun example(): String = CurrentUserProvider().currentUser().loginName
+    }
 
-    @AfterEach
-    fun clearSecurityContext() = SecurityContextHolder.clearContext()
+    private val mockMvc =
+        MockMvcBuilders
+            .standaloneSetup(ExampleController())
+            .setControllerAdvice(
+                GlobalExceptionHandler(),
+                AuthenticationExceptionHandler(JsonAuthenticationEntryPoint(JsonMapper.builder().build()))
+            ).build()
 
     @Test
-    fun `currentUser without a principal throws, and the handler responds with 401 and the challenge`() {
-        val exception = assertThrows<AuthenticationCredentialsNotFoundException> { CurrentUserProvider().currentUser() }
-        val response = MockHttpServletResponse()
-
-        handler.handleAuthenticationException(exception, MockHttpServletRequest("PUT", "/api/example"), response)
-
-        assertThat(response.status).isEqualTo(401)
-        assertThat(response.getHeader("WWW-Authenticate")).isEqualTo(CurrentUserProvider.AUTHENTICATION_CHALLENGE)
-        assertThat(response.contentAsString)
-            .contains("The header X-Acting-User is missing.", "\"path\":\"/api/example\"")
+    fun `a route that needs an acting user returns 401 Unauthorized for a request without an acting user`() {
+        mockMvc.get("/api/example").andExpect {
+            status { isUnauthorized() }
+            header { string("WWW-Authenticate", CurrentUserProvider.AUTHENTICATION_CHALLENGE) }
+            jsonPath("$.errorCode") { value("Unauthorized") }
+            jsonPath("$.path") { value("/api/example") }
+        }
     }
 }

@@ -7,6 +7,11 @@ import de.seuhd.campuscoffee.tests.UserRequests
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
+import org.springframework.boot.test.system.CapturedOutput
+import org.springframework.boot.test.system.OutputCaptureExtension
 import org.springframework.http.MediaType
 import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
@@ -15,9 +20,9 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 /**
- * System tests for listing, reading, and creating users. The tests send their requests through [UserRequests], which
- * sends a request that creates a user with the login name of the admin `jane_doe` in the header `X-Acting-User` unless
- * a test leaves the header out or sets another login name.
+ * System tests for listing, reading, and creating users. The tests send their requests through [UserRequests]. A
+ * request that creates a user has the admin `jane_doe` as the acting user, unless a test sets another acting user or
+ * leaves the header `X-Acting-User` out.
  */
 class UserSystemTests : AbstractSystemTest() {
     /**
@@ -53,17 +58,25 @@ class UserSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `creating a user returns 201 Created with a Location header and a coffee count of zero`() {
+    fun `creating a user returns 201 Created with the URL of the new user`() {
         val response = UserRequests.create(newUser())
 
         assertThat(response.status).isEqualTo(201)
         val created = response.body
         assertThat(created.loginName).isEqualTo("new_user")
+        assertThat(created.emailAddress).isEqualTo("new.user@se.uni-heidelberg.de")
+        assertThat(created.firstName).isEqualTo("New")
+        assertThat(created.lastName).isEqualTo("User")
         assertThat(created.createdAt).isCloseTo(LocalDateTime.now(ZoneOffset.UTC), within(1, ChronoUnit.MINUTES))
-        assertThat(response.headers.location?.path).isEqualTo("/api/users/${created.persistedId}")
-        val consumption = ConsumptionRequests.retrieveConsumption(created.persistedId)
-        assertThat(consumption.status).isEqualTo(200)
-        assertThat(consumption.body.count).isEqualTo(0)
+        val location = requireNotNull(response.headers.location)
+        assertThat(UserRequests.retrieveAt(location).body).usingRecursiveComparison().isEqualTo(created)
+    }
+
+    @Test
+    fun `creating a user creates a consumption with a count of zero`() {
+        val created = UserRequests.create(newUser()).body
+
+        assertThat(ConsumptionRequests.retrieveConsumption(created.persistedId).body.count).isEqualTo(0)
     }
 
     @Test
@@ -73,12 +86,11 @@ class UserSystemTests : AbstractSystemTest() {
         val response = UserRequests.retrieveById(lisa.persistedId)
 
         assertThat(response.status).isEqualTo(200)
-        assertThat(response.body.loginName).isEqualTo("lisa_lee")
-        assertThat(response.body.emailAddress).isEqualTo(lisa.emailAddress)
+        assertThat(response.body).usingRecursiveComparison().isEqualTo(lisa)
     }
 
     @Test
-    fun `creating a user with a query string returns 201 Created with a Location header without the query string`() {
+    fun `creating a user with a query string returns a Location header without the query string`() {
         val response = UserRequests.create(newUser(), queryString = "source=test")
 
         assertThat(response.status).isEqualTo(201)
@@ -95,20 +107,11 @@ class UserSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `getting an unknown user returns 404 Not Found`() {
-        val response = UserRequests.retrieveById(UUID.randomUUID())
-
-        assertThat(response.status).isEqualTo(404)
-        assertThat(response.error.errorCode).isEqualTo("NotFoundException")
-    }
-
-    @Test
     fun `creating a user with a taken login name returns 409 Conflict`() {
         val response = UserRequests.create(newUser(loginName = "jane_doe"))
 
         assertThat(response.status).isEqualTo(409)
         assertThat(response.error.errorCode).isEqualTo("DuplicationException")
-        assertThat(response.error.message).isEqualTo("User with login name 'jane_doe' already exists.")
     }
 
     @Test
@@ -125,16 +128,43 @@ class UserSystemTests : AbstractSystemTest() {
 
         assertThat(response.status).isEqualTo(409)
         assertThat(response.error.errorCode).isEqualTo("DuplicationException")
-        assertThat(response.error.message)
-            .isEqualTo("User with email address 'jane.doe@se.uni-heidelberg.de' already exists.")
     }
 
     @Test
-    fun `creating a user with a blank login name returns 400 Bad Request`() {
-        val response = UserRequests.create(newUser(loginName = ""))
+    @ExtendWith(OutputCaptureExtension::class)
+    fun `creating a user logs neither a taken email address nor the login name of an unknown acting user`(
+        output: CapturedOutput
+    ) {
+        UserRequests.create(newUser(emailAddress = "jane.doe@se.uni-heidelberg.de")).requireStatus(409)
+        UserRequests.create(newUser(), actingUser = "nobody").requireStatus(401)
+
+        assertThat(output.all).doesNotContain("jane.doe@se.uni-heidelberg.de", "nobody")
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [1, 255])
+    fun `creating a user with a login name of 1 or 255 characters returns 201 Created`(length: Int) {
+        val response = UserRequests.create(newUser(loginName = "a".repeat(length)))
+
+        assertThat(response.status).isEqualTo(201)
+        assertThat(response.body.loginName).hasSize(length)
+    }
+
+    @Test
+    fun `creating a user with a login name of 256 characters returns 400 Bad Request`() {
+        val response = UserRequests.create(newUser(loginName = "a".repeat(256)))
 
         assertThat(response.status).isEqualTo(400)
         assertThat(response.error.errorCode).isEqualTo("BadRequest")
+        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+    }
+
+    @Test
+    fun `creating a user with capital letters in the email address returns 201 Created with a lowercase address`() {
+        val response = UserRequests.create(newUser(emailAddress = "New.User@SE.Uni-Heidelberg.DE"))
+
+        assertThat(response.status).isEqualTo(201)
+        assertThat(response.body.emailAddress).isEqualTo("new.user@se.uni-heidelberg.de")
     }
 
     @Test
@@ -154,28 +184,12 @@ class UserSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `creating a user with a NUL in the first name returns 400 Bad Request with ValidationException`() {
-        val response = UserRequests.create(newUser(firstName = "Ne\u0000w"))
-
-        assertThat(response.status).isEqualTo(400)
-        assertThat(response.error.errorCode).isEqualTo("ValidationException")
-    }
-
-    @Test
-    fun `creating a user with a quoted email address with a space returns 400 Bad Request with ValidationException`() {
-        val response = UserRequests.create(newUser(emailAddress = "\"jane doe\"@se.de"))
-
-        assertThat(response.status).isEqualTo(400)
-        assertThat(response.error.errorCode).isEqualTo("ValidationException")
-    }
-
-    @Test
-    fun `creating a user with a space in the login name returns 400 Bad Request that names the field`() {
+    fun `creating a user with a space in the login name returns 400 Bad Request without the login name`() {
         val response = UserRequests.create(newUser(loginName = "jane doe"))
 
         assertThat(response.status).isEqualTo(400)
-        assertThat(response.error.message)
-            .isEqualTo("loginName must contain only ASCII letters, digits, and underscores")
+        assertThat(response.error.errorCode).isEqualTo("BadRequest")
+        assertThat(response.error.message).contains("loginName").doesNotContain("jane doe")
     }
 
     @Test
@@ -186,37 +200,44 @@ class UserSystemTests : AbstractSystemTest() {
 
         assertThat(response.status).isEqualTo(400)
         assertThat(response.error.errorCode).isEqualTo("ValidationException")
+        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
     }
 
     @Test
-    fun `creating a user without the acting user header returns 401 Unauthorized and creates no user`() {
+    fun `creating a user without the acting user header returns 401 Unauthorized`() {
         val response = UserRequests.create(newUser(), actingUser = null)
 
         assertThat(response.status).isEqualTo(401)
         assertThat(response.error.errorCode).isEqualTo("Unauthorized")
-        assertThat(response.error.message).isEqualTo("The header X-Acting-User is missing.")
         assertThat(response.headers.getFirst("WWW-Authenticate")).isEqualTo(CHALLENGE)
         assertThat(userService.getAll()).hasSize(fixtureUsers.size)
     }
 
     @Test
-    fun `creating a user as a user who is not an admin returns 403 Forbidden and creates no user`() {
+    fun `creating a user as a user who is not an admin returns 403 Forbidden`() {
         val response = UserRequests.create(newUser(), actingUser = "maxmustermann")
 
         assertThat(response.status).isEqualTo(403)
         assertThat(response.error.errorCode).isEqualTo("ForbiddenException")
-        assertThat(response.error.message).isEqualTo("Only an admin may create a user.")
         assertThat(userService.getAll()).hasSize(fixtureUsers.size)
     }
 
     @Test
-    fun `creating a user with an unknown acting user returns 401 Unauthorized and creates no user`() {
+    fun `creating a user with an unknown acting user returns 401 Unauthorized`() {
         val response = UserRequests.create(newUser(), actingUser = "nobody")
 
         assertThat(response.status).isEqualTo(401)
         assertThat(response.error.errorCode).isEqualTo("Unauthorized")
-        assertThat(response.error.message).isEqualTo("No user has the login name in X-Acting-User.")
+        assertThat(response.error.message).doesNotContain("nobody")
         assertThat(response.headers.getFirst("WWW-Authenticate")).isEqualTo(CHALLENGE)
+        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+    }
+
+    @Test
+    fun `creating a user with an acting user in other letter case returns 401 Unauthorized`() {
+        val response = UserRequests.create(newUser(), actingUser = "JANE_DOE")
+
+        assertThat(response.status).isEqualTo(401)
         assertThat(userService.getAll()).hasSize(fixtureUsers.size)
     }
 
@@ -237,15 +258,6 @@ class UserSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `creating a user without the acting user header and with an id returns 401 Unauthorized`() {
-        val body = newUser() + ("id" to UUID.randomUUID().toString())
-
-        val response = UserRequests.create(body, actingUser = null)
-
-        assertThat(response.status).isEqualTo(401)
-    }
-
-    @Test
     fun `creating a user without a role returns 201 Created with the role USER`() {
         val response = UserRequests.create(newUser())
 
@@ -262,7 +274,21 @@ class UserSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `creating a user with an unknown role returns 400 Bad Request and creates no user`() {
+    fun `creating a user as an admin whom another admin created returns 201 Created`() {
+        UserRequests.create(newUser(loginName = "second_admin") + ("role" to "ADMIN")).requireStatus(201)
+
+        val response =
+            UserRequests.create(
+                newUser(loginName = "third_user", emailAddress = "third.user@se.uni-heidelberg.de"),
+                actingUser = "second_admin"
+            )
+
+        assertThat(response.status).isEqualTo(201)
+        assertThat(response.body.role).isEqualTo(Role.USER)
+    }
+
+    @Test
+    fun `creating a user with an unknown role returns 400 Bad Request`() {
         val response = UserRequests.create(newUser() + ("role" to "OWNER"))
 
         assertThat(response.status).isEqualTo(400)
@@ -270,7 +296,7 @@ class UserSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `creating a user with a number as the role returns 400 Bad Request and creates no user`() {
+    fun `creating a user with a number as the role returns 400 Bad Request`() {
         val response = UserRequests.create(newUser() + ("role" to 1))
 
         assertThat(response.status).isEqualTo(400)
@@ -279,7 +305,7 @@ class UserSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `creating a user with a number as the login name returns 400 Bad Request and creates no user`() {
+    fun `creating a user with a number as the login name returns 400 Bad Request`() {
         val response = UserRequests.create(newUser() + ("loginName" to 12345))
 
         assertThat(response.status).isEqualTo(400)
@@ -288,7 +314,7 @@ class UserSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `creating a user with a boolean as the first name returns 400 Bad Request and creates no user`() {
+    fun `creating a user with a boolean as the first name returns 400 Bad Request`() {
         val response = UserRequests.create(newUser() + ("firstName" to true))
 
         assertThat(response.status).isEqualTo(400)

@@ -7,8 +7,8 @@ count by one.
 
 ## Rationale
 
-Users sometimes add a coffee by mistake, for example with a double tap. Coffee Kitty cannot yet lower a coffee count,
-so a wrong entry remains recorded. Assumption: 5 minutes are enough to notice a mistake.
+Users sometimes add a coffee by mistake, for example with a double tap. Without an undo, they cannot lower their coffee
+count, and a wrong entry remains recorded. Assumption: 5 minutes are enough to notice a mistake.
 
 ## Success Criteria
 
