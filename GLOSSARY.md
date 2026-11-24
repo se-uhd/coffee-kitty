@@ -76,7 +76,7 @@ with a line "Avoid:", which lists words not to use for the concept.
 - **price per cup**: The one price of a coffee in euro cents, which applies to every user and which an admin sets. Each
   coffee lowers the balance of its user by the price per cup at the time of the coffee, so a new price applies only to
   the coffees added after the change. Coffee Kitty stores at most one price, and no endpoint reads or sets it yet. No
-  price is stored after the migrations or after a data reset, so the startup has to store the start price.
+  price is stored after the migrations, so the startup has to store the start price.
   Code: `CoffeePrice`, `CoffeePriceDataService`, `coffee_prices`.
 - **balance**: A user's amount of money in euro cents, negative when the user owes the kitty money and positive when the
   kitty owes the user money. Coffees lower the balance, and deposits and the private shares of the user's expenses
@@ -128,24 +128,25 @@ with a line "Avoid:", which lists words not to use for the concept.
 - **acting user**: The user who sends a request, identified by the login name in the header `X-Acting-User`. Because
   Coffee Kitty has no authentication yet, any client can act as any user.
   API: `X-Acting-User`, `WWW-Authenticate: X-Acting-User realm="Coffee Kitty"` in a 401. Code: `CurrentUserProvider`,
-  `ActingUserAuthenticationFilter`, `SecurityConfig`.
+  `ActingUserAuthenticationFilter`, `ActingUserRequired`, `SecurityConfig`.
   Avoid: current user (except in the class name), caller.
 - **bootstrap admin**: The admin that the app stores on startup from the keys under `campus-coffee.bootstrap-admin` when
-  no admin exists after the fixture loader has run. If a user has the configured login name, the app gives that user the
+  no admin exists. If a user has the configured login name, the app gives that user the
   role `ADMIN`. Otherwise, it creates the configured user.
   Code: `BootstrapAdminLoader`, `BootstrapAdminProperties`, `StartupDataInitializer`,
   `UserInternalService.createInitialAdmin`.
-- **fixture user**: One of the five users in `TestFixtures`, such as `jane_doe`, the only admin among them. In the dev
-  profile, the fixture loader creates these users with a coffee count of zero on every start, and the system and
-  acceptance tests create them the same way before each test.
-  Code: `TestFixtures`, `FixtureStartupLoader`, `campus-coffee.fixtures.*`.
+- **fixture user**: One of the five users in `TestFixtures`, such as `jane_doe`, the only admin among them. The dev
+  application creates these users with a coffee count of zero on every start, and the system and acceptance tests
+  create them the same way before each test.
+  Code: `TestFixtures`, `DevDataSeeder`.
   Avoid: seeded user.
 - **test fixture**: A test object with fixed values that several tests share, or the state that a test prepares before
   it runs the code under test. `TestFixtures` holds the shared test objects: the fixture users, a fixed time with a
   clock that shows it, a consumption without a coffee, a consumption with a recent coffee, and a consumption with an old
   coffee. At the fixed time, the grace period of the old coffee has passed. A function with `@BeforeEach` prepares the
-  state that each test of a class needs, such as a stored user.
-  Code: `TestFixtures`, `FIXED_TIME`, `fixedClock`, `consumptionWithRecentCoffee`.
+  state that each test of a class needs, such as a stored user. `TestFixtures` and the database cleaner are in the
+  Gradle source set `src/testFixtures` of their module, which the production jar does not contain.
+  Code: `TestFixtures`, `FIXED_TIME`, `fixedClock`, `consumptionWithRecentCoffee`, `DatabaseCleaner`.
 
 ## Architecture
 
@@ -158,9 +159,10 @@ with a line "Avoid:", which lists words not to use for the concept.
   which adds the Kotlin JPA plugin.
   Code: `java-conventions.gradle.kts`, `kotlin-conventions.gradle.kts`.
 - **port**: An interface in `domain/.../ports/` that connects the domain to the other modules. The controllers call the
-  API ports in `ports/api/`, and the data module implements the data ports in `ports/data/`. The fixture loader, the
-  bootstrap admin loader, and the tests call the internal ports in `ports/internal/`.
-  Code: `UserService`, `UserDataService`, `DataResetService`.
+  API ports in `ports/api/`, and the data module implements the data ports in `ports/data/`. The bootstrap admin
+  loader, the tests, and the dev application call the internal port in `ports/internal/`, which creates a user without
+  an acting user.
+  Code: `UserService`, `UserDataService`, `UserInternalService`.
 - **adapter**: A class outside the domain that connects a port to a technology. Examples are a controller, which
   handles HTTP requests and calls an API port, and a data adapter such as `UserDataServiceImpl`, which implements a
   data port with Jakarta Persistence (JPA). The accepted ADR 001 applies the term to whole modules as well and calls
@@ -174,14 +176,15 @@ with a line "Avoid:", which lists words not to use for the concept.
   has no annotations or code for the web or the database. An instance of such a class is a domain object.
   Code: `DomainModel`, `User`, `CoffeeConsumption`, `CountCorrection`.
 - **DTO**: A data transfer object, that is, a class in `api/.../dtos/` that defines the JSON body of a request or a
-  response. Bean Validation checks a request body against the constraint annotations of the class, such as `@NotBlank`,
-  before the controller method runs. A MapStruct mapper in `api/.../mapper/` converts between a domain object and the
-  matching class. `UserDtoMapper` converts in both directions, `ConsumptionDtoMapper` converts only from
-  `CoffeeConsumption` to `ConsumptionDto`, and `CountCorrectionDtoMapper` only from `CountCorrection` to
-  `CountCorrectionDto`. `ConsumptionDeltaDto` and `ConsumptionCorrectionDto` have no mapper, because the controller
-  passes their values to the domain. `UndoStatusDto` has no mapper either, because the controller creates it from the
-  result of `CoffeeConsumptionService.undoableUntil`.
-  Code: `UserDto`, `ConsumptionDto`, `ConsumptionDeltaDto`, `UserDtoMapper`.
+  response. A request DTO has nullable properties, and Bean Validation rejects a missing field (`@NotNull`) before the
+  controller function runs. A request DTO checks no value: The domain checks the values and throws a
+  `ValidationException`. A response DTO has only non-null properties. A MapStruct mapper in `api/.../mapper/` converts
+  between a domain object and the matching classes. `UserDtoMapper` converts a `User` to a `UserDto` and a
+  `CreateUserDto` to a `User`, `ConsumptionDtoMapper` converts a `CoffeeConsumption` to a `ConsumptionDto`, and
+  `CountCorrectionDtoMapper` a `CountCorrection` to a `CountCorrectionDto`. `ConsumptionDeltaDto` and
+  `ConsumptionCorrectionDto` have no mapper, because the controller passes their values to the domain. `UndoStatusDto`
+  has no mapper either, because the controller creates it from the result of `CoffeeConsumptionService.undoableUntil`.
+  Code: `UserDto`, `CreateUserDto`, `ConsumptionDto`, `ConsumptionDeltaDto`, `UserDtoMapper`.
 - **JPA entity**: A class in `data/.../persistence/entities/` that JPA maps to one table, such as `UserEntity` for the
   table `users`. Each such class has a name that ends in `Entity`, and each one except `UserBalanceEntity` and
   `KittyBalanceEntity` extends the base class `Entity`. The tables of these two classes have neither a random id nor
@@ -190,28 +193,28 @@ with a line "Avoid:", which lists words not to use for the concept.
 - **upsert**: The operation of a data port that inserts or updates a domain object. A domain object without an id is
   inserted as a new row under a new random `UUID`. For a domain object with an id, the operation updates the stored row
   with that id, or throws a `NotFoundException` when no row has that id. A violation of a unique constraint that
-  `ConstraintMapping.REGISTRY` lists becomes a `DuplicationException`.
+  `ConstraintMapping.REGISTRY` lists becomes a `DuplicationException`, and a violation of any other constraint a
+  `DataConstraintException`.
   Code: `CrudDataService.upsert`, `CrudDataServiceImpl.upsert`.
 - **migration**: A versioned SQL file in `data/src/main/resources/db/migration/`. At startup, Flyway applies every such
   file that it has not applied to the database before, in version order. A migration that others have applied, such as
   a pushed migration, must not change (CLAUDE.md, Database).
   Code: `V1__create_users_table.sql`, `V2__create_coffee_consumptions_table.sql`.
-- **data reset**: The deletion of all ratings, payments, corrections, consumptions, and users, then all beans, and then
-  the price through the internal port `DataResetService`. The fixture loader runs this deletion when `reset-on-startup`
-  is true, and the data integration, system, and acceptance tests run it before each test. A client cannot delete the
-  data through the API. The tables `expenses`, `user_balance`, and `kitty_balance` have no data port yet. Deleting a
-  user deletes the balance of the user, and the kitty balance stays. While `expenses` has a row, the data reset fails
-  at the users, after it has deleted the ratings, payments, corrections, and consumptions.
-  Code: `DataResetService.clearAll`.
-- **fixture loader**: The Spring component that creates the fixture users through `UserInternalService.create` at
-  startup when `campus-coffee.fixtures.load-on-startup` is true. With `campus-coffee.fixtures.reset-on-startup` set to
-  true, as in the dev profile, the component runs a data reset first. Without that setting, the component creates the
-  fixture users only when the database has no users.
-  Code: `FixtureStartupLoader`, `FixturesProperties`.
-  Avoid: startup loader.
+- **database cleaner**: The class in the test fixtures of the data module that deletes the rows of every table of the
+  app. It reads the names of the tables from the PostgreSQL catalog and truncates them in one statement. The data
+  integration, system, and acceptance tests run it before each test, and the dev application runs it on every start. The
+  production jar does not contain it, so neither a client nor a configuration of a deployed app can delete the data.
+  Code: `DatabaseCleaner.clean`.
+  Avoid: data reset.
+- **dev application**: The app in the dev profile with the fixture users, which `gradle :application:bootTestRun`
+  starts. On every start, it runs the database cleaner and creates the fixture users through
+  `UserInternalService.create` before it serves requests. Its `main` function is in the test sources of the application
+  module, because it uses the test fixtures.
+  Code: `DevApplication.kt`, `DevDataConfiguration`, `DevDataSeeder`.
+  Avoid: fixture loader, startup loader.
 - **dev profile**: The Spring profile `dev` for running the app locally. In this profile, the app serves the API and
-  Swagger UI on port 8081 and connects to PostgreSQL on port 5433. At every start, the fixture loader runs a data reset
-  and creates the fixture users. The tests run without this profile.
+  Swagger UI on port 8081 and connects to PostgreSQL on port 5433. The dev application runs in this profile. The tests
+  run without it.
   Code: `application.yaml`, `--spring.profiles.active=dev`.
 - **error response**: The response to a failed request. Its JSON body has the fields `errorCode`, `message`,
   `statusCode`, `statusMessage`, `timestamp` (in UTC), and `path`. For a domain exception, `errorCode` is the class name
@@ -224,10 +227,12 @@ with a line "Avoid:", which lists words not to use for the concept.
   repeats a value that must be unique, such as the login name or the email address of another user. `ConflictException`
   (409) means that a well-formed request does not apply to the current state, such as an undo after the grace period.
   `ForbiddenException` (403) means that the acting user may not perform the action, such as creating a user or
-  correcting a coffee count without the role `ADMIN`. `ValidationException` (400) means that a request breaks a rule of
-  the domain or of a controller, such as an integer delta other than +1 or an id in the body of `POST /api/users`. A
-  request body that fails Bean Validation or cannot be read, such as a body with a delta of 1.9, gets a 400 with the
-  error code `BadRequest` instead.
+  correcting a coffee count without the role `ADMIN`. `ValidationException` (400) means that a value in a request breaks
+  a rule of the domain, such as an integer delta other than +1 or a login name of 256 characters. A request body that
+  the api module cannot read gets a 400 with the error code `BadRequest` instead: a body without a required field, with
+  a value of the wrong JSON type, such as a delta of 1.9, or with an unknown field. `DataConstraintException` is not a
+  domain exception. A data port throws it when the database refuses a row that the domain should have refused, and the
+  client gets a 500.
 - **firewall**: The `StrictHttpFirewall` of Spring Security, which rejects a request with `;`, `//`, `..`, or an encoded
   slash in the path or with a control character in a header value. Security rules and Spring MVC can read such a
   request differently. A rejected request gets 400 Bad Request with the error code `BadRequest`, and the message of

@@ -33,16 +33,16 @@ repository.
 
 ### Module Dependencies
 
-- `domain`: the domain models, the ports, and the business logic. Depends on the Spring Boot core, `spring-tx`, and
-  kotlin-logging, never on Bean Validation, Jakarta Persistence (JPA), or the other modules.
+- `domain`: the domain models, the ports, and the business logic. Depends on the Spring Boot core and `spring-tx`,
+  never on Bean Validation, Jakarta Persistence (JPA), or the other modules.
 - `api`: the controllers, the data transfer objects (DTOs), the DTO mappers, the exception handler, and the OpenAPI
   definition. Depends on `domain`.
 - `data`: the JPA entities, the repositories, the entity mappers, the data adapters, and the Flyway migrations. Depends
   on `domain`.
 - `application`: the composition root, which wires the other modules into one Spring Boot application. It holds the
-  main class, the startup tasks (`StartupDataInitializer`, which runs the fixture loader with `FixturesProperties`
-  and then `BootstrapAdminLoader` with `BootstrapAdminProperties`), `ClockConfiguration`, and `application.yaml`, but no
-  web or business code.
+  main class, the startup task (`StartupDataInitializer`, which runs `BootstrapAdminLoader` with
+  `BootstrapAdminProperties`), `ClockConfiguration`, and `application.yaml`, but no web or business code. Its test
+  sources hold the dev application (see Configuration).
   Depends on `domain`, `api`, and `data`.
 
 ### Layer Rules (Enforced by ArchUnit)
@@ -52,12 +52,20 @@ repository.
 - Only `application` may access `api` and `data`, and only `api`, `data`, and `application` may access `domain`.
 - The production packages must be free of cycles.
 - Every class, test classes included, must lie in a layer: `api..`, `domain..`, `data..`, or the application layer,
-  which consists of the root package `de.seuhd.campuscoffee`, `configuration..`, and `tests..`. A class in a new
-  production package of the application module fails the layer test until the package is added to
+  which consists of the root package `de.seuhd.campuscoffee`, `configuration..`, `tests..`, and `dev..`. A class in a
+  new production package of the application module fails the layer test until the package is added to
   `APPLICATION_PRODUCTION_PACKAGES`.
 - The production classes of `api` and `application` must not depend on the data ports or on
   `domain/.../implementation/`.
-- No production class in `api` may depend on the internal ports or on `TestFixtures` in `domain/.../tests/`.
+- No production class in `api` may depend on the internal ports.
+- Within the domain module, the production classes of `data` may depend only on the models, the exceptions, and the
+  data ports. The rule lists these packages, so a new package of the domain is forbidden for `data` until the rule
+  names it.
+- A controller function that calls `CurrentUserProvider.currentUser` must have the annotation `ActingUserRequired` (see
+  Important Patterns).
+- No class under `tests..` may depend on a class of the api module, such as a DTO (see Testing Strategy).
+- The production classes must not contain the test fixtures. `PRODUCTION_CLASSES` leaves out the jars with the test
+  fixtures of the domain and data modules, and this rule fails if it does not.
 - The port packages may hold only interfaces named `*Service`, and `ports/data/` only interfaces named `*DataService`.
 - No production class, `*Impl` classes included, may depend on a concrete `*Impl` class. Depend on the port instead.
   The test `production code depends on ports, never on Impl types` exempts the `@Configuration` classes and ignores
@@ -68,17 +76,18 @@ repository.
 The ports are in `domain/src/main/kotlin/de/seuhd/campuscoffee/domain/ports/`:
 
 - API ports (`ports/api/`), which the controllers call, such as `UserService`.
-- Data ports (`ports/data/`), which the data module implements, such as `UserDataService`. Each entity with a domain
-  model has a `*DataService` that extends the generic `CrudDataService<DOMAIN, ID>`. Except for the data reset, no
-  domain service uses the data ports of the price, the payments, the beans, and the ratings yet (see Tables Without an
-  Endpoint).
-- Internal ports (`ports/internal/`), which the fixture loader, the bootstrap admin loader, and the test setup call,
-  such as `DataResetService` and `UserInternalService`.
+- Data ports (`ports/data/`), which the data module implements, such as `UserDataService`. The data port of an entity
+  that the domain may change and delete extends the generic `CrudDataService<DOMAIN, ID>`. The data port of an entity
+  that never changes after it is stored declares only the operations that the domain needs: `CountCorrectionDataService`
+  has only `insert` and `getAllByUserId`. No domain service uses the data ports of the price, the payments, the beans,
+  and the ratings yet (see Tables Without an Endpoint).
+- Internal ports (`ports/internal/`), which the bootstrap admin loader, the test setup, and the dev application call:
+  `UserInternalService` creates a user without an acting user.
 
 The implementations of the API and internal ports are in `domain/.../implementation/`. `UserServiceImpl.create` trims
 the email address, converts it to lowercase, and checks the new user against the limits in the companion object of
 `User`. In one transaction, the method then stores the user and the consumption of the user with a coffee count of zero.
-The fixture loader and the test setup create the fixture users through `UserInternalService.create`, which checks the
+The test setup and the dev application create the fixture users through `UserInternalService.create`, which checks the
 fixture users like any other new user. `CoffeeConsumptionServiceImpl.applyDelta` accepts only a delta of `+1` and reads
 the consumption with `getByUserIdForUpdate`, which locks the row until the transaction ends. A second request that adds
 a coffee for the same user at the same time waits until the first transaction ends. The second request then reads the
@@ -98,7 +107,7 @@ checks the role with `requireAdmin`, refuses a total outside 0 to `CountCorrecti
 missing, blank, or longer than `CountCorrection.MAX_NOTE_LENGTH`, and locks the consumption like `applyDelta`. A total
 below the count drops the times of the newest coffees from `coffeeTimes`, as the coffee app of SE@UHD removes the newest
 coffees of the user from its undo stack. A higher total adds coffees without a time. In the same transaction, the method
-stores a `CountCorrection` with the count before and after, the note, and the admin through the data port
+stores a `CountCorrection` with the count before and after, the note, and the admin with `insert` of the data port
 `CountCorrectionDataService`. The data module stores the corrections in the table `count_corrections`, which references
 the corrected user with `ON DELETE CASCADE` and the admin with the default `NO ACTION`. `getCorrections` also checks the
 role with `requireAdmin` and returns the corrections of a user, newest first.
@@ -108,22 +117,25 @@ role with `requireAdmin` and returns the corrections of a user, newest first.
 `CrudDataServiceImpl` is the base class of the data adapters. `CrudDataServiceImpl.upsert` inserts a domain object
 without an id under a random `UUID`. For an object with an id, `upsert` updates the stored JPA entity through the entity
 mapper, or throws a `NotFoundException` when no row has that id. A violated unique constraint becomes the
-`DuplicationException` of the matching `ConstraintMapping.REGISTRY` entry.
+`DuplicationException` of the matching `ConstraintMapping.REGISTRY` entry. For any other violated constraint, such as a
+CHECK constraint or a foreign key that prevents a deletion, `upsert` and `delete` throw a `DataConstraintException` of
+the domain module, so that no exception of Spring or Hibernate crosses a data port. A `DataConstraintException` is not
+a `DomainException` and becomes a 500, because it means that a domain service did not check a rule before it called
+the data port.
 
 The read methods of `CrudDataServiceImpl` and of the data adapters, except `getByUserIdForUpdate`, are not
 `@Transactional`. For a caller without a transaction, these methods map the JPA entity outside any transaction. Because
 `application.yaml` turns off Open Session in View, a lazy association loads only inside a transaction. A data adapter
 for a JPA entity with a lazy association must therefore read and map the entity inside a `@Transactional` method.
 
-The generic MapStruct interfaces `DtoMapper` and `EntityMapper` take the domain type first, as in
-`UserDtoMapper : DtoMapper<User, UserDto>`. Every entity mapper overrides `updateEntity` to ignore the id and the
-timestamps (see `UserEntityMapper`). Without the override, an update copies the id and the timestamps from the domain
-object.
+The generic MapStruct interface `EntityMapper` takes the domain type first, as in `UserEntityMapper : EntityMapper<User,
+UserEntity>`. Every entity mapper overrides `updateEntity` to ignore the id and the timestamps (see `UserEntityMapper`).
+Without the override, an update copies the id and the timestamps from the domain object.
 
 ### Tables Without an Endpoint
 
 The migrations V6 to V11 create the tables of later features, which the coffee app of SE@UHD has. No endpoint and no
-domain service except the data reset uses them yet, and their columns and constraints follow that app without its event
+domain service uses them yet, and their columns and constraints follow that app without its event
 log. The KDoc of each JPA entity explains the columns, the CHECK constraints, and the `ON DELETE` action of each foreign
 key.
 
@@ -131,19 +143,15 @@ key.
   adjustment without one), the beans (`coffee_beans`, with a unique name among the live beans and, for a merged bean,
   the id of the bean that it was merged into), and the ratings (`coffee_ratings`, a score from 1 to 5 of a bean by a
   user) have the full data layer: the domain models `CoffeePrice`, `Payment`, `CoffeeBean`, and `CoffeeRating`, a data
-  port, an entity mapper, a data adapter, and the call in `DataResetServiceImpl.clearAll`.
-  `EntityReferenceResolver.beanReference` resolves the bean of a rating. An API port, a domain service, DTOs, and a
-  controller are missing.
+  port, an entity mapper, and a data adapter. `EntityReferenceResolver.beanReference` resolves the bean of a rating. An
+  API port, a domain service, DTOs, and a controller are missing.
 - The expenses (`expenses`) and the balances (`user_balance` and `kitty_balance`) have only a JPA entity and a
   repository with the queries and locks that a data adapter needs. A domain model, a data port, an entity mapper, and a
   data adapter are missing. `ExpenseEntity.expenseType` is a `String` with the values `BEANS` and `OTHER`, which
   MapStruct can map to the constants of a domain enum with these names. `UserBalanceEntity` and `KittyBalanceEntity` do
   not extend `Entity`, because their tables have neither a random id nor timestamps. `EntityMapper` and
-  `CrudDataServiceImpl` accept only subclasses of `Entity` and do not apply to them. The data reset does not clear these
-  three tables. While `expenses` has a row, the data reset deletes the ratings, payments, corrections, and consumptions
-  and then fails at the users, and with `reset-on-startup` the app does not start. Add the call for each new data port
-  to `DataResetServiceImpl.clearAll`.
-- No migration stores a price, and a data reset deletes the stored price. `CoffeePriceDataService.findCurrent` then
+  `CrudDataServiceImpl` accept only subclasses of `Entity` and do not apply to them.
+- No migration stores a price, and every test starts with empty tables. `CoffeePriceDataService.findCurrent` then
   returns null. The startup and the test setup have to store the start price, as `BootstrapAdminLoader` stores the
   bootstrap admin.
 - A balance cannot be computed from the stored data afterwards, because Coffee Kitty does not store the price of each
@@ -181,10 +189,10 @@ gradle ktlintFormat                                          # apply the formatt
 gradle :domain:test --tests "CoffeeConsumptionServiceTest"   # one test class
 gradle :application:test --tests "ArchitectureTests"         # the layer rules only, which need no Docker
 gradle :coverage:testCodeCoverageReport                      # the coverage report of all modules
-gradle :domain:pitest                                        # mutation testing of the domain module
+gradle :domain:pitest                                        # mutation testing of the domain services
 gradle cpd                                                   # duplicates in the production code
 docker run -d --name campus-coffee-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p ${DB_PORT:-5433}:5432 postgres:18-alpine
-gradle :application:bootRun --args='--spring.profiles.active=dev'
+gradle :application:bootTestRun                              # the dev application with the fixture users
 ```
 
 Scope a `--tests` filter to one subproject, because Gradle fails the test task of every subproject without a matching
@@ -305,38 +313,35 @@ Test each part of the code at the level that can detect its faults:
 
 The tests are in these places:
 
-- Unit tests: the tests in `domain/src/test/kotlin/`, such as `UserServiceTest` and `GracePeriodTest`, and the tests of
-  the startup tasks in `application/src/test/kotlin/`, such as `FixtureStartupLoaderTest`. The test of a class that
-  depends on ports, such as a domain service, replaces the ports with Mockito mocks. The api module has no test sources.
-  The unit tests of its classes, such as `RequestRejectedExceptionHandlerTest`, are in
-  `application/src/test/kotlin/de/seuhd/campuscoffee/api/`, in the package of the class under test. The test of a mapper
-  with significant logic creates the implementation that MapStruct generates, such as `UserDtoMapperImpl`, with its
-  constructor. `FixtureStartupLoaderTest` uses its mocks as a stub, for a verification, and with an argument captor.
-  `StartupTest` starts the startup tasks in a Spring context with `application.yaml` and mocked ports.
+- Unit tests: the tests in `domain/src/test/kotlin/`, such as `UserServiceTest` and `GracePeriodTest`, the tests of the
+  api module in `api/src/test/kotlin/`, such as `RequestRejectedExceptionHandlerTest`, and the tests of the startup task
+  in `application/src/test/kotlin/`, such as `BootstrapAdminLoaderTest`. The test of a class that depends on ports,
+  such as a domain service, replaces the ports with Mockito mocks. The test of a mapper with significant logic creates
+  the implementation that MapStruct generates, such as `UserDtoMapperImpl`, with its constructor. `StartupTest` starts
+  the startup task in a Spring context with `application.yaml` and a mocked port.
 - Integration tests: the classes in `data/src/test/kotlin/`. `CrudDataServiceIntegrationTest` tests the base class and
   the data adapters of the users, the consumptions, and the corrections. `CoffeeConsumptionDataServiceIntegrationTest`
   has further tests of the data adapter of the consumptions, `UserDataServiceIntegrationTest` tests the limits of the
   database for the length of an email address, and each data adapter of Tables Without an Endpoint has a test class of
   its own, such as `PaymentDataServiceIntegrationTest`. `ExpenseAndBalanceRepositoryIntegrationTest` tests the tables
-  without a data port through their repositories and deletes their rows after each test, because the data reset does not
-  clear them. `DataResetIntegrationTest` checks that the data reset clears every table with a data port. The integration
-  tests extend `AbstractDataIntegrationTest`, which runs each test in the Spring context of `DataTestApplication`
-  against PostgreSQL in Testcontainers.
+  without a data port through their repositories. The integration tests extend `AbstractDataIntegrationTest`, which
+  runs each test in the Spring context of `DataTestApplication` against PostgreSQL in Testcontainers and cleans the
+  database before each test (see Test Fixtures).
 - System tests: the classes in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/system/`, such as
-  `UserSystemTests`. They extend `AbstractSystemTest` and send their requests through `UserRequests` and
-  `ConsumptionRequests` in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/`, which use Spring's
-  `RestTestClient`. A function for a system test returns a `Response` with the status code, the headers, and the body
-  or the error response. `SystemTestUtils` holds the PostgreSQL container from Testcontainers that the system and
-  acceptance tests share. The system tests run with the system clock. `UndoWithoutGracePeriodSystemTests` sets the
-  grace period to zero with `@TestPropertySource` and therefore runs in a Spring context of its own.
-  `FailureSystemTests` also runs in a Spring context of its own, because Mockito spies wrap two data adapters, so that a
-  test can make one of their functions fail.
+  `UserSystemTests`. They extend `AbstractSystemTest`, which creates a `UserRequests` and a `ConsumptionRequests` for
+  the port of its Spring context. These classes in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/` send the
+  requests with Spring's `RestTestClient`. Each of their functions returns a `Response` with the status code, the
+  headers, and the body or the error response. `SystemTestUtils` holds the PostgreSQL container from Testcontainers
+  that the system and acceptance tests share and one client per server port. The system tests run with the system
+  clock. `UndoWithoutGracePeriodSystemTests` sets the grace period to zero with `@TestPropertySource` and therefore
+  runs in a Spring context of its own. `FailureSystemTests` also runs in a Spring context of its own, because Mockito
+  spies wrap two data adapters, so that a test can make one of their functions fail.
 - Acceptance tests: Cucumber scenarios for behavior-driven development (BDD). The step definitions and the Cucumber
   configuration are in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/acceptance/`, and the feature files,
   such as `consumption.feature`, are in `application/src/test/resources/de/seuhd/campuscoffee/tests/acceptance/`.
   `CucumberSpringConfiguration` replaces the `Clock` bean with a `SettableClock`, which the steps set to the times in
-  the scenarios, such as 10:05:01. `ConsumptionRequests` sends the requests of a step by login name and returns the
-  status code or the values to check.
+  the scenarios, such as 10:05:01, and provides the `ConsumptionRequests` of the steps. A step names a user by login
+  name and looks up the id with `ConsumptionRequests.userId`.
 - Architecture tests: `ArchitectureTests` (see Layer Rules).
 
 System tests and step definitions send every request through `UserRequests` and `ConsumptionRequests` and never build an
@@ -344,15 +349,32 @@ HTTP request themselves, so that a reader of a test does not need to know the RE
 `ErrorResponseSystemTests`, in which the request itself is under test. It builds the requests for an unknown path, for a
 path that the firewall rejects, and with a `Content-Type` or `Accept` header that the API does not support.
 
+The system and acceptance tests are clients of the REST API and use no class of the api module, which an architecture
+test checks. A request body is a map with the JSON field names, such as `mapOf("delta" to 1)`. A response is parsed into
+a class of `Json.kt`, such as `UserJson`, with a mapper that fails on an unknown or a missing field. A timestamp is a
+`String` that `utc` parses. If a test used a DTO for both directions, a renamed JSON field would change the request of
+the test and the response of the server together, and the test would still pass. When an endpoint gets a new field, add
+it to the class in `Json.kt`. The names of the header `X-Acting-User` and of its challenge are literals in
+`SystemTestUtils` for the same reason.
+
 ### Test Fixtures
 
-`TestFixtures` in `domain/src/main/kotlin/de/seuhd/campuscoffee/domain/tests/` holds the test objects that the tests of
-every module share: the fixture users with `admin()` and `regularUser()`, the fixed time `FIXED_TIME` with
+`TestFixtures` in `domain/src/testFixtures/kotlin/de/seuhd/campuscoffee/domain/tests/` holds the test objects that the
+tests of every module share: the fixture users with `admin()` and `regularUser()`, the fixed time `FIXED_TIME` with
 `fixedClock()`, and the consumptions of `consumptionWithoutCoffee`, `consumptionWithRecentCoffee`, and
 `consumptionWithOldCoffee`. Take a test object from `TestFixtures` when a test needs one of these states. Create the
 object in the test class when the tests need values that these objects do not have, such as an id and timestamps.
 Prepare the state that each test of a class needs anew, such as a stored user, in a function with `@BeforeEach` (see
 `CoffeeConsumptionDataServiceIntegrationTest.storeUser`).
+
+`DatabaseCleaner` in `data/src/testFixtures/kotlin/de/seuhd/campuscoffee/data/tests/` deletes the rows of every table
+before each integration test, system test, and scenario and on every start of the dev application. It reads the names
+of the tables from the PostgreSQL catalog and truncates them in one statement, so a new table needs no change to it.
+`DatabaseCleanerIntegrationTest` checks every table that the catalog lists.
+
+Both classes are in the Gradle source set `src/testFixtures` of their module (plugin `java-test-fixtures`). The other
+modules add them with `testImplementation(testFixtures(project(":domain")))`. The production jar contains neither the
+fixture users nor code that deletes data, so no configuration of a deployed app can delete its data.
 
 ### Test Naming
 
@@ -375,18 +397,21 @@ of an invalid field, a rejected value, or a login name in a log message.
 
 JaCoCo records the execution data of the tests of every module. The subproject `coverage` merges the data into one
 report at `coverage/build/reports/jacoco/testCodeCoverageReport/html/index.html`, because the system and acceptance
-tests of the application module cover most of the other modules. The task `coverageGate`, which `check` runs, fails
-the build below 90% of the lines or 80% of the branches (`coverage/build.gradle.kts`). The fixture classes in
-`domain/.../tests/`, the class `Application`, and the generated mappers do not count. Raise the minimums as the
-coverage grows, and never lower them to make a build pass.
+tests of the application module cover most of the other modules. The task `coverageGate`, which `check` runs, has two
+rules (`coverage/build.gradle.kts`). It fails the build below 95% of the lines or 85% of the branches of all modules
+together. The class `Application` and the generated mappers do not count. Raise these minimums as the coverage grows,
+and never lower them to make a build pass. A ratio over all modules cannot detect a single function without a test, so
+the second rule requires that a test executes every function of a domain service and of a controller.
 
-`gradle :domain:pitest` runs the mutation testing tool PIT on the domain module. PIT changes the code, e.g., it negates
-a condition, and runs the unit tests of the domain module against each changed version (mutant). A mutant that no test
-detects points to a missing check or to a check that passes although the behavior is wrong. The report is in
-`domain/build/reports/pitest/index.html`. The task fails when the tests detect fewer than 85% of the mutants that they
-execute (`pitest-conventions.gradle.kts`). `check` and CI do not run it. Run it before a release (see Versioning and
-Releases) and before you push a change to the domain module, and add a test or improve a check for each surviving mutant
-that changes the behavior.
+`gradle :domain:pitest` runs the mutation testing tool PIT on the classes in `domain/.../implementation/`. PIT changes
+the code, e.g., it negates a condition, and runs the unit tests of the domain module against each changed version
+(mutant). A mutant that no test detects points to a missing check or to a check that passes although the behavior is
+wrong. The report is in `domain/build/reports/pitest/index.html`. The task fails when the tests detect fewer than 90%
+of all mutants (`pitest-conventions.gradle.kts`). This share also counts the mutants in code that no unit test
+executes, so a function of a domain service without a unit test lowers it. `check` does not run PIT, and CI runs it
+after the build. Run it before you push a change to the domain module, and add a test or improve a check for each
+surviving mutant that changes the behavior. The mutants that survive today are null checks that the Kotlin compiler
+generates.
 
 `check` runs CPD, the copy-paste detector of PMD, on the production code. It fails at a duplicate of 70 tokens, which
 is a copy of about 10 to 13 lines (`build.gradle.kts`). `gradle cpd` runs it alone. Extract the shared code instead of
@@ -409,44 +434,56 @@ endpoint with its status codes and a runnable curl command.
 
 ## Configuration
 
-`application/src/main/resources/application.yaml` has a default block and a `dev` block. `FixturesProperties` binds the
-fixture flags `campus-coffee.fixtures.load-on-startup` and `campus-coffee.fixtures.reset-on-startup`. When
-`load-on-startup` is true, Spring registers `FixtureStartupLoader`, which creates the fixture users in a database
-without users. When `reset-on-startup` is true as well, the fixture loader first runs a data reset and creates the
-fixture users on every start. The `dev` block turns on both flags and sets the datasource to
-`localhost:${DB_PORT:5433}`, the server port to `${SERVER_PORT:8081}`, and the springdoc paths. In the dev profile, the
-API is at `http://localhost:8081/api` and Swagger UI at `http://localhost:8081/api/swagger-ui.html`. Outside the dev
-profile, springdoc is off.
+`application/src/main/resources/application.yaml` has a default block and a `dev` block. The `dev` block sets the
+datasource to `localhost:${DB_PORT:5433}`, the server port to `${SERVER_PORT:8081}`, and the springdoc paths. In the dev
+profile, the API is at `http://localhost:8081/api` and Swagger UI at `http://localhost:8081/api/swagger-ui.html`.
+Outside the dev profile, springdoc is off.
+
+`gradle :application:bootTestRun` starts the dev application: the app in the dev profile with the fixture users. Its
+`main` function is in `application/src/test/kotlin/de/seuhd/campuscoffee/dev/DevApplication.kt` and adds
+`DevDataConfiguration` to the app. On every start, `DevDataSeeder` cleans the database with the `DatabaseCleaner` and
+creates the fixture users before the web server accepts requests. The dev application is in the test sources, because
+it uses the test fixtures, which the production jar does not contain. `gradle :application:bootRun` with
+`--args='--spring.profiles.active=dev'` starts the app in the dev profile on the data of the previous run, without
+cleaning the database.
 
 ## Important Patterns
 
-- Acting user: Spring Security runs `ActingUserAuthenticationFilter` before the controllers. A controller that calls
-  `CurrentUserProvider.currentUser` needs a rule in `SecurityConfig.securityFilterChain` that requires authentication
-  for its method and path, such as `requestMatchers(HttpMethod.POST, "/api/users").authenticated()`. Without the rule, a
-  request without an acting user and with an invalid body gets 400 instead of 401, because Spring MVC validates the body
-  before the controller calls `CurrentUserProvider.currentUser`.
+- Acting user: Spring Security runs `ActingUserAuthenticationFilter` before the controllers. A controller function that
+  calls `CurrentUserProvider.currentUser` needs the annotation `ActingUserRequired`. `SecurityConfig` reads the HTTP
+  method and the path of every function with this annotation from Spring MVC and requires authentication for these
+  routes. Without the annotation, a request without an acting user and without a required field gets 400 instead of
+  401, because Spring MVC validates the body before the controller calls `CurrentUserProvider.currentUser`. An
+  architecture test fails for a controller function that calls `currentUser` without the annotation.
 - Firewall: The default firewall of Spring Security rejects, among others, a path with `;`, `//`, `..`, or an encoded
   slash and a header value with a control character. `SecurityConfig.requestRejectedHandler` and
   `RequestRejectedExceptionHandler` respond to such a request with 400 and an `ErrorResponse` (`writeErrorResponse` in
   `api/.../security/`).
 - Error handling: The data adapters throw the domain exceptions `NotFoundException` (404) and `DuplicationException`
   (409), as described in Generic Base Classes. `CoffeeConsumptionServiceImpl.undo` throws `ConflictException` (409),
-  `requireAdmin` throws `ForbiddenException` (403), and the domain services and `UserController` throw
-  `ValidationException` (400). `JsonAuthenticationEntryPoint` responds to a request without a known acting user with 401
-  and the header `WWW-Authenticate`, which RFC 9110 requires in every 401. `GlobalExceptionHandler` extends
+  `requireAdmin` throws `ForbiddenException` (403), and the domain services throw `ValidationException` (400).
+  `JsonAuthenticationEntryPoint` responds to a request without a known acting user with 401 and the header
+  `WWW-Authenticate`, which RFC 9110 requires in every 401. `GlobalExceptionHandler` extends
   `ResponseEntityExceptionHandler`, which maps Spring's standard web exceptions to their status codes (e.g., 404 for an
   unknown path). An `IllegalArgumentException` for a wildcard in the `Content-Type` header becomes a 415, and any other
   exception becomes a 500. The body of every error response is an `ErrorResponse`. Its `errorCode` is the class name of
   the domain exception or, for any other error, the reason phrase of the status without spaces (e.g., `BadRequest`). To
   add a domain exception, create a subclass of the sealed class `DomainException` and add its status to
   `GlobalExceptionHandler.statusOf`, which does not compile without it.
+- Validation: The api module checks the structure of a request body, and the domain checks its values. A request DTO
+  has nullable properties and only `@NotNull` constraints, and its `@Schema` annotations document the limits of the
+  domain in the OpenAPI definition. A body with a missing field, a value of the wrong JSON type, or an unknown field
+  gets a 400 with the error code `BadRequest`. A domain service checks every rule for a value, such as a length or a
+  range, and throws a `ValidationException` (400). These rules then also hold for a user that no request creates, such
+  as the bootstrap admin. Do not add a constraint such as `@Size` or `@Pattern` to a DTO.
 - Request bodies: Jackson rejects a value of the wrong JSON type instead of converting it, and the request gets a 400
-  with the error code `BadRequest`. The `spring.jackson` settings in `application.yaml` reject a number with a fraction
-  for an integer field, a JSON string for a number or a boolean field, and a JSON number for an enum field. `JsonConfig`
-  in `api/.../configuration/` rejects a JSON number or boolean for a `String` field, because Spring Boot has no property
-  for this setting. A new DTO gets these checks without any code. The API responds only in English:
-  `spring.web.locale-resolver` in `application.yaml` fixes the locale, so that the messages of Bean Validation do not
-  depend on the header `Accept-Language`.
+  with the error code `BadRequest`. It also rejects a field that the DTO does not have
+  (`spring.jackson.deserialization.fail-on-unknown-properties`), such as an `id` in the body of `POST /api/users`. The
+  `spring.jackson` settings in `application.yaml` reject a number with a fraction for an integer field, a JSON string
+  for a number or a boolean field, and a JSON number for an enum field. `JsonConfig` in `api/.../configuration/` rejects
+  a JSON number or boolean for a `String` field, because Spring Boot has no property for this setting. A new DTO gets
+  these checks without any code. The API responds only in English: `spring.web.locale-resolver` in `application.yaml`
+  fixes the locale, so that the messages of Bean Validation do not depend on the header `Accept-Language`.
 - MapStruct: The `kotlin-kapt-conventions` plugin runs MapStruct through kapt with the option
   `mapstruct.unmappedTargetPolicy=ERROR`. With this option, the build fails when a target property has neither a
   source nor `ignore = true`.
@@ -470,14 +507,16 @@ profile, springdoc is off.
 In this order, `gradle build` passes after each step. The ports come first, because a port without an implementation
 does not break the build. The data adapter (step 7) comes before the implementation of the API port (step 8), because
 a `@Service` needs a bean for each port that it uses. For the tables of Tables Without an Endpoint, steps 4 and 5 are
-done. For the price, the payments, the beans, and the ratings, steps 1, 3, 6, 7, and 9 are done as well, and the next
-step is the API port (step 2).
+done. For the price, the payments, the beans, and the ratings, steps 1, 3, 6, and 7 are done as well, and the next step
+is the API port (step 2).
 
 1. Create the domain model in `domain/.../model/`. The domain model implements `DomainModel<UUID>` and has a nullable
    `id`, `createdAt`, and `updatedAt` (see `User`).
 2. Create the API port in `domain/.../ports/api/`. An operation that only the startup tasks or the test setup calls
    belongs to an internal port in `domain/.../ports/internal/`.
-3. Create the data port in `domain/.../ports/data/` (extend `CrudDataService<DOMAIN, UUID>`).
+3. Create the data port in `domain/.../ports/data/`. Extend `CrudDataService<DOMAIN, UUID>` if the domain may change
+   and delete the objects. For objects that never change after they are stored, declare only the operations that the
+   domain needs (see `CountCorrectionDataService`).
 4. In one step, create the Flyway migration in `data/src/main/resources/db/migration/`, the JPA entity in
    `data/.../persistence/entities/` (extend `Entity`), and a `ConstraintMapping.REGISTRY` entry for each unique
    constraint. Hibernate checks every JPA entity against the schema at startup. Without its registry entry, a violated
@@ -485,7 +524,7 @@ step is the API port (step 2).
    `@jakarta.persistence.Entity`, because an import of `jakarta.persistence.Entity` would hide the base class `Entity`.
    Choose the `ON DELETE` action of each foreign key. Use `CASCADE` only for a row that belongs to the referenced row,
    such as a consumption, which belongs to its user. Under the default `NO ACTION`, deleting a referenced row throws a
-   `DataIntegrityViolationException`, and the client gets a 500. An operation that deletes a row must therefore check
+   `DataConstraintException`, and the client gets a 500. An operation that deletes a row must therefore check
    for references first and, for a referenced row, throw a new domain exception that `GlobalExceptionHandler` maps to
    409 Conflict.
 5. Create the repository in `data/.../persistence/repositories/` (extend `JpaRepository`).
@@ -498,16 +537,18 @@ step is the API port (step 2).
    the referenced row.
 7. Create the data adapter in `data/.../implementations/` (extend `CrudDataServiceImpl`).
 8. Create the implementation of the API port in `domain/.../implementation/`.
-9. Clear the data of the new entity in `DataResetServiceImpl.clearAll`. Place the call after the calls for the entities
-   that reference the new entity and before the calls for the entities that the new entity references.
-10. Create the DTO in `api/.../dtos/` and the DTO mapper in `api/.../mapper/`. The DTO implements `Dto<UUID>` and has
-    a nullable `id`, `createdAt`, and `updatedAt`, which the OpenAPI definition marks as read-only (see `UserDto`).
-11. Create the controller in `api/.../controller/` and keep it thin (see Testing Strategy). An endpoint that creates an
-    object rejects a body with an `id` and returns 201 Created with a `Location` header (see `UserController.create`).
-12. Add tests: a domain unit test modeled on `UserServiceTest`, an integration test class for the data adapter, such as
+9. Create the DTOs in `api/.../dtos/` and the DTO mapper in `api/.../mapper/`. A response DTO has only non-null
+   properties, including `id`, `createdAt`, and `updatedAt` (see `UserDto`). A request DTO has nullable properties with
+   `@NotNull` and no property for a value that the server assigns (see `CreateUserDto` and Validation in Important
+   Patterns).
+10. Create the controller in `api/.../controller/` and keep it thin (see Testing Strategy). An endpoint that creates an
+    object returns 201 Created with a `Location` header (see `UserController.create`). Put `ActingUserRequired` on a
+    function that needs the acting user.
+11. Add tests: a domain unit test modeled on `UserServiceTest`, an integration test class for the data adapter, such as
     `PaymentDataServiceIntegrationTest`, and a system test class that extends `AbstractSystemTest`. The integration
-    cases include an update without timestamps, which fails when the entity mapper copies the timestamps.
-13. Update Ports and Adapters in this file for the new ports, and add the new terms to `GLOSSARY.md`. List the new
+    cases include an update without timestamps, which fails when the entity mapper copies the timestamps. Add the
+    functions for the requests to a class such as `UserRequests` and the JSON bodies to `Json.kt`.
+12. Update Ports and Adapters in this file for the new ports, and add the new terms to `GLOSSARY.md`. List the new
     endpoints in the REST API section of `README.md`, with one runnable curl block per endpoint. Update the texts that
     summarize the entities, such as the README introduction, the description in `OpenApiConfig`, and the glossary
-    entries "data reset" and "domain exception".
+    entry "domain exception".
