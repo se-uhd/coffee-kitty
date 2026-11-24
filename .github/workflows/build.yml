@@ -35,6 +35,11 @@ jobs:
       - name: Build with Gradle
         run: gradle build
 
+      # `gradle build` does not run the mutation tests. PIT changes the code of the domain services and fails when the
+      # unit tests of the domain module detect fewer than 90% of the changes (pitest-conventions.gradle.kts).
+      - name: Run the mutation tests of the domain module
+        run: gradle :domain:pitest
+
       # Upload the test reports of a failed build, so that a developer can inspect them.
       - name: Upload test reports
         if: failure()
@@ -44,4 +49,5 @@ jobs:
           path: |
             */build/reports/tests/
             application/build/reports/cucumber/
+            domain/build/reports/pitest/
           if-no-files-found: warn

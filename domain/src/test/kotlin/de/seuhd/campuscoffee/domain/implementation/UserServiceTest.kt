@@ -62,6 +62,13 @@ class UserServiceTest {
     }
 
     @Test
+    fun `getAll returns the users of the data port`() {
+        whenever(userDataService.getAll()).thenReturn(listOf(storedUser))
+
+        assertThat(service.getAll()).containsExactly(storedUser)
+    }
+
+    @Test
     fun `create stores a trimmed lowercase email address and ignores the id and the timestamps`() {
         stubUpserts()
         val clientTime = LocalDateTime.of(2000, 1, 1, 0, 0)
