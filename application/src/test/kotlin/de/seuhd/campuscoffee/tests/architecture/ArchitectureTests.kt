@@ -55,7 +55,7 @@ class ArchitectureTests {
         // its own. With one slice per module, the rule would miss a cycle inside a module, such as a cycle between
         // data.implementations and data.mapper. The rule leaves out the test classes, because it checks the structure
         // of the production code. RootInclusiveSliceAssignment includes the classes of the root package, such as
-        // Application and FixtureStartupLoader.
+        // Application and BootstrapAdminLoader.
         slices()
             .assignedFrom(RootInclusiveSliceAssignment)
             .should()
@@ -100,7 +100,7 @@ class ArchitectureTests {
     @Test
     fun `api and application depend on neither the data ports nor the implementation classes of the domain`() {
         // The layered rule lets api and application use every class of the domain module. Without this rule, a
-        // controller or the fixture loader could inject a data port. It would then bypass the checks in the domain
+        // controller or a startup task could inject a data port. It would then bypass the checks in the domain
         // services, such as the checks of the login name and the email address of a new user.
         noClasses()
             .that()
@@ -114,16 +114,27 @@ class ArchitectureTests {
     }
 
     @Test
-    fun `no api class depends on the internal ports or on TestFixtures`() {
-        // The internal ports, such as DataResetService, are for the fixture loader, the bootstrap admin loader, and the
-        // test setup. TestFixtures holds the fixture users. The two loaders may use the internal ports and
-        // TestFixtures, because they are in the application layer, which this rule does not cover.
+    fun `no api class depends on the internal ports`() {
+        // The internal port UserInternalService creates a user without an acting user. It is for the bootstrap admin
+        // loader, the test setup, and the dev application, which are in the application layer. A controller that used
+        // it would create users without the check of the role.
         noClasses()
             .that()
             .resideInAPackage("de.seuhd.campuscoffee.api..")
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("de.seuhd.campuscoffee.domain.ports.internal..", "de.seuhd.campuscoffee.domain.tests..")
+            .resideInAPackage("de.seuhd.campuscoffee.domain.ports.internal..")
+            .check(PRODUCTION_CLASSES)
+    }
+
+    @Test
+    fun `the production classes contain no test fixtures`() {
+        // TestFixtures and DatabaseCleaner are in the test fixtures of the domain and data modules. If the import of
+        // PRODUCTION_CLASSES included them, the rules for production code would also judge the test fixtures, and this
+        // test would fail.
+        noClasses()
+            .should()
+            .resideInAnyPackage("de.seuhd.campuscoffee.domain.tests..", "de.seuhd.campuscoffee.data.tests..")
             .check(PRODUCTION_CLASSES)
     }
 
@@ -153,18 +164,22 @@ class ArchitectureTests {
 
     private companion object {
         // The production packages of the application module: the root package with Application and
-        // FixtureStartupLoader, and `configuration` with FixturesProperties. The controllers and their configuration
-        // are in the api layer.
+        // BootstrapAdminLoader, and `configuration` with BootstrapAdminProperties. The controllers and their
+        // configuration are in the api layer.
         val APPLICATION_PRODUCTION_PACKAGES = arrayOf("de.seuhd.campuscoffee", "de.seuhd.campuscoffee.configuration..")
 
-        // The application layer, which no other layer may access, consists of these production packages and the
-        // test classes under `tests`.
-        val APPLICATION_PACKAGES = APPLICATION_PRODUCTION_PACKAGES + "de.seuhd.campuscoffee.tests.."
+        // The application layer, which no other layer may access, consists of these production packages, the test
+        // classes under `tests`, and the dev application under `dev`, which is in the test sources as well.
+        val APPLICATION_PACKAGES =
+            APPLICATION_PRODUCTION_PACKAGES + "de.seuhd.campuscoffee.tests.." + "de.seuhd.campuscoffee.dev.."
 
-        // The production classes of every module. The rules share one import, which runs on first use.
+        // The production classes of every module. The rules share one import, which runs on first use. The import
+        // leaves out the test classes of this module and the test fixtures of the domain and data modules. Gradle puts
+        // the test fixtures on the test classpath as jars named `<module>-<version>-test-fixtures.jar`.
         val PRODUCTION_CLASSES: JavaClasses by lazy {
             ClassFileImporter()
                 .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+                .withImportOption { location -> !location.contains("test-fixtures") }
                 .importPackages("de.seuhd.campuscoffee")
         }
     }

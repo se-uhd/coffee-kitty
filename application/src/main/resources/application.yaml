@@ -60,11 +60,8 @@ springdoc:
   swagger-ui:
     enabled: false
 # Custom properties. The KDoc of a @ConfigurationProperties class documents the keys under its prefix. For
-# campus-coffee.fixtures, this class is FixturesProperties. A comment on one of these keys describes only the effect of
-# the value that a profile sets.
+# campus-coffee.bootstrap-admin, this class is BootstrapAdminProperties.
 campus-coffee:
-  fixtures:
-    load-on-startup: false
   bootstrap-admin:
     login-name: ${BOOTSTRAP_ADMIN_LOGIN_NAME:}
     email-address: ${BOOTSTRAP_ADMIN_EMAIL_ADDRESS:}
@@ -97,8 +94,3 @@ springdoc:
   swagger-ui:
     enabled: true
     path: /api/swagger-ui.html
-campus-coffee:
-  fixtures:
-    load-on-startup: true
-    # Runs a data reset on every start. Each run then begins with only the fixture users at a coffee count of zero.
-    reset-on-startup: true

@@ -14,13 +14,16 @@ dependencies {
     implementation(project(":data"))
 
     implementation(libs.spring.boot.starter.webmvc)
-    // FixtureStartupLoader and BootstrapAdminLoader log through kotlin-logging, which wraps SLF4J in a Kotlin API.
+    // BootstrapAdminLoader logs through kotlin-logging, which wraps SLF4J in a Kotlin API.
     implementation(libs.kotlin.logging)
 
     // No source imports the PostgreSQL driver. The driver is still a compile dependency, because IntelliJ resolves
     // the driver-class-name in application.yaml only from compile dependencies.
     implementation(libs.postgresql)
 
+    // TestFixtures and DatabaseCleaner, for the tests and for the dev application in src/test (see DevApplication.kt).
+    testImplementation(testFixtures(project(":domain")))
+    testImplementation(testFixtures(project(":data")))
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.junit.platform.suite)
     testImplementation(libs.cucumber.java)

@@ -5,6 +5,7 @@ import de.seuhd.campuscoffee.api.dtos.ConsumptionDto
 import de.seuhd.campuscoffee.domain.model.persistedId
 import de.seuhd.campuscoffee.tests.ConsumptionRequests
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 import java.util.UUID
 import java.util.concurrent.CountDownLatch
@@ -12,9 +13,9 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 /**
- * System tests for reading the coffee count of a user, adding a coffee, and undoing a coffee. The tests send their
- * requests through [ConsumptionRequests]. The tests for an unknown user use a random id, and all other tests use the
- * fixture user `maxmustermann`.
+ * System tests for reading the coffee count and the undo status of a user, adding a coffee, and undoing a coffee. The
+ * tests send their requests through [ConsumptionRequests]. The tests for an unknown user use a random id, and all other
+ * tests use the fixture user `maxmustermann`.
  */
 class ConsumptionSystemTests : AbstractSystemTest() {
     private val loginName = "maxmustermann"
