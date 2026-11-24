@@ -9,14 +9,23 @@ import java.time.LocalDateTime
  * class has no id, because no endpoint reads a single correction by id.
  */
 data class CountCorrectionDto(
-    @field:Schema(description = "The coffee count before the correction.")
+    @field:Schema(description = "The coffee count before the correction.", requiredMode = Schema.RequiredMode.REQUIRED)
     val countBefore: Int,
-    @field:Schema(description = "The coffee count after the correction.")
+    @field:Schema(description = "The coffee count after the correction.", requiredMode = Schema.RequiredMode.REQUIRED)
     val countAfter: Int,
-    @field:Schema(description = "The note with the reason for the correction.")
+    @field:Schema(
+        description = "The note with the reason for the correction.",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     val note: String,
-    @field:Schema(description = "The login name of the admin who corrected the coffee count.")
+    @field:Schema(
+        description = "The login name of the admin who corrected the coffee count.",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     val adminLoginName: String,
-    @field:Schema(description = "When the admin corrected the coffee count, in UTC.")
+    @field:Schema(
+        description = "When the admin corrected the coffee count, in UTC.",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     val createdAt: LocalDateTime
 )

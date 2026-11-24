@@ -76,8 +76,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (`spring.jackson.deserialization.fail-on-unknown-properties`). `POST /api/users` with an `id` returned 400 with the
   error code `ValidationException` until now, and the server ignored the fields `createdAt` and `updatedAt` and any
   misspelled field.
-- `POST /api/users` reads the new `CreateUserDto`, and `UserDto` is only the response body. Its fields are no longer
-  optional in the OpenAPI definition. `Dto` and `DtoMapper` are removed.
+- `POST /api/users` reads the new `CreateUserDto`, and `UserDto` is only the response body. The OpenAPI definition marks
+  every field of a response body as required. Until now, it marked none. `Dto` and `DtoMapper` are removed.
 - The production jar contains neither the fixture users nor code that deletes data. `TestFixtures` is in the test
   fixtures of the domain module (`src/testFixtures`), and the new `DatabaseCleaner` in the test fixtures of the data
   module replaces `DataResetService`. It truncates every table that the PostgreSQL catalog lists, including `expenses`,

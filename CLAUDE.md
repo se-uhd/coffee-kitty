@@ -538,8 +538,9 @@ is the API port (step 2).
 7. Create the data adapter in `data/.../implementations/` (extend `CrudDataServiceImpl`).
 8. Create the implementation of the API port in `domain/.../implementation/`.
 9. Create the DTOs in `api/.../dtos/` and the DTO mapper in `api/.../mapper/`. A response DTO has only non-null
-   properties, including `id`, `createdAt`, and `updatedAt` (see `UserDto`). A request DTO has nullable properties with
-   `@NotNull` and no property for a value that the server assigns (see `CreateUserDto` and Validation in Important
+   properties, including `id`, `createdAt`, and `updatedAt`, and marks each as required for the OpenAPI definition with
+   `@field:Schema(requiredMode = Schema.RequiredMode.REQUIRED)` (see `UserDto`). A request DTO has nullable properties
+   with `@NotNull` and no property for a value that the server assigns (see `CreateUserDto` and Validation in Important
    Patterns).
 10. Create the controller in `api/.../controller/` and keep it thin (see Testing Strategy). An endpoint that creates an
     object returns 201 Created with a `Location` header (see `UserController.create`). Put `ActingUserRequired` on a
