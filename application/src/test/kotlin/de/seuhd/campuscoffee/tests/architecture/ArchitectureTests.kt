@@ -2,6 +2,8 @@ package de.seuhd.campuscoffee.tests.architecture
 
 import com.tngtech.archunit.base.DescribedPredicate
 import com.tngtech.archunit.core.domain.JavaClass
+import com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage
+import com.tngtech.archunit.core.domain.JavaClass.Predicates.resideOutsideOfPackage
 import com.tngtech.archunit.core.domain.JavaClasses
 import com.tngtech.archunit.core.domain.JavaModifier
 import com.tngtech.archunit.core.importer.ClassFileImporter
@@ -110,6 +112,27 @@ class ArchitectureTests {
             .resideInAnyPackage(
                 "de.seuhd.campuscoffee.domain.ports.data..",
                 "de.seuhd.campuscoffee.domain.implementation.."
+            ).check(PRODUCTION_CLASSES)
+    }
+
+    @Test
+    fun `the data module uses only the models, the exceptions, and the data ports of the domain`() {
+        // The data module implements the data ports. The layered rule lets it use every class of the domain module.
+        // Without this rule, a data adapter could call an API port or an internal port, which are for the callers of
+        // the domain, or a class in domain/.../implementation/, such as GracePeriod. The rule lists the packages that
+        // the data module may use, so that a new package of the domain is forbidden until it is added here.
+        val allowedDomainPackages =
+            resideInAnyPackage(
+                "de.seuhd.campuscoffee.domain.model..",
+                "de.seuhd.campuscoffee.domain.exceptions..",
+                "de.seuhd.campuscoffee.domain.ports.data.."
+            )
+        classes()
+            .that()
+            .resideInAPackage("de.seuhd.campuscoffee.data..")
+            .should()
+            .onlyDependOnClassesThat(
+                resideOutsideOfPackage("de.seuhd.campuscoffee.domain..").or(allowedDomainPackages)
             ).check(PRODUCTION_CLASSES)
     }
 
