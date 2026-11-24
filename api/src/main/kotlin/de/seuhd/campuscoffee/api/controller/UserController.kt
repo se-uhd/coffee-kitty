@@ -3,6 +3,7 @@ package de.seuhd.campuscoffee.api.controller
 import de.seuhd.campuscoffee.api.dtos.CreateUserDto
 import de.seuhd.campuscoffee.api.dtos.UserDto
 import de.seuhd.campuscoffee.api.mapper.UserDtoMapper
+import de.seuhd.campuscoffee.api.security.ActingUserRequired
 import de.seuhd.campuscoffee.api.security.CurrentUserProvider
 import de.seuhd.campuscoffee.domain.model.persistedId
 import de.seuhd.campuscoffee.domain.ports.api.UserService
@@ -79,6 +80,7 @@ class UserController(
         required = true
     )
     @ResponseStatus(HttpStatus.CREATED)
+    @ActingUserRequired
     @PostMapping("")
     fun create(
         @ApiRequestBody(description = "The fields of the user to create.", required = true)

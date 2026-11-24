@@ -5,10 +5,12 @@ import com.tngtech.archunit.core.domain.JavaClass
 import com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage
 import com.tngtech.archunit.core.domain.JavaClass.Predicates.resideOutsideOfPackage
 import com.tngtech.archunit.core.domain.JavaClasses
+import com.tngtech.archunit.core.domain.JavaMethod
 import com.tngtech.archunit.core.domain.JavaModifier
 import com.tngtech.archunit.core.importer.ClassFileImporter
 import com.tngtech.archunit.core.importer.ImportOption
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes
+import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses
 import com.tngtech.archunit.library.Architectures.layeredArchitecture
 import com.tngtech.archunit.library.dependencies.SliceAssignment
@@ -147,6 +149,30 @@ class ArchitectureTests {
             .should()
             .dependOnClassesThat()
             .resideInAPackage("de.seuhd.campuscoffee.domain.ports.internal..")
+            .check(PRODUCTION_CLASSES)
+    }
+
+    @Test
+    fun `a controller function that reads the acting user has the annotation ActingUserRequired`() {
+        // SecurityConfig requires authentication only for the routes of the functions with ActingUserRequired. Without
+        // the annotation, Spring MVC validates the request body before the controller asks for the acting user, and a
+        // request without an acting user and with an invalid body gets 400 instead of 401. The rule names the classes
+        // of the api module as text, because the tests must not depend on that module.
+        val readsTheActingUser =
+            object : DescribedPredicate<JavaMethod>("call CurrentUserProvider.currentUser") {
+                override fun test(method: JavaMethod): Boolean =
+                    method.methodCallsFromSelf.any {
+                        it.targetOwner.name == "de.seuhd.campuscoffee.api.security.CurrentUserProvider" &&
+                            it.name == "currentUser"
+                    }
+            }
+        methods()
+            .that()
+            .areDeclaredInClassesThat()
+            .resideInAPackage("de.seuhd.campuscoffee.api.controller..")
+            .and(readsTheActingUser)
+            .should()
+            .beAnnotatedWith("de.seuhd.campuscoffee.api.security.ActingUserRequired")
             .check(PRODUCTION_CLASSES)
     }
 
