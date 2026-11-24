@@ -6,8 +6,8 @@ import jakarta.persistence.Table
 import java.util.UUID
 
 /**
- * JPA entity of the balance of one user in euro cents ([balanceCents]). A negative balance means that the user owes the
- * kitty money, and a positive balance that the kitty owes the user money. The migration
+ * The JPA entity of the balance of one user in euro cents ([balanceCents]). A negative balance means that the user owes
+ * the kitty money, and a positive balance that the kitty owes the user money. The migration
  * `V11__create_balance_tables.sql` creates the table `user_balance`. Coffee Kitty has no domain model, port, or adapter
  * for balances yet, and no code writes the table.
  * [UserBalanceRepository][de.seuhd.campuscoffee.data.persistence.repositories.UserBalanceRepository] already reads a

@@ -22,7 +22,7 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
 
 /**
- * Integration tests of the tables `expenses`, `user_balance`, and `kitty_balance` against PostgreSQL. Each of these
+ * The integration tests of the tables `expenses`, `user_balance`, and `kitty_balance` against PostgreSQL. Each of these
  * tables has a JPA entity and a repository but no data port yet. The tests therefore write and read the rows through
  * the repositories.
  */

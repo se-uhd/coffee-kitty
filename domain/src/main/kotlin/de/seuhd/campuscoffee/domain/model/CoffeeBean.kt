@@ -4,8 +4,8 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 /**
- * Domain model of a bean, one named kind of coffee beans that the group buys and that users rate. Each bean purchase
- * and each rating refers to a bean.
+ * The domain model of a bean, one named kind of coffee beans that the group buys and that users rate. Each bean
+ * purchase and each rating refers to a bean.
  *
  * A live bean has [active] true and a null [mergedIntoId], and its [name] is unique among the live beans, ignoring
  * case. An admin can merge a bean into another bean, for example to remove a duplicate with a misspelled name. The

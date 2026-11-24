@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RestController
 import tools.jackson.databind.json.JsonMapper
 
 /**
- * The unit test for [AuthenticationExceptionHandler] on a route without a rule in `SecurityConfig`. MockMvc runs the
- * route with the handler and [GlobalExceptionHandler], so that the test fails when the handler does not take
+ * The unit test for [AuthenticationExceptionHandler] on an endpoint without a rule in `SecurityConfig`. MockMvc runs
+ * the endpoint with the handler and [GlobalExceptionHandler], so that the test fails when the handler does not take
  * precedence.
  */
 class AuthenticationExceptionHandlerTest {
@@ -29,7 +29,7 @@ class AuthenticationExceptionHandlerTest {
             ).build()
 
     @Test
-    fun `a route that needs an acting user returns 401 Unauthorized for a request without an acting user`() {
+    fun `an endpoint that needs an acting user returns 401 Unauthorized for a request without an acting user`() {
         mockMvc.get("/api/example").andExpect {
             status { isUnauthorized() }
             header { string("WWW-Authenticate", CurrentUserProvider.AUTHENTICATION_CHALLENGE) }

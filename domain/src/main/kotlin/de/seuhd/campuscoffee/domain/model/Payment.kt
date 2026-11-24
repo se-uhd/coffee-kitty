@@ -4,8 +4,8 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 /**
- * Domain model of a payment, an amount of money in euro cents ([amountCents]) that an admin records for the kitty. The
- * nullable [user] distinguishes the two kinds of payment:
+ * The domain model of a payment, an amount of money in euro cents ([amountCents]) that an admin records for the kitty.
+ * The nullable [user] distinguishes the two kinds of payment:
  * - With a [user], the payment is a deposit, cash that the user paid into the kitty. A deposit raises the balance of
  *   the user and the kitty by its amount, and the table `payments` accepts only a positive amount.
  * - Without a [user], the payment is a kitty adjustment, which changes only the kitty, for example by the initial cash

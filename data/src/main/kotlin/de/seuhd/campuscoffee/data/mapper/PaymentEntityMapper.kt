@@ -7,8 +7,8 @@ import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 
 /**
- * MapStruct mapper between [Payment] domain objects and [PaymentEntity] JPA entities. [toEntity] and [updateEntity] set
- * [PaymentEntity.user] to the stored user, which [EntityReferenceResolver] loads by the id of [Payment.user], or to
+ * The MapStruct mapper between [Payment] domain objects and [PaymentEntity] JPA entities. [toEntity] and [updateEntity]
+ * set [PaymentEntity.user] to the stored user, which [EntityReferenceResolver] loads by the id of [Payment.user], or to
  * null for a kitty adjustment. Saving a payment then leaves the user row unchanged. [fromEntity] maps the user with all
  * fields through [UserEntityMapper]. [updateEntity] does not copy the id or the timestamps (see
  * [EntityMapper.updateEntity]).

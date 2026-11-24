@@ -9,10 +9,10 @@ import org.springframework.stereotype.Service
 import java.util.UUID
 
 /**
- * Data adapter that implements the [CoffeeBeanDataService] port on the table `coffee_beans`. Business rules, such as
- * trimming a name and merging two beans, belong in a domain service. Coffee Kitty has no domain service for the beans
- * yet. [upsert] throws a `DuplicationException` for a live bean with the same name as another live bean, ignoring case
- * (see [CrudDataServiceImpl]).
+ * The data adapter that implements the [CoffeeBeanDataService] port on the table `coffee_beans`. Business rules, such
+ * as trimming a name and merging two beans, belong in a domain service. Coffee Kitty has no domain service for the
+ * beans yet. [upsert] throws a `DuplicationException` for a live bean with the same name as another live bean, ignoring
+ * case (see [CrudDataServiceImpl]).
  */
 @Service
 class CoffeeBeanDataServiceImpl(

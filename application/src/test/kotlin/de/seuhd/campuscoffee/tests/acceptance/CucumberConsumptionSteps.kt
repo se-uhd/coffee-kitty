@@ -9,11 +9,10 @@ import org.assertj.core.api.Assertions.assertThat
 import java.time.LocalTime
 
 /**
- * Step definitions for the acceptance scenarios in `consumption.feature`.
- *
+ * The step definitions for the acceptance scenarios in `consumption.feature`.
  * Before each scenario, [CucumberSpringConfiguration.beforeEach] cleans the database and creates the user fixtures of
- * `TestFixtures`, such as `maxmustermann`, each with a coffee count of 0. A login name in a step must be the login name
- * of a user fixture.
+ * `TestFixtures`, such as `maxmustermann`, each with a coffee count of zero. A login name in a step must be the login
+ * name of a user fixture.
  *
  * The steps send their requests through [ConsumptionRequests]. The first Given step stores the login name of the user
  * of the scenario. Each When step stores the status code for the Then steps. A step with a time sets the

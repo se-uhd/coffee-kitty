@@ -4,8 +4,8 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 /**
- * Domain model of a rating, in which a [user] scores a [bean] with a [value] from [MIN_VALUE] to [MAX_VALUE]. A user
- * rates the beans of a coffee, not the cup itself. The ratings of a user for the same bean accumulate over time,
+ * The domain model of a rating, in which a [user] scores a [bean] with a [value] from [MIN_VALUE] to [MAX_VALUE]. A
+ * user rates the beans of a coffee, not the cup itself. The ratings of a user for the same bean accumulate over time,
  * because a new rating does not replace an earlier one. A rating moves no money.
  *
  * The data module assigns [id], [createdAt], and [updatedAt]. They are null on a rating that is not stored yet.

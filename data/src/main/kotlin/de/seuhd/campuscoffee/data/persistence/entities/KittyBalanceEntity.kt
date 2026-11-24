@@ -5,8 +5,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 
 /**
- * JPA entity of the kitty balance, the cash in the kitty in euro cents ([balanceCents]). Deposits raise it, the kitty
- * shares of expenses lower it, and kitty adjustments change it in either direction. The migration
+ * The JPA entity of the kitty balance, the cash in the kitty in euro cents ([balanceCents]). Deposits raise it, the
+ * kitty shares of expenses lower it, and kitty adjustments change it in either direction. The migration
  * `V11__create_balance_tables.sql` creates the table `kitty_balance`. Its CHECK constraints allow only the row with the
  * id [SINGLETON_ID] and reject a negative balance. Coffee Kitty has no domain model, port, or adapter for the kitty
  * balance yet. No code writes the table, and the table has no row. The code that first stores a kitty balance has to

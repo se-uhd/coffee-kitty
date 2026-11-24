@@ -7,7 +7,7 @@ import org.springframework.data.repository.query.Param
 import java.util.UUID
 
 /**
- * Spring Data JPA repository for [CoffeeBeanEntity]. Spring Data implements this interface at runtime and runs the
+ * The Spring Data JPA repository for [CoffeeBeanEntity]. Spring Data implements this interface at runtime and runs the
  * query of [findActiveByName].
  */
 interface CoffeeBeanRepository : JpaRepository<CoffeeBeanEntity, UUID> {

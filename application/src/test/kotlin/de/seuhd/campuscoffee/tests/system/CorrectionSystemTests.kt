@@ -18,7 +18,7 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 /**
- * System tests for correcting a coffee count and for listing the corrections (FR-8). The tests send their requests
+ * The system tests for correcting a coffee count and for listing the corrections (FR-8). The tests send their requests
  * through [ConsumptionRequests]. Before each test, the user fixture `maxmustermann` adds three coffees. The acting user
  * of the requests of FR-8 is the admin `jane_doe`, unless a test sets another acting user or leaves the header
  * `X-Acting-User` out.
@@ -68,7 +68,7 @@ class CorrectionSystemTests : AbstractSystemTest() {
     @Test
     fun `correcting a coffee count without a total and without the acting user header returns 401 Unauthorized`() {
         // With an acting user, the body without a total returns 400. Without the rule of SecurityConfig for this
-        // route, Spring MVC would validate the body first, and this request would return 400 as well.
+        // endpoint, Spring MVC would validate the body first, and this request would return 400 as well.
         val response = consumptionRequests.correctCount(userId(), mapOf("note" to note), actingUser = null)
 
         assertThat(response.status).isEqualTo(401)

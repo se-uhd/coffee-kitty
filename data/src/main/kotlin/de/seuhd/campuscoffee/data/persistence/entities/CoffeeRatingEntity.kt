@@ -6,7 +6,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 
 /**
- * JPA entity of a rating, in which a [user] scores a [bean] with a [value] from 1 to 5. The migration
+ * The JPA entity of a rating, in which a [user] scores a [bean] with a [value] from 1 to 5. The migration
  * `V9__create_coffee_ratings_table.sql` creates the table `coffee_ratings` with a CHECK constraint that rejects any
  * other score. The table has no unique constraint, because the ratings of a user for the same bean accumulate.
  *

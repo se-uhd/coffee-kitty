@@ -10,7 +10,7 @@ import org.assertj.core.api.Assertions.assertThat
 import java.time.LocalTime
 
 /**
- * Step definitions for the scenarios of FR-8 in `correction.feature`. The steps send their requests through
+ * The step definitions for the scenarios of FR-8 in `correction.feature`. The steps send their requests through
  * [ConsumptionRequests] and name the users by login name. [CucumberConsumptionSteps] defines the Given steps for the
  * coffees of a single user, the steps of the undo, and the parameter type `{time}`.
  */
@@ -90,7 +90,9 @@ class CucumberCorrectionSteps(
         assertThat(corrections(loginName)).isEmpty()
     }
 
-    /** Returns the corrections of the coffee count of the user with [loginName], newest first, as an admin reads them. */
+    /**
+     * Returns the corrections of the coffee count of the user with [loginName], newest first, as an admin reads them.
+     */
     private fun corrections(loginName: String): List<Correction> =
         requests
             .retrieveCorrections(requests.userId(loginName))

@@ -22,7 +22,7 @@ import javax.sql.DataSource
 /**
  * The base class of the system tests. The Spring Boot test context uses the shared PostgreSQL container and serves the
  * API on a random port. Before each test, [beforeEach] deletes the rows of every table with the [DatabaseCleaner],
- * creates the user fixtures at a coffee count of zero, and creates [userRequests] and [consumptionRequests] for the
+ * creates the user fixtures with a coffee count of zero, and creates [userRequests] and [consumptionRequests] for the
  * port of this context.
  */
 @SpringBootTest(

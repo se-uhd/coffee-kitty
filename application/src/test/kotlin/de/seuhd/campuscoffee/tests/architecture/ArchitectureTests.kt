@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.context.annotation.Configuration
 
 /**
- * ArchUnit tests that check that the app follows the ports-and-adapters pattern.
+ * The ArchUnit tests that check that the app follows the ports-and-adapters pattern.
  */
 class ArchitectureTests {
     @Test
@@ -155,9 +155,9 @@ class ArchitectureTests {
 
     @Test
     fun `a controller function that reads the acting user has the annotation ActingUserRequired`() {
-        // SecurityConfig requires authentication only for the routes of the functions with ActingUserRequired. Without
-        // the annotation, Spring MVC validates the request body before the controller asks for the acting user. A
-        // request without an acting user and with an invalid body then gets 400 instead of 401. The rule names the
+        // SecurityConfig requires authentication only for the endpoints of the functions with ActingUserRequired.
+        // Without the annotation, Spring MVC validates the request body before the controller asks for the acting user.
+        // A request without an acting user and with an invalid body then gets 400 instead of 401. The rule names the
         // classes of the api module as text, because the tests must not depend on that module.
         val readsTheActingUser =
             object : DescribedPredicate<JavaMethod>("call CurrentUserProvider.currentUser") {

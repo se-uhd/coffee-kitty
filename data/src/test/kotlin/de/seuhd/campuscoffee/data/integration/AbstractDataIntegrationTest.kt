@@ -12,10 +12,10 @@ import org.testcontainers.utility.DockerImageName
 import javax.sql.DataSource
 
 /**
- * Base class of the integration tests of the data module. Each test runs in the Spring context of
+ * The base class of the integration tests of the data module. Each test runs in the Spring context of
  * [DataTestApplication], with a PostgreSQL database in a Docker container from Testcontainers. At startup, Flyway
- * applies the migrations, and Hibernate then checks that the JPA entities match the schema (`ddl-auto: validate` in
- * the test `application.yaml`). Before each test, [cleanDatabase] deletes the rows of every table with the
+ * applies the migrations, and Hibernate then checks that the JPA entities match the schema (`ddl-auto: validate` in the
+ * test `application.yaml`). Before each test, [cleanDatabase] deletes the rows of every table with the
  * [DatabaseCleaner].
  */
 @SpringBootTest(classes = [DataTestApplication::class], webEnvironment = SpringBootTest.WebEnvironment.NONE)

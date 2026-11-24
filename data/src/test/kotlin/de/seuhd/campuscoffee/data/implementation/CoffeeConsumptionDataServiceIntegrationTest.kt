@@ -16,9 +16,9 @@ import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.jdbc.core.JdbcTemplate
 
 /**
- * Integration tests of the data adapter [CoffeeConsumptionDataServiceImpl] against PostgreSQL, with the consumptions
- * of [TestFixtures]. Every consumption needs a stored user. Before each test, the base class cleans the database, and
- * [storeUser] then stores a user fixture.
+ * The integration tests of the data adapter [CoffeeConsumptionDataServiceImpl] against PostgreSQL, with the
+ * consumptions of [TestFixtures]. Every consumption needs a stored user. Before each test, the base class cleans the
+ * database, and [storeUser] then stores a user fixture.
  */
 class CoffeeConsumptionDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     @Autowired

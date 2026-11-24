@@ -6,7 +6,8 @@ organization on GitHub](https://adr.github.io/) and [this
 collection](https://github.com/joelparkerhenderson/architecture-decision-record/tree/main/locales/en/templates) of ADR
 templates. -->
 
-<!-- Store the ADR files in a directory named "adr", "_adr", or ".adr". Number the files consecutively and give each file a meaningful name, as in 001-my-adr.md. -->
+<!-- Store the ADR files in a directory named "adr", "_adr", or ".adr". Number the files consecutively and give each
+file a meaningful name, as in 001-my-adr.md. -->
 
 # Short title of the decision to make or of the question that started the discussion
 
@@ -16,7 +17,8 @@ templates. -->
 
 ### Status
 
-<!-- What is the current status of the decision? Possible values: proposed, rejected, accepted, deprecated, superseded by [ADR-001](001-other-adr.md) -->
+<!-- What is the current status of the decision? Possible values: proposed, rejected, accepted, deprecated, superseded
+by [ADR-001](001-other-adr.md) -->
 
 Proposed/Rejected/Accepted/Deprecated/Superseded
 
@@ -36,7 +38,8 @@ YYYY-MM-DD
 
 ## Context
 
-<!-- What is the context of the decision? Describe in a few sentences what started the discussion or the decision. The section can contain a problem statement and links to issues or tickets. -->
+<!-- What is the context of the decision? Describe in a few sentences what started the discussion or the decision. The
+section can contain a problem statement and links to issues or tickets. -->
 
 ...
 
@@ -56,6 +59,7 @@ YYYY-MM-DD
 
 ## Consequences
 
-<!-- What consequences does the decision have, and what does the implementation of the decision require? The section can separate the positive from the negative consequences. -->
+<!-- What consequences does the decision have, and what does the implementation of the decision require? The section can
+separate the positive from the negative consequences. -->
 
 ...

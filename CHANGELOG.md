@@ -20,16 +20,16 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The database has the tables of later features, which no endpoint uses yet. The migration V6 creates the table
   `coffee_prices` (the price per cup, at most one row). The migrations V7 to V9 create the tables `payments` (deposits
   and kitty adjustments), `coffee_beans` (beans with a unique name among the live beans), and `coffee_ratings` (scores
-  from 1 to 5). For these tables, the data module implements the new data ports `CoffeePriceDataService`,
-  `PaymentDataService`, `CoffeeBeanDataService`, and `CoffeeRatingDataService` with the domain models `CoffeePrice`,
-  `Payment`, `CoffeeBean`, and `CoffeeRating`. The migrations V10 and V11 create the tables `expenses`, `user_balance`,
-  and `kitty_balance`, which have only a JPA entity and a repository so far. The section "Tables Without an Endpoint" in
-  `CLAUDE.md` lists what each feature still needs, and GLOSSARY.md defines the new terms.
+  from 1 to 5). The domain module has the new domain models `CoffeePrice`, `Payment`, `CoffeeBean`, and `CoffeeRating`.
+  The data module implements the new data ports `CoffeePriceDataService`, `PaymentDataService`, `CoffeeBeanDataService`,
+  and `CoffeeRatingDataService`, which store them. The migrations V10 and V11 create the tables `expenses`,
+  `user_balance`, and `kitty_balance`, which have only a JPA entity and a repository so far. The section "Tables Without
+  an Endpoint" in `CLAUDE.md` lists what each feature still needs, and GLOSSARY.md defines the new terms.
 - The requirements FR-4 (record a deposit), FR-10 (raise the kitty balance), and FR-6 (record own expenses) in
   `requirements/`. Coffee Kitty does not implement them yet. FR-10 had the ID FR-4b until now. A requirement ID has no
   suffix, and each requirement lists the requirements that it depends on and those that depend on it.
 - The requirements FR-5 (pay for a coffee) and FR-11 (credit an undone coffee) in `requirements/`. FR-11 specifies that
-  an undo raises the balance by the amount by which the coffee lowered it, also when the price per cup changed in
+  an undo raises the balance by the amount by which the coffee lowered it, even when the price per cup changed in
   between. The migration V12 adds the column `coffee_times.price_cents` for this amount. Until now, the table stored
   only the time of a coffee. Coffee Kitty does not implement FR-5 and FR-11 yet, and no JPA entity maps the column.
 - The requirement FR-12 (rate a bean) in `requirements/`, which follows the coffee app of SE@UHD. Coffee Kitty does not
@@ -49,14 +49,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Integration tests: `CoffeeConsumptionDataServiceIntegrationTest` checks that the database stores and deletes the
   times of the coffees and rejects a negative coffee count. `CrudDataServiceIntegrationTest` checks that
   `UserDataServiceImpl` returns the users ordered by login name and stores the role of a user.
+  `UserDataServiceIntegrationTest` checks that the database stores an email address of 3 or 254 characters and rejects
+  one of 2 or 255 characters.
 - System tests for an undo at a coffee count of zero and for an undo with a grace period of zero
   (`UndoWithoutGracePeriodSystemTests`). Further system tests check login names of 1, 255, and 256 characters, an email
   address with capital letters, and an admin whom another admin created. They also check the URL in the `Location`
   header of a new user and a text as the delta. `FailureSystemTests` checks that a request returns 500 and stores
   nothing when a data adapter throws an exception.
 - Tests of the undo status (FR-9): unit tests of `undoableUntil` and `GracePeriod.closesAt`, and system tests of
-  `GET /api/users/{userId}/consumption/undo`. `UserDataServiceIntegrationTest` checks that the database stores an email
-  address of 3 or 254 characters and rejects one of 2 or 255 characters.
+  `GET /api/users/{userId}/consumption/undo`.
 - `gradle build` creates a coverage report of all modules with JaCoCo. The build fails below 95% of the lines or 85% of
   the branches, and when the tests do not execute every function of a domain service or a controller.
 - `gradle :domain:pitest` runs mutation tests of the domain services with PIT and fails when the tests detect fewer
@@ -110,6 +111,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   status.
 - The data adapters are in the package `data.implementation`, as the domain services are in `domain.implementation`.
   Until now, the package was `data.implementations`.
+- GLOSSARY.md defines the term endpoint, and the documentation no longer uses the word route for it. The message of a
+  missing object writes "id" in lowercase ("User with id ... does not exist.").
 - GLOSSARY.md calls a user of `TestFixtures` a user fixture instead of a fixture user, and the code and the
   documentation use this term.
 - The tests check observable behavior, such as a status, an error code, an exception type, or the stored state. They no
@@ -145,17 +148,17 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and the error code `BadRequest`. Until now Jackson read the string as the number 1, and the request added a coffee.
   `application.yaml` sets `spring.jackson.mapper.allow-coercion-of-scalars` to false, so the same holds for every
   number and boolean field of a request body.
-- `POST /api/users` rejects a JSON number for the role, such as `"role": 1`, and a JSON number or boolean for a
-  `String` field, such as `"loginName": 12345`, with a 400 and the error code `BadRequest`. Until now Jackson read the
-  number 1 as the role `ADMIN`, the constant with the index 1, and stored a number or a boolean as its text, such as
-  the login name "12345". `application.yaml` sets `spring.jackson.datatype.enum.fail-on-numbers-for-enums` to true for
-  every enum field of a request body, and the new `JsonConfig` rejects a number or a boolean for every `String` field,
-  for which Spring Boot has no property.
+- `POST /api/users` rejects a JSON number for the role, such as `"role": 1`, and a JSON number or boolean for a `String`
+  field, such as `"loginName": 12345`, with a 400 and the error code `BadRequest`. Until now Jackson read the number 1
+  as the role `ADMIN`, which is the constant with the index 1. It stored a number or a boolean as its text, such as the
+  login name "12345". `application.yaml` sets `spring.jackson.datatype.enum.fail-on-numbers-for-enums` to true for every
+  enum field of a request body. The new `JsonConfig` rejects a number or a boolean for every `String` field, because
+  Spring Boot has no property for this setting.
 - The REST API reads and writes only JSON, as the README states. A request with a YAML body, such as `POST /api/users`
   with `Content-Type: application/yaml`, gets a 415 with the error code `UnsupportedMediaType`, and a request with
   `Accept: application/yaml` gets a 406. Until now such a body got a 500, and such an `Accept` header got a YAML
-  response, because springdoc puts the YAML module of Jackson on the classpath and Spring registered a YAML message
-  converter for it. `ApiWebConfig` removes this message converter as it removes the XML message converters.
+  response. The reason was that springdoc puts the YAML module of Jackson on the classpath, and Spring registered a YAML
+  message converter for it. `ApiWebConfig` removes this message converter as it removes the XML message converters.
 
 ## [0.2.1] - 2026-11-17
 
@@ -186,12 +189,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - A user can undo their most recent coffee within 5 minutes of adding it (FR-3 in `requirements/FR-3-undo-coffee.md`).
-  `POST /api/users/{userId}/consumption/undo` lowers the coffee count by one and returns 409 Conflict when the user
-  has no coffee to undo or when the grace period of the most recent coffee has ended. After an undo, the coffee before
-  can be undone while its own grace period is open. The grace period includes its last instant, as in the coffee app of
-  SE@UHD, and `campus-coffee.consumption.grace-period` sets it (default 5 minutes). The migration V3 creates the
-  table `coffee_times`, which holds the time of each recent coffee that is not undone. Adding a coffee drops the times
-  of the coffees outside their grace period. Coffees added before this release have no time and cannot be undone.
+  `POST /api/users/{userId}/consumption/undo` lowers the coffee count by one and returns 409 Conflict when the user has
+  no coffee to undo or when the grace period of the most recent coffee has ended. After an undo, the user can undo the
+  coffee before while its own grace period is open. The grace period includes its last instant, as in the coffee app of
+  SE@UHD, and `campus-coffee.consumption.grace-period` sets it (default 5 minutes). The migration V3 creates the table
+  `coffee_times`, which holds the time of each recent coffee that the user did not undo. Adding a coffee drops the times
+  of the coffees outside their grace period. Coffees added before this release have no time, and a user cannot undo
+  them.
 - Every user has a role, `USER` or `ADMIN` (migration V4), and the fixture user `jane_doe` is an admin. `POST
   /api/users` may set the role of the new user, which defaults to `USER`.
 - Spring Security runs `ActingUserAuthenticationFilter` before the controllers. The filter resolves the acting user
@@ -201,25 +205,26 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - FR-8 in `requirements/FR-8-correct-coffee-count.md` specifies the correction of a coffee count by an admin, which
   the group lead decided and which assignment 5 implements. FR-3 marks its open question about corrections as
   resolved.
-- `ConsumptionRequests` in the tests sends the requests of the step definitions, such as adding a coffee or reading a
-  coffee count, so that a step names users by login name and gets status codes and values back. Its functions for
-  FR-8 send the correction and read the corrections, which Coffee Kitty implements only with assignment 5.
-- When no admin exists, `BootstrapAdminLoader` stores an admin on startup, after the fixture loader, from the keys
-  under `campus-coffee.bootstrap-admin`, which the environment variables `BOOTSTRAP_ADMIN_LOGIN_NAME`,
-  `BOOTSTRAP_ADMIN_EMAIL_ADDRESS`, `BOOTSTRAP_ADMIN_FIRST_NAME`, and `BOOTSTRAP_ADMIN_LAST_NAME` set. If a user has the
-  configured login name, the loader gives that user the role `ADMIN`.
+- `ConsumptionRequests` in the tests sends the requests of the step definitions, so that a step names users by login
+  name and gets status codes and values back. Examples of these requests are adding a coffee and reading a coffee count.
+  Its functions for FR-8 send the correction and read the corrections, which Coffee Kitty does not implement
+  before assignment 5.
+- When no admin exists, `BootstrapAdminLoader` stores an admin on startup, after the fixture loader, from the keys under
+  `campus-coffee.bootstrap-admin`. The environment variables `BOOTSTRAP_ADMIN_LOGIN_NAME`,
+  `BOOTSTRAP_ADMIN_EMAIL_ADDRESS`, `BOOTSTRAP_ADMIN_FIRST_NAME`, and `BOOTSTRAP_ADMIN_LAST_NAME` set these keys. If a
+  user has the configured login name, the loader gives that user the role `ADMIN`.
 
 ### Changed
 
-- Breaking: only an admin may create a user with `POST /api/users`. Coffee Kitty has no authentication yet. A client
+- Breaking: Only an admin may create a user with `POST /api/users`. Coffee Kitty has no authentication yet. A client
   sends the login name of its acting user in the header `X-Acting-User`. The response is 401 Unauthorized without a
   known acting user and 403 Forbidden when the acting user is not an admin. The migration V4 gives every existing user
   the role `USER`, including `jane_doe` in a database that the `dev` profile does not reset. Configure the bootstrap
   admin with the login name of an existing user, or of a new one, before creating users.
 - The default firewall of Spring Security rejects a path with `;`, `//`, `..`, or an encoded slash and a header value
-  with a control character, because security rules and Spring MVC can read such a request differently. A rejected
-  request gets 400 Bad Request with the message "The request could not be read." Coffee Kitty 0.1.0 handled `GET
-  /api/users;x=1` like `GET /api/users` and responded to `GET /api//users` with 404 Not Found.
+  with a control character. The firewall rejects such a request because security rules and Spring MVC can read it
+  differently. A rejected request gets 400 Bad Request with the message "The request could not be read." Coffee Kitty
+  0.1.0 handled `GET /api/users;x=1` like `GET /api/users` and responded to `GET /api//users` with 404 Not Found.
 - The README describes how the group buys coffee beans from the kitty and how a user who buys coffee with their own
   money declares the purchase as an expense. It states that students first see the app in the lectures on agentic
   software engineering and explains how to set up IntelliJ IDEA.
@@ -228,13 +233,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   command in the README has its own code block.
 - `gradle check` runs ktlint on the root `build.gradle.kts` and `settings.gradle.kts` and on the included build
   `build-logic`, in addition to the subprojects. ktlint found four formatting violations in
-  `java-conventions.gradle.kts`, which are fixed.
+  `java-conventions.gradle.kts`, which this release fixes.
 - Coffee Kitty uses Gradle 9.9 instead of 9.8 (`mise.toml`), and `mise install` installs it. In IntelliJ IDEA, select
   the `gradle-9.9.x` directory as the local Gradle installation (README, section IntelliJ IDEA).
 - For a failed test, Gradle prints the assertion message, e.g., `expected: 200 but was: 404`, and the stack trace with
   the class and method of each line, which IntelliJ IDEA links to the source.
-- The workflow `.github/workflows/mise-outdated.yml` checks the pins in `mise.toml` every Monday and opens an issue when
-  a pin no longer covers the newest release of its tool, because Dependabot does not read `mise.toml`.
+- The workflow `.github/workflows/mise-outdated.yml` checks the pins in `mise.toml` every Monday, because Dependabot
+  does not read `mise.toml`. The workflow opens an issue when a pin no longer covers the newest release of its tool.
 - When IntelliJ IDEA runs a single scenario of a feature file, Cucumber loads the step definitions from the package of
   `CucumberTests` (`application/src/test/resources/cucumber.properties`) and no longer scans every test class.
 
@@ -243,8 +248,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A successful build no longer ends with the deprecation notice that detekt 2.0.0-alpha.6 causes. Until a detekt
   release includes the fix from detekt/detekt#9577, `org.gradle.warning.mode=none` in `gradle.properties` hides all
   Gradle deprecation warnings.
-- IntelliJ could not start the Gradle daemon when it ran Gradle on a JDK older than 23, because such a JDK rejects the
-  option `--sun-misc-unsafe-memory-access=allow` in `org.gradle.jvmargs`. `gradle/gradle-daemon-jvm.properties` now
+- IntelliJ IDEA could not start the Gradle daemon when it ran Gradle on a JDK older than 23, because such a JDK rejects
+  the option `--sun-misc-unsafe-memory-access=allow` in `org.gradle.jvmargs`. `gradle/gradle-daemon-jvm.properties` now
   requires JDK 25 for the daemon. When Gradle finds no JDK 25 on the machine, it downloads a JDK 25 from the URLs in
   this file. The foojay toolchain resolver in `settings.gradle.kts` looked up these URLs.
 

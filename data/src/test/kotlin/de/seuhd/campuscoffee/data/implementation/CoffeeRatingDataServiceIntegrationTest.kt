@@ -19,8 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import java.util.UUID
 
 /**
- * Integration tests of [CoffeeRatingDataServiceImpl] against PostgreSQL. Every rating needs a stored user and a stored
- * bean. [storeUserAndBean] stores both before each test.
+ * The integration tests of [CoffeeRatingDataServiceImpl] against PostgreSQL. Every rating needs a stored user and a
+ * stored bean. [storeUserAndBean] stores both before each test.
  */
 class CoffeeRatingDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     @Autowired

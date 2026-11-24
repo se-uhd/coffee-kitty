@@ -1,7 +1,7 @@
 package de.seuhd.campuscoffee.domain.model
 
 /**
- * Type of the domain objects that have an id. Generic code reads the id through this interface, for example
+ * The type of the domain objects that have an id. Generic code reads the id through this interface, for example
  * `CrudDataServiceImpl.upsert` in the data module and the extension property [persistedId].
  */
 interface Identifiable<T> {

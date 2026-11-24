@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID
 
 /**
- * Spring Data JPA repository for [ExpenseEntity]. Spring Data implements this interface at runtime and derives the
+ * The Spring Data JPA repository for [ExpenseEntity]. Spring Data implements this interface at runtime and derives the
  * query of each method declared here from the method name. No data adapter uses the repository yet.
  */
 interface ExpenseRepository : JpaRepository<ExpenseEntity, UUID> {

@@ -6,9 +6,9 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 
 /**
- * JPA entity of a correction, in which an [admin] set the coffee count of a [user] from [countBefore] to [countAfter]
- * and explained the correction in a [note]. The migration `V5__create_count_corrections_table.sql` creates the table
- * `count_corrections`. The column `note` has the width `CountCorrection.MAX_NOTE_LENGTH`.
+ * The JPA entity of a correction, in which an [admin] set the coffee count of a [user] from [countBefore] to
+ * [countAfter] and explained the correction in a [note]. The migration `V5__create_count_corrections_table.sql` creates
+ * the table `count_corrections`. The column `note` has the width `CountCorrection.MAX_NOTE_LENGTH`.
  *
  * The foreign key `user_id` has `ON DELETE CASCADE`, because a correction belongs to its user, as a consumption does.
  * The foreign key `admin_id` has the default `NO ACTION`, because a correction does not belong to its admin.

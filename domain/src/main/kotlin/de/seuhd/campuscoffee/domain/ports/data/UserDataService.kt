@@ -5,8 +5,8 @@ import de.seuhd.campuscoffee.domain.model.User
 import java.util.UUID
 
 /**
- * Data port for the users. `UserDataServiceImpl` in the data module implements it. [getAll] returns the users ordered
- * by login name.
+ * The data port for the users. `UserDataServiceImpl` in the data module implements it. [getAll] returns the users
+ * ordered by login name.
  */
 interface UserDataService : CrudDataService<User, UUID> {
     /**

@@ -4,7 +4,7 @@ import de.seuhd.campuscoffee.domain.model.CoffeeBean
 import java.util.UUID
 
 /**
- * Data port for the beans, with a lookup of a live bean by name in addition to the operations of [CrudDataService].
+ * The data port for the beans, with a lookup of a live bean by name in addition to the operations of [CrudDataService].
  * `CoffeeBeanDataServiceImpl` in the data module implements it. [getAll] returns the live and the merged beans, ordered
  * by creation time. [upsert] throws a `DuplicationException` for a live bean with the same name as another live bean,
  * ignoring case.

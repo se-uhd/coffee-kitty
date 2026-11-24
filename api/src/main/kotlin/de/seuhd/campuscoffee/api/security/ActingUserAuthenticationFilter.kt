@@ -21,7 +21,7 @@ import org.springframework.web.servlet.HandlerExceptionResolver
  * no password or token and any client can act as any user. The principal has no authorities, because no rule of Spring
  * Security checks a role. The domain checks the role of the acting user with `requireAdmin`. A request with a login
  * name that no user has gets a 401 from [entryPoint] and does not reach a controller. A request without the header
- * continues without a principal, and `SecurityConfig` requires one for the routes with [ActingUserRequired]. If the
+ * continues without a principal, and `SecurityConfig` requires one for the endpoints with [ActingUserRequired]. If the
  * lookup throws any other exception, for example without a database connection, the filter passes the exception to
  * [exceptionResolver]. The resolver passes it to `GlobalExceptionHandler`, like an exception of a controller.
  *

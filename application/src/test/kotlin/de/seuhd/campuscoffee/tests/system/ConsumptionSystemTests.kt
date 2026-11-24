@@ -12,9 +12,9 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 /**
- * System tests for reading the coffee count and the undo status of a user, adding a coffee, and undoing a coffee. The
- * tests send their requests through [ConsumptionRequests]. The tests for an unknown user use a random id, and all other
- * tests use the user fixture `maxmustermann`.
+ * The system tests for reading the coffee count and the undo status of a user, adding a coffee, and undoing a coffee.
+ * The tests send their requests through [ConsumptionRequests]. The tests for an unknown user use a random id, and all
+ * other tests use the user fixture `maxmustermann`.
  */
 class ConsumptionSystemTests : AbstractSystemTest() {
     private val loginName = "maxmustermann"

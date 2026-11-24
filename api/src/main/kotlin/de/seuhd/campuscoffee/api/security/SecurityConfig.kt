@@ -19,9 +19,9 @@ import tools.jackson.databind.json.JsonMapper
 /**
  * The Spring Security configuration of Coffee Kitty. The coffee app of SE@UHD has a class with the same name.
  * [ActingUserAuthenticationFilter] runs before the controllers and resolves the acting user from the header
- * `X-Acting-User`. [securityFilterChain] requires authentication for the route of every controller function with the
- * annotation [ActingUserRequired]. A request to such a route without an acting user then gets its 401 before Spring
- * MVC reads and validates the request body. Every other route is open to every client.
+ * `X-Acting-User`. [securityFilterChain] requires authentication for the endpoint of every controller function with the
+ * annotation [ActingUserRequired]. A request to such an endpoint without an acting user then gets its 401 before Spring
+ * MVC reads and validates the request body. Every other endpoint is open to every client.
  *
  * The filter authenticates each request separately, so the API stores no sessions and sets no cookies. The
  * configuration turns off sessions, CSRF protection, the login form, HTTP Basic, and the logout endpoint.
@@ -29,7 +29,7 @@ import tools.jackson.databind.json.JsonMapper
 @Configuration
 class SecurityConfig {
     /**
-     * Returns the filter chain for every request. The routes of the controller functions with [ActingUserRequired]
+     * Returns the filter chain for every request. The endpoints of the controller functions with [ActingUserRequired]
      * require an acting user: creating a user, correcting a coffee count, and listing the corrections of a user.
      *
      * @param http        the builder of the filter chain
@@ -37,7 +37,7 @@ class SecurityConfig {
      * @param entryPoint  the entry point that responds with 401 to a request without a known acting user
      * @param exceptionResolver the resolver of Spring MVC, which turns an exception of the lookup into the error
      *   response of `GlobalExceptionHandler`
-     * @param handlerMapping the mapping of Spring MVC from routes to controller functions
+     * @param handlerMapping the mapping of Spring MVC from endpoints to controller functions
      */
     @Bean
     fun securityFilterChain(
@@ -47,7 +47,7 @@ class SecurityConfig {
         @Qualifier("handlerExceptionResolver") exceptionResolver: HandlerExceptionResolver,
         @Qualifier("requestMappingHandlerMapping") handlerMapping: RequestMappingHandlerMapping
     ): SecurityFilterChain {
-        val routes = actingUserRoutes(handlerMapping)
+        val endpoints = actingUserEndpoints(handlerMapping)
         return http
             .csrf { it.disable() }
             .formLogin { it.disable() }
@@ -55,7 +55,7 @@ class SecurityConfig {
             .logout { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { requests ->
-                routes.forEach { (method, path) -> requests.requestMatchers(method, path).authenticated() }
+                endpoints.forEach { (method, path) -> requests.requestMatchers(method, path).authenticated() }
                 requests.anyRequest().permitAll()
             }.exceptionHandling { it.authenticationEntryPoint(entryPoint) }
             .addFilterBefore(
@@ -68,11 +68,11 @@ class SecurityConfig {
      * Returns the HTTP method and the path pattern of every controller function with [ActingUserRequired], such as
      * `PUT` and `/api/users/{userId}/consumption`. The paths contain the prefix that `ApiWebConfig` adds.
      *
-     * @throws IllegalStateException if no controller function has the annotation. Every route would then be open, so
+     * @throws IllegalStateException if no controller function has the annotation. Every endpoint would then be open, so
      *   the app does not start.
      */
-    private fun actingUserRoutes(handlerMapping: RequestMappingHandlerMapping): List<Pair<HttpMethod, String>> {
-        val routes =
+    private fun actingUserEndpoints(handlerMapping: RequestMappingHandlerMapping): List<Pair<HttpMethod, String>> {
+        val endpoints =
             handlerMapping.handlerMethods
                 .filterValues { it.hasMethodAnnotation(ActingUserRequired::class.java) }
                 .keys
@@ -81,8 +81,8 @@ class SecurityConfig {
                         mapping.patternValues.map { path -> method.asHttpMethod() to path }
                     }
                 }
-        check(routes.isNotEmpty()) { "No controller function has the annotation ActingUserRequired." }
-        return routes
+        check(endpoints.isNotEmpty()) { "No controller function has the annotation ActingUserRequired." }
+        return endpoints
     }
 
     /**

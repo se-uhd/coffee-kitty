@@ -9,10 +9,10 @@ import org.springframework.stereotype.Service
 import java.util.UUID
 
 /**
- * Data adapter that implements the [CoffeePriceDataService] port on the table `coffee_prices`, which holds at most one
- * row. Business rules, such as the check that only an admin changes the price, belong in a domain service. Coffee Kitty
- * has no domain service for the price yet. [upsert] throws a `DuplicationException` for a second price without an id
- * (see [CrudDataServiceImpl]).
+ * The data adapter that implements the [CoffeePriceDataService] port on the table `coffee_prices`, which holds at most
+ * one row. Business rules, such as the check that only an admin changes the price, belong in a domain service. Coffee
+ * Kitty has no domain service for the price yet. [upsert] throws a `DuplicationException` for a second price without an
+ * id (see [CrudDataServiceImpl]).
  */
 @Service
 class CoffeePriceDataServiceImpl(

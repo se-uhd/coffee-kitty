@@ -16,8 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import java.util.UUID
 
 /**
- * Integration tests of [PaymentDataServiceImpl] against PostgreSQL. A payment with a user is a deposit, and a payment
- * without a user is a kitty adjustment.
+ * The integration tests of [PaymentDataServiceImpl] against PostgreSQL. A payment with a user is a deposit, and a
+ * payment without a user is a kitty adjustment.
  */
 class PaymentDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     @Autowired

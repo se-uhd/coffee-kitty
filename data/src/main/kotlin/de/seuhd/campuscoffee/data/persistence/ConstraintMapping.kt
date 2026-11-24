@@ -53,7 +53,7 @@ class ConstraintMapping<D : DomainModel<*>>(
                 ConstraintMapping(
                     CoffeeConsumptionEntity.USER_UNIQUE_CONSTRAINT,
                     CoffeeConsumption::class.java,
-                    "user ID"
+                    "user id"
                 ) { it.user.id.toString() },
                 // is_singleton is true in every row of coffee_prices, and a second price repeats this value
                 ConstraintMapping(CoffeePriceEntity.SINGLETON_UNIQUE_CONSTRAINT, CoffeePrice::class.java, "singleton") {

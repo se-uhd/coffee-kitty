@@ -6,10 +6,11 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 
 /**
- * JPA entity of an expense, money that a [buyer] spent for the group. The migration `V10__create_expenses_table.sql`
- * creates the table `expenses`. Coffee Kitty has no domain model, data port, entity mapper, or data adapter for
- * expenses yet. [ExpenseRepository][de.seuhd.campuscoffee.data.persistence.repositories.ExpenseRepository] already
- * provides a query for the expenses of a buyer.
+ * The JPA entity of an expense, money that a [buyer] spent for the group. The migration
+ * `V10__create_expenses_table.sql` creates the table `expenses`. Coffee Kitty has no domain model, data port, entity
+ * mapper, or data adapter for expenses yet.
+ * [ExpenseRepository][de.seuhd.campuscoffee.data.persistence.repositories.ExpenseRepository] already provides a query
+ * for the expenses of a buyer.
  *
  * [expenseType] holds [BEANS_TYPE] for a bean purchase or [OTHER_TYPE] for any other expense, such as filters or milk.
  * A domain enum with constants of these names needs no mapping code, because MapStruct converts between an enum and a

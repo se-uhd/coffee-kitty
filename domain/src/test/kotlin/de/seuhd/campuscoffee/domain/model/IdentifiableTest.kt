@@ -7,8 +7,8 @@ import org.junit.jupiter.api.assertThrows
 import java.util.UUID
 
 /**
- * Unit tests for the extension property [persistedId], with a [User] as the object that has or lacks an id. A fixture
- * user from [TestFixtures] has no id, because it is not stored.
+ * The unit tests for the extension property [persistedId], with a [User] as the object that has or lacks an id. A
+ * fixture user from [TestFixtures] has no id, because it is not stored.
  */
 class IdentifiableTest {
     private val userWithoutId = TestFixtures.regularUser()

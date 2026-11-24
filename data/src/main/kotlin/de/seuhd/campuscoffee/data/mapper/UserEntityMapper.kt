@@ -7,8 +7,8 @@ import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 
 /**
- * MapStruct mapper between [User] domain objects and [UserEntity] JPA entities. MapStruct maps each field to the field
- * with the same name. [updateEntity] does not copy the id or the timestamps (see [EntityMapper.updateEntity]).
+ * The MapStruct mapper between [User] domain objects and [UserEntity] JPA entities. MapStruct maps each field to the
+ * field with the same name. [updateEntity] does not copy the id or the timestamps (see [EntityMapper.updateEntity]).
  */
 @Mapper(componentModel = "spring")
 interface UserEntityMapper : EntityMapper<User, UserEntity> {

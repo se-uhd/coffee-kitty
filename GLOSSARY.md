@@ -1,9 +1,9 @@
 # Glossary
 
 This glossary defines one term for each concept of Coffee Kitty. Use these terms in the documentation, in KDoc and
-comments, and in the messages that the API returns. Identifiers such as class, field, table, and route names keep their
-spelling, and the lines "API:" and "Code:" of an entry list the identifiers that differ from the term. Some entries end
-with a line "Avoid:", which lists words not to use for the concept.
+comments, and in the messages that the API returns. Identifiers such as the names of classes, fields, and tables and the
+paths of endpoints keep their spelling, and the lines "API:" and "Code:" of an entry list the identifiers that differ
+from the term. Some entries end with a line "Avoid:", which lists words not to use for the concept.
 
 ## Domain
 
@@ -77,8 +77,8 @@ with a line "Avoid:", which lists words not to use for the concept.
   coffee lowers the balance of its user by the price per cup at the time of the coffee, so a new price applies only to
   the coffees added after the change (FR-5 in `requirements/FR-5-pay-for-coffee.md`). An undo raises the balance by the
   amount by which the coffee lowered it (FR-11 in `requirements/FR-11-credit-undone-coffee.md`). Coffee Kitty stores at
-  most one price, and no endpoint reads or sets it yet. No migration stores a price, so the startup has to store the
-  start price.
+  most one price, and no endpoint reads or sets it yet. No migration stores a price, so the startup task has to store
+  the start price.
   Code: `CoffeePrice`, `CoffeePriceDataService`, `coffee_prices`, `coffee_times.price_cents`.
 - **balance**: A user's amount of money in euro cents, negative when the user owes the kitty money and positive when the
   kitty owes the user money. Coffees lower the balance, and deposits and the private shares of the user's expenses
@@ -114,9 +114,9 @@ with a line "Avoid:", which lists words not to use for the concept.
 - **private share / kitty share**: The two parts of an expense, which add up to its amount. The private share raises the
   balance of the buyer, and the kitty share lowers the kitty.
   Code: `ExpenseEntity.privateAmountCents`, `ExpenseEntity.kittyAmountCents`.
-- **bean**: One named kind of coffee beans, which bean purchases and ratings refer to. A live bean has a name that no
-  other live bean has, ignoring case. An admin can merge a bean into another bean, and the merged bean stays as an
-  inactive record that refers to the other bean.
+- **bean**: One named kind of coffee beans, which bean purchases and ratings refer to. A live bean, that is, a bean that
+  no admin merged into another bean, has a name that no other live bean has, ignoring case. An admin can merge a bean
+  into another bean, and the merged bean stays as an inactive record that refers to the other bean.
   Code: `CoffeeBean`, `CoffeeBean.mergedIntoId`, `CoffeeBeanDataService`, `coffee_beans`.
 - **rating**: The stored record of one score that a user gives a bean. A new rating of a user for the same bean does not
   replace an earlier rating, and a rating moves no money. FR-12 in `requirements/FR-12-rate-a-bean.md` specifies how a
@@ -132,7 +132,8 @@ with a line "Avoid:", which lists words not to use for the concept.
   Coffee Kitty has no authentication yet, any client can act as any user.
   API: `X-Acting-User`, `WWW-Authenticate: X-Acting-User realm="Coffee Kitty"` in a 401. Code: `CurrentUserProvider`,
   `ActingUserAuthenticationFilter`, `ActingUserRequired`, `SecurityConfig`.
-  Avoid: current user (except in the class name), caller.
+  Avoid: current user (except in the class name `CurrentUserProvider` and its function `currentUser`, which the coffee
+  app of SE@UHD has as well), caller.
 - **bootstrap admin**: The admin that the app stores on startup from the keys under `campus-coffee.bootstrap-admin` when
   no admin exists. If a user has the configured login name, the app gives that user the
   role `ADMIN`. Otherwise, it creates the configured user.
@@ -223,6 +224,9 @@ with a line "Avoid:", which lists words not to use for the concept.
   Swagger UI on port 8081 and connects to PostgreSQL on port 5433. The dev application runs in this profile. The tests
   run without it.
   Code: `application.yaml`, `--spring.profiles.active=dev`.
+- **endpoint**: An HTTP method with a path that a controller function serves, such as `POST /api/users`.
+  Code: `UserController`, `ConsumptionController`, `ActingUserRequired`.
+  Avoid: route.
 - **error response**: The response to a failed request. Its JSON body has the fields `errorCode`, `message`,
   `statusCode`, `statusMessage`, `timestamp` (in UTC), and `path`. For a domain exception, `errorCode` is the class name
   of the exception. For any other error, `errorCode` is the reason phrase of the status without spaces, such as

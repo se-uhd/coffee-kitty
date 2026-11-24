@@ -7,9 +7,9 @@ import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 
 /**
- * MapStruct mapper between [CoffeeConsumption] domain objects and [CoffeeConsumptionEntity] JPA entities. [toEntity]
- * and [updateEntity] set [CoffeeConsumptionEntity.user] to the stored user, which [EntityReferenceResolver] loads by
- * the id of [CoffeeConsumption.user]. Saving a consumption then leaves the user row unchanged (see
+ * The MapStruct mapper between [CoffeeConsumption] domain objects and [CoffeeConsumptionEntity] JPA entities.
+ * [toEntity] and [updateEntity] set [CoffeeConsumptionEntity.user] to the stored user, which [EntityReferenceResolver]
+ * loads by the id of [CoffeeConsumption.user]. Saving a consumption then leaves the user row unchanged (see
  * [EntityReferenceResolver]). [fromEntity] maps the user with all fields through [UserEntityMapper]. [updateEntity]
  * does not copy the id or the timestamps (see [EntityMapper.updateEntity]).
  */

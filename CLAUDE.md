@@ -3,12 +3,13 @@
 ## Project Overview
 
 Coffee Kitty is a minimal coffee counter with the architecture of the coffee app of SE@UHD, the Software Engineering
-Group at Heidelberg University. The package prefix `de.seuhd` stands for the group. Coffee Kitty is the running example
-of a software engineering lecture, and students extend it over the semester. A user has a login name, an email address,
-and a first and a last name. Each user has exactly one consumption, which holds a coffee count that starts at zero. The
-REST API lists, creates, and reads users, reads a coffee count, and adds one coffee at a time. It undoes the most recent
-coffee within 5 minutes and reads the undo status, which states whether that undo is possible. An admin can also correct
-a coffee count with a note and list the corrections of a user.
+Group at Heidelberg University. The package prefix `de.seuhd` stands for the group. The packages, the plugin ids, and
+the configuration keys contain `campuscoffee` or `campus-coffee`, after the name of that coffee app, Campus Coffee.
+Coffee Kitty is the running example of a software engineering lecture, and students extend it over the semester. A user
+has a login name, an email address, and a first and a last name. Each user has exactly one consumption, which holds a
+coffee count that starts at zero. The REST API lists, creates, and reads users, reads a coffee count, and adds one
+coffee at a time. It undoes the most recent coffee within 5 minutes and reads the undo status, which states whether that
+undo is possible. An admin can also correct a coffee count with a note and list the corrections of a user.
 
 `requirements/` holds the functional requirements, such as FR-3 for the undo, FR-8 for the correction, and FR-9 for the
 undo status. FR-4, FR-5, FR-6, FR-10, FR-11, and FR-12 specify deposits, the price per cup, expenses, and ratings, which
@@ -147,8 +148,8 @@ column `coffee_times.price_cents`. No endpoint and no domain service uses them y
 follow that app without its event log. The KDoc of each JPA entity explains the columns, the CHECK constraints, and the
 `ON DELETE` action of each foreign key.
 
-- The price per cup, the payments, the beans, and the ratings have the full data layer: a domain model, a data port, an
-  entity mapper, and a data adapter. The domain models are `CoffeePrice`, `Payment`, `CoffeeBean`, and `CoffeeRating`.
+- The price per cup, the payments, the beans, and the ratings have these parts: a domain model, a data port, an entity
+  mapper, and a data adapter. The domain models are `CoffeePrice`, `Payment`, `CoffeeBean`, and `CoffeeRating`.
   The table `coffee_prices` holds at most one row. A row of `payments` is a deposit with a user or a kitty adjustment
   without a user. A row of `coffee_beans` has a unique name among the live beans and, for a merged bean, the id of the
   bean that an admin merged it into. A row of `coffee_ratings` holds a score from 1 to 5 of a bean by a user.
@@ -161,15 +162,15 @@ follow that app without its event log. The KDoc of each JPA entity explains the 
   not extend `Entity`, because their tables have neither a random id nor timestamps. `EntityMapper` and
   `CrudDataServiceImpl` accept only subclasses of `Entity` and do not apply to these two classes.
 - No migration stores a price, and every test starts with empty tables. `CoffeePriceDataService.findCurrent` then
-  returns null. The startup and the test setup have to store the start price, as `BootstrapAdminLoader` stores the
-  bootstrap admin.
+  returns null. The startup task and the test setup have to store the start price, as `BootstrapAdminLoader` stores
+  the bootstrap admin.
 - Coffee Kitty cannot compute a balance from the stored data afterwards, because it does not store the price of each
   past coffee. Every operation that moves money therefore has to change the balances in the same transaction. Examples
   are adding or undoing a coffee, a correction, a deposit, and an expense. A domain service locks a row with
   `UserBalanceRepository.findForUpdateByUserId` or `KittyBalanceRepository.findForUpdateById` through its data adapter,
   as `applyDelta` locks a consumption. No migration inserts a row. The first operation that changes a balance has to
   insert its row, unless `UserServiceImpl.create` creates the row of a new user together with the consumption.
-- An undo has to raise the balance by the amount by which the coffee lowered it, also when the price per cup changed in
+- An undo has to raise the balance by the amount by which the coffee lowered it, even when the price per cup changed in
   between (FR-11). The column `coffee_times.price_cents` (migration V12) is for this amount. No JPA entity maps it yet.
   The implementation of FR-5 has to store the price with the time of each coffee, and the implementation of FR-11 has to
   use it. Coffee Kitty drops the time and the price of a coffee outside its grace period when the user adds a coffee. A
@@ -191,8 +192,8 @@ follow that app without its event log. The KDoc of each JPA entity explains the 
 
 Run Gradle in a shell with mise activated or as `mise exec -- gradle ...`, because the project has no Gradle wrapper and
 mise installs Java and Gradle from `mise.toml`. The `java` entry in `gradle/libs.versions.toml` sets the Java toolchain
-and the Kotlin `jvmTarget`, and `mise.toml` pins the same major version by hand. The dev database and the
-Testcontainers tests need Docker.
+and the Kotlin `jvmTarget`. `mise.toml` pins the same major version, and no tool copies it from one file to the other,
+so change both files together. The dev database and the Testcontainers tests need Docker.
 
 ```shell
 gradle build                                                 # compile, ktlint, detekt, CPD, every test, coverage gate
@@ -259,8 +260,9 @@ A substantial change goes through these steps:
 5. Release the change (see Versioning and Releases).
 
 Write each decision worth recording as a short architecture decision record (ADR) in `doc/adr/`, named
-`NNN-meaningful-name.md` and based on `doc/adr/template.md`. Never edit an accepted ADR except for its status. Record a
-changed decision in a new ADR that refers to the old one, and set the status of the old ADR to superseded.
+`NNN-meaningful-name.md` and based on `doc/adr/template.md`. Never edit an accepted ADR except for its status. A
+correction of the wording that does not change the decision is allowed. Record a changed decision in a new ADR that
+refers to the old one, and set the status of the old ADR to superseded.
 
 ## Versioning and Releases
 
@@ -466,15 +468,15 @@ cleaning the database.
 - Acting user: Spring Security runs `ActingUserAuthenticationFilter` before the controllers. A controller function that
   calls `CurrentUserProvider.currentUser` needs the annotation `ActingUserRequired`. `SecurityConfig` reads the HTTP
   method and the path of every function with this annotation from Spring MVC and requires authentication for these
-  routes. Without the annotation, a request that has no acting user and lacks a required field gets 400 instead of 401.
-  The reason is that Spring MVC validates the body before the controller calls `CurrentUserProvider.currentUser`. An
-  architecture test fails for a controller function that calls `currentUser` without the annotation.
+  endpoints. Without the annotation, a request that has no acting user and lacks a required field gets 400 instead of
+  401. The reason is that Spring MVC validates the body before the controller calls `CurrentUserProvider.currentUser`.
+  An architecture test fails for a controller function that calls `currentUser` without the annotation.
 - Firewall: The default firewall of Spring Security rejects, among others, a path with `;`, `//`, `..`, or an encoded
   slash and a header value with a control character. `SecurityConfig.requestRejectedHandler` and
   `RequestRejectedExceptionHandler` respond to such a request with 400 and an `ErrorResponse` (`writeErrorResponse` in
   `api/.../security/`).
 - Error handling: The data adapters throw the domain exceptions `NotFoundException` (404) and `DuplicationException`
-  (409), as described in Generic Base Classes. `CoffeeConsumptionServiceImpl.undo` throws `ConflictException` (409),
+  (409) (see Generic Base Classes). `CoffeeConsumptionServiceImpl.undo` throws `ConflictException` (409),
   `requireAdmin` throws `ForbiddenException` (403), and the domain services throw `ValidationException` (400).
   `JsonAuthenticationEntryPoint` responds to a request without a known acting user with 401 and the header
   `WWW-Authenticate`, which RFC 9110 requires in every 401. `GlobalExceptionHandler` extends
@@ -526,7 +528,7 @@ is the API port (step 2).
 
 1. Create the domain model in `domain/.../model/`. The domain model implements `DomainModel<UUID>` and has a nullable
    `id`, `createdAt`, and `updatedAt` (see `User`).
-2. Create the API port in `domain/.../ports/api/`. An operation that only the startup tasks or the test setup calls
+2. Create the API port in `domain/.../ports/api/`. An operation that only the startup task or the test setup calls
    belongs to an internal port in `domain/.../ports/internal/`.
 3. Create the data port in `domain/.../ports/data/`. Ports and Adapters states when a data port extends
    `CrudDataService<DOMAIN, UUID>`.
@@ -541,8 +543,8 @@ is the API port (step 2).
    for references first and, for a referenced row, throw a new domain exception that `GlobalExceptionHandler` maps to
    409 Conflict.
 5. Create the repository in `data/.../persistence/repositories/` (extend `JpaRepository`).
-6. Create the entity mapper in `data/.../mapper/` (extend `EntityMapper` and override `updateEntity` as described in
-   Generic Base Classes). Map each reference to another entity by its id (see `CoffeeConsumptionEntityMapper`). Add a
+6. Create the entity mapper in `data/.../mapper/` (extend `EntityMapper` and override `updateEntity`, see Generic Base
+   Classes). Map each reference to another entity by its id (see `CoffeeConsumptionEntityMapper`). Add a
    lookup such as `userReference` to `EntityReferenceResolver`, list the resolver and the referenced mapper in
    `@Mapper(uses = ...)`, and put `@Mapping(target = "<reference>", source = "<reference>.id")` on `toEntity` and
    `updateEntity`. Without these mappings, MapStruct maps the nested domain object, such as the `User` in a

@@ -31,7 +31,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 import java.util.UUID
 
 /**
- * Integration test of the [DatabaseCleaner] against PostgreSQL. The test stores a row in every table of the app and
+ * The integration test of the [DatabaseCleaner] against PostgreSQL. The test stores a row in every table of the app and
  * then reads the names of the tables from the PostgreSQL catalog. A table that a new migration creates is therefore
  * part of the assertions without a change to this class, although the test does not store a row in it.
  */

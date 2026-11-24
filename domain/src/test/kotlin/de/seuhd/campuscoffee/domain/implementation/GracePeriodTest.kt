@@ -9,7 +9,7 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 /**
- * Unit tests for [GracePeriod] with a fixed clock at 2026-01-15T12:00Z and a grace period of 5 minutes. The grace
+ * The unit tests for [GracePeriod] with a fixed clock at 2026-01-15T12:00Z and a grace period of 5 minutes. The grace
  * period includes the instant at which it ends. The boundary at 11:55:00 splits the times of the coffees into two
  * partitions: [GracePeriod.isOpen] is true for a coffee from 11:55:00 on and false for an earlier coffee. The tests of
  * [GracePeriod.isOpen] take one time inside each partition (12:00:00 and 11:00:00) and the two times at the boundary.

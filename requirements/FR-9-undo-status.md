@@ -28,7 +28,7 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
 
 - Depends on FR-3: The success criteria of FR-3 specify when an undo lowers the coffee count and when it returns
   409 Conflict.
-- The coffee app of SE@UHD reports `undoable` and `undoableUntil` in its summaries, and its landing page shows the undo
-  button only while `undoable` is true.
+- The coffee app of SE@UHD reports `undoable` and `undoableUntil` in the response of `GET /summary`, and its landing
+  page shows the undo button only while `undoable` is true.
 - TBD (open): Does a client also need the undo status in the responses to adding and to undoing a coffee, as the
   coffee app of SE@UHD reports it in every summary? Contact person: group lead.

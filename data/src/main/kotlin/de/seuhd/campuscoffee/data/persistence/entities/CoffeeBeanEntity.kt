@@ -5,8 +5,8 @@ import jakarta.persistence.Table
 import java.util.UUID
 
 /**
- * JPA entity of a bean with a [name]. The bean is live while [mergedIntoId] is null. A merged bean has [active] false,
- * and its [mergedIntoId] is the id of the bean into which an admin merged it. The CHECK constraint
+ * The JPA entity of a bean with a [name]. The bean is live while [mergedIntoId] is null. A merged bean has [active]
+ * false, and its [mergedIntoId] is the id of the bean into which an admin merged it. The CHECK constraint
  * `ck_coffee_beans_active` requires that [active] is true exactly when [mergedIntoId] is null, and
  * `ck_coffee_beans_merged_into_other` rejects a bean merged into itself. The migration
  * `V8__create_coffee_beans_table.sql` creates the table `coffee_beans`. The column `name` has the width
