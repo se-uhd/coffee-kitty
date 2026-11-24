@@ -2,14 +2,14 @@ spring:
   application:
     name: coffee-kitty
   autoconfigure:
-    # SecurityConfig authenticates with ActingUserAuthenticationFilter and needs no user store of Spring Security, which
-    # would otherwise log a generated password on every start.
+    # SecurityConfig authenticates with ActingUserAuthenticationFilter and needs no user store of Spring Security. With
+    # the default user store, Spring Boot would log a generated password on every start.
     exclude: org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
   datasource:
     driver-class-name: org.postgresql.Driver
     hikari:
       data-source-properties:
-        # Keeps the values of the affected row, such as an email address, out of the message of a database error. The
+        # Removes the values of the affected row, such as an email address, from the message of a database error. The
         # message still names the violated constraint.
         logServerErrorDetail: false
   jpa:
@@ -25,8 +25,8 @@ spring:
       # and does not change the schema.
       ddl-auto: validate
     properties:
-      # Turns off the logging of SQL errors by Hibernate. The exception handler already logs each database error that a
-      # request causes, and Hibernate would log the same error a second time.
+      # Stops Hibernate from logging SQL errors. The exception handler already logs each database error that a request
+      # causes, and Hibernate would log the same error a second time.
       hibernate.jdbc.log.errors: false
   jackson:
     # The settings below make Jackson reject a value of the wrong JSON type in a request body instead of converting
@@ -44,6 +44,11 @@ spring:
         # Jackson rejects a JSON number for an enum field, and the request gets a 400. With the default false,
         # Jackson would read a role of 1 as ADMIN, the constant of Role with the index 1.
         fail-on-numbers-for-enums: true
+  web:
+    # The API responds in English. With the default locale resolver, Spring takes the locale from the Accept-Language
+    # header of the request, and Bean Validation translates its default messages, such as "must not be null".
+    locale: en
+    locale-resolver: fixed
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -54,8 +59,8 @@ springdoc:
   swagger-ui:
     enabled: false
 # Custom properties. The KDoc of a @ConfigurationProperties class documents the keys under its prefix. For
-# campus-coffee.fixtures, this class is FixturesProperties. A comment on a key in this file says only why a profile
-# sets the value.
+# campus-coffee.fixtures, this class is FixturesProperties. A comment on one of these keys describes only the effect of
+# the value that a profile sets.
 campus-coffee:
   fixtures:
     load-on-startup: false
@@ -73,9 +78,9 @@ spring:
     activate:
       on-profile: dev
   datasource:
-    # Connects to PostgreSQL on host port 5433 instead of the default 5432, to avoid a conflict with a PostgreSQL
-    # installed on the system or with a container of another project. DB_PORT overrides the host port, as in
-    # DB_PORT=5432. Inside the container, PostgreSQL still listens on port 5432.
+    # Connects to PostgreSQL on host port 5433. The default port 5432 could conflict with a PostgreSQL installed on the
+    # system or with a container of another project. DB_PORT overrides the host port, as in DB_PORT=5432. Inside the
+    # container, PostgreSQL still listens on port 5432.
     url: jdbc:postgresql://localhost:${DB_PORT:5433}/postgres
     username: postgres
     password: postgres
