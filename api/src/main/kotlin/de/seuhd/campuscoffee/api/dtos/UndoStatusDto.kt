@@ -1,5 +1,6 @@
 package de.seuhd.campuscoffee.api.dtos
 
+import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 
 /**
@@ -9,6 +10,12 @@ import java.time.LocalDateTime
  * the same names in its summaries.
  */
 data class UndoStatusDto(
+    @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     val undoable: Boolean,
+    @field:Schema(
+        description = "The end of the grace period in UTC, or null if the user cannot undo a coffee.",
+        requiredMode = Schema.RequiredMode.REQUIRED,
+        nullable = true
+    )
     val undoableUntil: LocalDateTime?
 )
