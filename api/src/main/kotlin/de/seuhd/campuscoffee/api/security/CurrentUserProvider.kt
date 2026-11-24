@@ -7,7 +7,8 @@ import org.springframework.stereotype.Component
 
 /**
  * Returns the acting user of the current request. A controller passes this [User] to the domain, which checks whether
- * the role of the user allows the action. `UserService.create`, for example, requires an admin.
+ * the role of the user allows the action. `UserService.create`, for example, requires an admin. A controller function
+ * that calls [currentUser] has the annotation [ActingUserRequired].
  *
  * [ActingUserAuthenticationFilter] resolves the acting user from the request header [ACTING_USER_HEADER] before
  * any controller runs. The filter stores the user as the principal of the request in the `SecurityContext` of

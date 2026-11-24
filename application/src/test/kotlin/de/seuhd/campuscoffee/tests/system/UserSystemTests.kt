@@ -273,8 +273,10 @@ class UserSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `creating a user with an invalid body and without the acting user header returns 401 Unauthorized`() {
-        val response = userRequests.create(newUser(loginName = " "), actingUser = null)
+    fun `creating a user without a required field and without the acting user header returns 401 Unauthorized`() {
+        // With an acting user, the body without an email address returns 400. Without the rule of SecurityConfig for
+        // this route, Spring MVC would validate the body first, and this request would return 400 as well.
+        val response = userRequests.create(newUser() - "emailAddress", actingUser = null)
 
         assertThat(response.status).isEqualTo(401)
         assertThat(response.headers.getFirst("WWW-Authenticate")).isEqualTo(AUTHENTICATION_CHALLENGE)

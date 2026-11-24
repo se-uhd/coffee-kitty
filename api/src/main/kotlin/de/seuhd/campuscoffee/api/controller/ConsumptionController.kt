@@ -7,6 +7,7 @@ import de.seuhd.campuscoffee.api.dtos.CountCorrectionDto
 import de.seuhd.campuscoffee.api.dtos.UndoStatusDto
 import de.seuhd.campuscoffee.api.mapper.ConsumptionDtoMapper
 import de.seuhd.campuscoffee.api.mapper.CountCorrectionDtoMapper
+import de.seuhd.campuscoffee.api.security.ActingUserRequired
 import de.seuhd.campuscoffee.api.security.CurrentUserProvider
 import de.seuhd.campuscoffee.domain.ports.api.CoffeeConsumptionService
 import io.swagger.v3.oas.annotations.Operation
@@ -129,6 +130,7 @@ class ConsumptionController(
         description = "Login name of the acting user, who has to be an admin.",
         required = true
     )
+    @ActingUserRequired
     @PutMapping("")
     fun correctCount(
         @Parameter(description = "Unique identifier of the user.", required = true)
@@ -163,6 +165,7 @@ class ConsumptionController(
         description = "Login name of the acting user, who has to be an admin.",
         required = true
     )
+    @ActingUserRequired
     @GetMapping("/corrections")
     fun getCorrections(
         @Parameter(description = "Unique identifier of the user.", required = true)

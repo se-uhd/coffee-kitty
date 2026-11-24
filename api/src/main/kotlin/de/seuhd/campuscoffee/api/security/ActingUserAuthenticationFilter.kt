@@ -7,7 +7,7 @@ import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.authentication.BadCredentialsException
-import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.authority.AuthorityUtils
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken
@@ -17,10 +17,12 @@ import org.springframework.web.servlet.HandlerExceptionResolver
 /**
  * Resolves the acting user of a request before Spring MVC reads the request body and calls a controller. If the header
  * [CurrentUserProvider.ACTING_USER_HEADER] contains a login name, the filter looks up the user and stores the user as
- * the principal of the request, with the authority `ROLE_USER` or `ROLE_ADMIN`. Spring Security then treats the request
- * as authenticated, although Coffee Kitty checks no password or token and any client can act as any user. A request
+ * the principal of the request. Spring Security then treats the request as authenticated, although Coffee Kitty checks
+ * no password or token and any client can act as any user. The principal has no authorities, because no rule of Spring
+ * Security checks a role: The domain checks the role of the acting user with `requireAdmin`. A request
  * with a login name that no user has gets a 401 from [entryPoint] and does not reach a controller. A request without
- * the header continues without a principal, and `SecurityConfig` defines whether its route needs one. If the lookup
+ * the header continues without a principal, and `SecurityConfig` requires one for the routes with
+ * [ActingUserRequired]. If the lookup
  * throws any other exception, for example without a database connection, the filter passes the exception to
  * [exceptionResolver]. The resolver passes it to `GlobalExceptionHandler`, like an exception of a controller.
  *
@@ -47,11 +49,7 @@ class ActingUserAuthenticationFilter(
             val user = lookUp(loginName, request, response) ?: return
             val context = SecurityContextHolder.createEmptyContext()
             context.authentication =
-                PreAuthenticatedAuthenticationToken(
-                    user,
-                    null,
-                    listOf(SimpleGrantedAuthority("ROLE_${user.role.name}"))
-                )
+                PreAuthenticatedAuthenticationToken(user, null, AuthorityUtils.NO_AUTHORITIES)
             SecurityContextHolder.setContext(context)
         }
         filterChain.doFilter(request, response)

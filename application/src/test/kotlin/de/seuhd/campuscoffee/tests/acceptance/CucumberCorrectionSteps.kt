@@ -90,7 +90,7 @@ class CucumberCorrectionSteps(
         assertThat(corrections(loginName)).isEmpty()
     }
 
-    /** Returns the corrections of the coffee count of the user with [loginName], newest first, as the admin reads them. */
+    /** Returns the corrections of the coffee count of the user with [loginName], newest first, as an admin reads them. */
     private fun corrections(loginName: String): List<Correction> =
         requests
             .retrieveCorrections(requests.userId(loginName))
