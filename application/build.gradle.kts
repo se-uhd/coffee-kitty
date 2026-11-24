@@ -32,8 +32,6 @@ dependencies {
     testImplementation(libs.cucumber.junit.platform.engine)
     testImplementation(libs.cucumber.spring)
     testImplementation(libs.archunit)
-    // The unit tests of the security classes of the api module use the types of Spring Security.
-    testImplementation(libs.spring.boot.starter.security)
 }
 
 springBoot {

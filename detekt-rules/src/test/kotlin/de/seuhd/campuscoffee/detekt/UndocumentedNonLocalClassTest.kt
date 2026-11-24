@@ -38,4 +38,24 @@ class UndocumentedNonLocalClassTest {
             """.trimIndent()
         assertEquals(listOf("Shape", "Registry"), rule.reportedNames(code))
     }
+
+    @Test
+    fun `UndocumentedNonLocalClass reports no class with KDoc, companion object, local class, or anonymous object`() {
+        val code =
+            """
+            /** A holder. */
+            class Holder {
+                companion object {
+                    const val SIZE = 1
+                }
+
+                /** Runs. */
+                fun run(): Any {
+                    class Local
+                    return object : Any() {}
+                }
+            }
+            """.trimIndent()
+        assertEquals(emptyList<String?>(), rule.reportedNames(code))
+    }
 }

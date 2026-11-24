@@ -58,15 +58,25 @@ class CoffeeRatingDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `getAllByUserId returns the newest rating first, and getAllByBeanId returns the oldest rating first`() {
+    fun `getAllByUserId returns the ratings of one user, newest first`() {
         val otherUser = userDataService.upsert(user("sven"))
         val otherBean = coffeeBeanDataService.upsert(CoffeeBean(name = "Kenya AA"))
         val first = coffeeRatingDataService.upsert(CoffeeRating(user = user, bean = bean, value = 3))
-        val other = coffeeRatingDataService.upsert(CoffeeRating(user = otherUser, bean = bean, value = 5))
+        coffeeRatingDataService.upsert(CoffeeRating(user = otherUser, bean = bean, value = 5))
         val second = coffeeRatingDataService.upsert(CoffeeRating(user = user, bean = otherBean, value = 2))
 
         assertThat(coffeeRatingDataService.getAllByUserId(requireNotNull(user.id))).containsExactly(second, first)
-        assertThat(coffeeRatingDataService.getAllByBeanId(requireNotNull(bean.id))).containsExactly(first, other)
+    }
+
+    @Test
+    fun `getAllByBeanId returns the ratings of one bean, oldest first`() {
+        val otherUser = userDataService.upsert(user("sven"))
+        val otherBean = coffeeBeanDataService.upsert(CoffeeBean(name = "Kenya AA"))
+        val first = coffeeRatingDataService.upsert(CoffeeRating(user = user, bean = bean, value = 3))
+        coffeeRatingDataService.upsert(CoffeeRating(user = user, bean = otherBean, value = 2))
+        val second = coffeeRatingDataService.upsert(CoffeeRating(user = otherUser, bean = bean, value = 5))
+
+        assertThat(coffeeRatingDataService.getAllByBeanId(requireNotNull(bean.id))).containsExactly(first, second)
     }
 
     @Test

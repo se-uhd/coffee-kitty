@@ -23,4 +23,25 @@ class UndocumentedFunctionTest {
             """.trimIndent()
         assertEquals(1, rule.lintSource(code).size)
     }
+
+    @Test
+    fun `UndocumentedFunction reports no function with KDoc, no override, and no local function`() {
+        val code =
+            """
+            /** A shape. */
+            interface Shape {
+                /** Returns the area. */
+                fun area(): Double
+            }
+
+            /** A square. */
+            class Square : Shape {
+                override fun area(): Double {
+                    fun side() = 2.0
+                    return side() * side()
+                }
+            }
+            """.trimIndent()
+        assertEquals(emptyList<String?>(), rule.reportedNames(code))
+    }
 }

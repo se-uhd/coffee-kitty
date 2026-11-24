@@ -49,13 +49,19 @@ class CoffeeBeanDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `upsert throws DataConstraintException for an active merged bean or an inactive unmerged bean`() {
+    fun `upsert throws DataConstraintException for an active bean that is merged into another bean`() {
         val target = coffeeBeanDataService.upsert(CoffeeBean(name = "Kenya AA"))
         val other = coffeeBeanDataService.upsert(CoffeeBean(name = "Kenia AA"))
 
         assertThatThrownBy { coffeeBeanDataService.upsert(other.copy(mergedIntoId = target.id)) }
             .isInstanceOf(DataConstraintException::class.java)
-        assertThatThrownBy { coffeeBeanDataService.upsert(other.copy(active = false)) }
+    }
+
+    @Test
+    fun `upsert throws DataConstraintException for an inactive bean that is not merged`() {
+        val bean = coffeeBeanDataService.upsert(CoffeeBean(name = "Kenia AA"))
+
+        assertThatThrownBy { coffeeBeanDataService.upsert(bean.copy(active = false)) }
             .isInstanceOf(DataConstraintException::class.java)
     }
 

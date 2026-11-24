@@ -14,6 +14,8 @@ import de.seuhd.campuscoffee.domain.ports.data.UserDataService
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.support.TransactionTemplate
 import java.time.LocalDateTime
@@ -291,15 +293,21 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
         assertThat(countCorrectionDataService.getAllByUserId(requireNotNull(user.id))).containsExactly(created)
     }
 
-    @Test
-    fun `insert throws DataConstraintException for a correction with a negative count or an empty note`() {
-        val correction = correction(userDataService.upsert(user("olaf")), storeAdmin("nina"))
-
-        listOf(correction.copy(countBefore = -1), correction.copy(countAfter = -1), correction.copy(note = ""))
-            .forEach { invalid ->
-                assertThatThrownBy { countCorrectionDataService.insert(invalid) }
-                    .isInstanceOf(DataConstraintException::class.java)
+    @ParameterizedTest
+    @ValueSource(strings = ["countBefore", "countAfter", "note"])
+    fun `insert throws DataConstraintException for a correction with a negative count or an empty note`(field: String) {
+        val user = userDataService.upsert(user("olaf"))
+        val correction = correction(user, storeAdmin("nina"))
+        val invalid =
+            when (field) {
+                "countBefore" -> correction.copy(countBefore = -1)
+                "countAfter" -> correction.copy(countAfter = -1)
+                else -> correction.copy(note = "")
             }
+
+        assertThatThrownBy { countCorrectionDataService.insert(invalid) }
+            .isInstanceOf(DataConstraintException::class.java)
+        assertThat(countCorrectionDataService.getAllByUserId(requireNotNull(user.id))).isEmpty()
     }
 
     @Test

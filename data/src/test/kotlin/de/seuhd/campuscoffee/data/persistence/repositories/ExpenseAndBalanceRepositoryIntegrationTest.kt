@@ -13,6 +13,7 @@ import de.seuhd.campuscoffee.domain.ports.data.CoffeeBeanDataService
 import de.seuhd.campuscoffee.domain.ports.data.UserDataService
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.assertj.core.api.SoftAssertions.assertSoftly
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -108,69 +109,77 @@ class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest()
         assertThat(stored.first().note).isEqualTo("Filters")
     }
 
-    /** Asserts that the database refuses to store each of [expenses], each under a new id. */
-    private fun assertRefused(vararg expenses: ExpenseEntity) {
-        for (expense in expenses) {
-            expense.id = randomId()
-            assertThatThrownBy { expenseRepository.saveAndFlush(expense) }
-                .isInstanceOf(DataIntegrityViolationException::class.java)
+    /**
+     * Asserts that the database refuses to store each of [expenses], each under a new id. The function checks every
+     * expense and reports each one that the database stored by its description.
+     *
+     * @param expenses the expenses, each with a description for the failure message
+     */
+    private fun assertRefused(vararg expenses: Pair<String, ExpenseEntity>) {
+        assertSoftly { softly ->
+            for ((description, expense) in expenses) {
+                expense.id = randomId()
+                softly
+                    .assertThatThrownBy { expenseRepository.saveAndFlush(expense) }
+                    .`as`(description)
+                    .isInstanceOf(DataIntegrityViolationException::class.java)
+            }
         }
+        assertThat(expenseRepository.count()).isZero()
     }
 
     @Test
     fun `saving a bean purchase without a bean or without a weight above 0 throws DataIntegrityViolationException`() {
         assertRefused(
-            beanPurchase().apply { bean = null },
-            beanPurchase().apply { weightGrams = null },
-            beanPurchase().apply { weightGrams = 0 }
+            "without a bean" to beanPurchase().apply { bean = null },
+            "without a weight" to beanPurchase().apply { weightGrams = null },
+            "with a weight of 0" to beanPurchase().apply { weightGrams = 0 }
         )
     }
 
     @Test
     fun `saving an expense of the type OTHER with a bean or a weight throws DataIntegrityViolationException`() {
         assertRefused(
-            otherExpense().also { it.bean = bean },
-            otherExpense().also { it.weightGrams = 250 }
+            "with a bean" to otherExpense().also { it.bean = bean },
+            "with a weight" to otherExpense().also { it.weightGrams = 250 }
         )
     }
 
     @Test
     fun `saving an expense with an amount of 0 or a negative share throws DataIntegrityViolationException`() {
         assertRefused(
-            otherExpense().apply {
-                amountCents = 0
-                privateAmountCents = 0
-            },
-            otherExpense().apply {
-                privateAmountCents = -1
-                kittyAmountCents = 351
-            },
-            otherExpense().apply {
-                privateAmountCents = 351
-                kittyAmountCents = -1
-            }
+            "with an amount of 0" to
+                otherExpense().apply {
+                    amountCents = 0
+                    privateAmountCents = 0
+                },
+            "with a negative private share" to
+                otherExpense().apply {
+                    privateAmountCents = -1
+                    kittyAmountCents = 351
+                },
+            "with a negative kitty share" to
+                otherExpense().apply {
+                    privateAmountCents = 351
+                    kittyAmountCents = -1
+                }
         )
     }
 
     @Test
     fun `saving an expense with shares that do not add up to its amount throws DataIntegrityViolationException`() {
-        val purchase = beanPurchase().apply { id = randomId() }
-        purchase.kittyAmountCents = 1
-
-        assertThatThrownBy { expenseRepository.saveAndFlush(purchase) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
+        assertRefused(
+            "with a kitty share of 1 and a private share of the full amount" to
+                beanPurchase().apply { kittyAmountCents = 1 }
+        )
     }
 
     @Test
     fun `saving an expense with an unknown type or an empty note throws DataIntegrityViolationException`() {
-        val unknownType = otherExpense().apply { id = randomId() }
-        unknownType.expenseType = "MILK"
-        val emptyNote = otherExpense(note = "").apply { id = randomId() }
-
-        assertThatThrownBy { expenseRepository.saveAndFlush(unknownType) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
-        assertThatThrownBy { expenseRepository.saveAndFlush(emptyNote) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
+        assertRefused(
+            "with the type MILK" to otherExpense().apply { expenseType = "MILK" },
+            "with an empty note" to otherExpense(note = "")
+        )
     }
 
     @Test
@@ -238,9 +247,14 @@ class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest()
     }
 
     @Test
-    fun `saving a kitty balance below 0 or with an id other than 1 throws DataIntegrityViolationException`() {
+    fun `saving a kitty balance below 0 throws DataIntegrityViolationException`() {
         assertThatThrownBy { kittyBalanceRepository.saveAndFlush(KittyBalanceEntity().apply { balanceCents = -1 }) }
             .isInstanceOf(DataIntegrityViolationException::class.java)
+        assertThat(kittyBalanceRepository.count()).isZero()
+    }
+
+    @Test
+    fun `saving a kitty balance with an id other than 1 throws DataIntegrityViolationException`() {
         assertThatThrownBy { kittyBalanceRepository.saveAndFlush(KittyBalanceEntity().apply { id = 2 }) }
             .isInstanceOf(DataIntegrityViolationException::class.java)
         assertThat(kittyBalanceRepository.count()).isZero()
