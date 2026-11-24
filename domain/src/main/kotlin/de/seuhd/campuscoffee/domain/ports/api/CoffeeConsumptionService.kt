@@ -7,11 +7,12 @@ import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
 import de.seuhd.campuscoffee.domain.model.CountCorrection
 import de.seuhd.campuscoffee.domain.model.User
+import java.time.LocalDateTime
 import java.util.UUID
 
 /**
  * API port for the consumptions. The controllers call it to read and correct coffee counts, to add and undo coffees,
- * and to read the corrections. `CoffeeConsumptionServiceImpl` in the domain module implements it.
+ * and to read the undo status and the corrections. `CoffeeConsumptionServiceImpl` in the domain module implements it.
  * [UserService.create] creates the consumption of a new user with a coffee count of zero.
  */
 interface CoffeeConsumptionService {
@@ -50,6 +51,17 @@ interface CoffeeConsumptionService {
      * @throws NotFoundException if no user has [userId]
      */
     fun undo(userId: UUID): CoffeeConsumption
+
+    /**
+     * Returns the time until which the user with [userId] can undo their most recent coffee, or null if the user cannot
+     * undo a coffee at the current time (FR-9). The result is a time exactly when [undo] at the current time succeeds.
+     * The time is then the end of the grace period of the coffee that this undo removes. The function reads the
+     * consumption without a lock and does not change it.
+     *
+     * @param userId the id of the user
+     * @throws NotFoundException if no user has [userId]
+     */
+    fun undoableUntil(userId: UUID): LocalDateTime?
 
     /**
      * Corrects the coffee count of the user with [userId] to [total] and stores the correction with [note] (FR-8).

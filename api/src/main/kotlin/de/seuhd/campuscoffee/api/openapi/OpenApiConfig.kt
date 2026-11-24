@@ -19,7 +19,9 @@ import org.springframework.context.annotation.Configuration
             title = "Coffee Kitty API",
             description =
                 "REST API of a coffee counter. It lists, reads, and creates users, reads a user's coffee count, " +
-                    "adds a coffee to it, and undoes the most recent coffee within 5 minutes."
+                    "adds a coffee to it, undoes the most recent coffee within the grace period (5 minutes by " +
+                    "default), and reads the undo status. " +
+                    "An admin can correct a coffee count with a note and list the corrections of a user."
         )
 )
 class OpenApiConfig {

@@ -17,6 +17,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   migration V5 creates the table `count_corrections`, which stores each correction with the count before and after, the
   note, and the admin. `GET /api/users/{userId}/consumption/corrections` lists the corrections of a user, newest first,
   and returns 403 Forbidden when the acting user is not an admin.
+- A client can read the undo status of a user (FR-9 in `requirements/FR-9-undo-status.md`).
+  `GET /api/users/{userId}/consumption/undo` returns `undoable` and `undoableUntil`, the end of the grace period of the
+  most recent coffee or null. `undoable` is true exactly when `POST` to the same path would undo a coffee at that time.
+  `GracePeriod.closesAt` returns the end of a grace period, and `ConsumptionRequests.retrieveUndoStatus` sends the
+  request for the system tests. GLOSSARY.md defines the term undo status.
 
 ## [0.2.3] - 2026-11-22
 
