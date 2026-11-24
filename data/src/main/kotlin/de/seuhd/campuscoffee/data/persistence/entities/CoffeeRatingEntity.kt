@@ -11,9 +11,9 @@ import jakarta.persistence.Table
  * other value. The table has no unique constraint, because the ratings of a user for the same bean accumulate.
  *
  * The foreign key `user_id` has `ON DELETE CASCADE`, because a rating belongs to its user. The foreign key `bean_id`
- * has the default `NO ACTION`, because a rated bean must stay. Deleting a bean with a rating fails. The index on
- * `user_id` and `created_at` is for the query of the ratings of a user, newest first. The index on `bean_id` is for the
- * query of the ratings of a bean. JPA loads the user and the bean together with the rating, because the read methods of
+ * has the default `NO ACTION`, and PostgreSQL therefore does not delete a bean with a rating. The index on `user_id`
+ * and `created_at` is for the query of the ratings of a user, newest first. The index on `bean_id` is for the query of
+ * the ratings of a bean. JPA loads the user and the bean together with the rating, because the read methods of
  * the data adapter map the entity outside a transaction (see `CrudDataServiceImpl`).
  */
 @jakarta.persistence.Entity

@@ -26,8 +26,8 @@ import java.util.UUID
  * the coffees outside their grace period, because the list of times would otherwise grow with every coffee. [undo]
  * takes the time of the most recent coffee that the user did not undo. It checks the grace period of this coffee with
  * [gracePeriod] and removes the time. As in the coffee app of SE@UHD, the user can then undo the coffee before it if
- * its own grace period is open. [undoableUntil] applies the checks of [undo] without changing the consumption, so that
- * the undo status agrees with the result of an undo.
+ * its own grace period is open. [undoableUntil] applies the checks of [undo] without changing the consumption,
+ * because it must return a time exactly when an undo at the current time succeeds.
  *
  * [correctCount] locks the consumption like [applyDelta], stores the corrected count, and stores a [CountCorrection]
  * with the note in the same transaction. A correction to a lower count removes the times of the newest coffees. The
@@ -82,7 +82,7 @@ class CoffeeConsumptionServiceImpl(
         val current = coffeeConsumptionDataService.getByUserId(userId)
         val lastCoffeeAt = current.coffeeTimes.lastOrNull()
         // These are the checks of undo. The schema allows a coffee count of zero with a stored coffee time, because no
-        // constraint links the coffee count to the stored times. The count check covers this case.
+        // constraint links the coffee count to the stored times. With the check of the count, the result is then null.
         if (current.count <= 0 || lastCoffeeAt == null || !gracePeriod.isOpen(lastCoffeeAt)) {
             return null
         }
@@ -139,7 +139,7 @@ class CoffeeConsumptionServiceImpl(
      * contain the NUL character, which PostgreSQL cannot store in a `varchar` column. A note can contain line breaks.
      *
      * @param note the note of a correction, or null if the request has no note
-     * @throws ValidationException if [note] is null or fails the check
+     * @throws ValidationException if [note] is null, blank, or too long or contains the NUL character
      */
     private fun requireValidNote(note: String?): String {
         if (note.isNullOrBlank()) {

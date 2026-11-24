@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service
  *
  * The tables `expenses`, `user_balance`, and `kitty_balance` have no data port yet, so the data reset does not clear
  * them. A row in `expenses` references a user and can reference a bean. While `expenses` has a row, [clearAll]
- * therefore fails when it deletes the users. The ratings, payments, corrections, and consumptions stay deleted, because
+ * therefore cannot delete the users. The ratings, payments, corrections, and consumptions stay deleted, because
  * [clearAll] runs without a transaction of its own. The database deletes the row in `user_balance` together with its
  * user, and the row in `kitty_balance` stays. When one of these tables gets a data port, call the `clear` of that port
  * here before the `clear` of the users.

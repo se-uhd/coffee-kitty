@@ -10,9 +10,7 @@ import java.util.UUID
  */
 interface UserDataService : CrudDataService<User, UUID> {
     /**
-     * Returns the user with [loginName]. Only `CrudDataServiceIntegrationTest` calls this method so far. The method
-     * exists for an extension that looks up users by login name, such as a sign-in that finds the user for an
-     * authenticated login name. The coffee app of SE@UHD has such a sign-in.
+     * Returns the user with [loginName]. `ada` and `Ada` are different login names.
      *
      * @param loginName the login name to look up
      * @throws NotFoundException if no user has [loginName]

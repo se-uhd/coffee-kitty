@@ -15,8 +15,8 @@ import org.springframework.stereotype.Component
  * coffee count of zero. The KDoc of [loadOnStartup] describes when the fixture loader runs a data reset first and when
  * it creates no users.
  *
- * Because [StartupDataInitializer] calls [loadOnStartup] before the embedded web server accepts requests, the app
- * serves no request before the fixture users exist.
+ * [StartupDataInitializer] calls [loadOnStartup] before the embedded web server accepts requests, so the fixture users
+ * exist before the first request.
  */
 @Component
 @ConditionalOnProperty("campus-coffee.fixtures.load-on-startup", havingValue = "true")
@@ -28,8 +28,8 @@ class FixtureStartupLoader(
 ) {
     /**
      * Creates the fixture users. When `reset-on-startup` is true, as in the dev profile, the fixture loader first runs
-     * a data reset, and every run starts with the fixture users at a coffee count of zero. Otherwise, the fixture
-     * loader creates the fixture users only in a database without users.
+     * a data reset. The app then starts with only the fixture users, each at a coffee count of zero. When
+     * `reset-on-startup` is false, the fixture loader creates the fixture users only in a database without users.
      */
     fun loadOnStartup() {
         if (fixturesProperties.resetOnStartup) {

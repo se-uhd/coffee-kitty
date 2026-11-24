@@ -127,7 +127,7 @@ class CoffeeRatingDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     fun `deleting a rated bean throws DataIntegrityViolationException`() {
         coffeeRatingDataService.upsert(CoffeeRating(user = user, bean = bean, value = 4))
 
-        // the foreign key bean_id has the default NO ACTION, because a rated bean must stay
+        // the foreign key bean_id has the default NO ACTION
         assertThatThrownBy { coffeeBeanDataService.delete(requireNotNull(bean.id)) }
             .isInstanceOf(DataIntegrityViolationException::class.java)
         assertThat(coffeeRatingDataService.getAll()).hasSize(1)

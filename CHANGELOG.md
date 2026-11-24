@@ -113,9 +113,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
-- FR-8 names the TBD of FR-3 that it resolves by its question instead of a wrong position and quotes the decision of
-  the group lead as its business requirement. Its Rationale no longer states who reads the notes, which a TBD of FR-8
-  leaves open.
+- FR-8 identifies the TBD of FR-3 on corrections by the question of the TBD instead of by a wrong position and contains
+  the decision of the group lead as its business requirement. The Rationale of FR-8 no longer specifies who reads the
+  notes, which a TBD of FR-8 leaves open.
 
 ## [0.2.0] - 2026-11-17
 
@@ -127,7 +127,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   can be undone while its own grace period is open. The grace period includes its last instant, as in the coffee app of
   SE@UHD, and `campus-coffee.consumption.grace-period` sets it (default 5 minutes). The migration V3 creates the
   table `coffee_times`, which holds the time of each recent coffee that is not undone. Adding a coffee drops the times
-  whose grace period has passed. Coffees added before this release have no time and cannot be undone.
+  of the coffees outside their grace period. Coffees added before this release have no time and cannot be undone.
 - Every user has a role, `USER` or `ADMIN` (migration V4), and the fixture user `jane_doe` is an admin. `POST
   /api/users` may set the role of the new user, which defaults to `USER`.
 - Spring Security runs `ActingUserAuthenticationFilter` before the controllers. The filter resolves the acting user

@@ -6,22 +6,22 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 
 /**
- * Returns the acting user of the current request. A controller passes this [User] to the domain, which decides
- * with the role of the user whether the action is allowed. `UserService.create`, for example, requires an admin.
+ * Returns the acting user of the current request. A controller passes this [User] to the domain, which checks whether
+ * the role of the user allows the action. `UserService.create`, for example, requires an admin.
  *
  * [ActingUserAuthenticationFilter] resolves the acting user from the request header [ACTING_USER_HEADER] before
  * any controller runs. The filter stores the user as the principal of the request in the `SecurityContext` of
- * Spring Security, where [currentUser] reads it. Coffee Kitty has no authentication yet, and any client can name any
- * user, an admin included. The coffee app of SE@UHD has a class with the same name and the same [currentUser], which
- * reads the user that the authentication filters of that app stored.
+ * Spring Security, where [currentUser] reads it. Coffee Kitty has no authentication yet, and any client can act as any
+ * user, including an admin. The coffee app of SE@UHD has a class with the same name and the same [currentUser]. In that
+ * app, [currentUser] returns the user that the authentication filters stored.
  */
 @Component
 class CurrentUserProvider {
     /**
      * Returns the acting user of the current request.
      *
-     * @throws AuthenticationCredentialsNotFoundException if the request has no acting user, which
-     *   [AuthenticationExceptionHandler] turns into a 401 Unauthorized
+     * @throws AuthenticationCredentialsNotFoundException if the request has no acting user.
+     *   [AuthenticationExceptionHandler] turns this exception into a 401 Unauthorized.
      */
     fun currentUser(): User =
         SecurityContextHolder.getContext().authentication?.principal as? User

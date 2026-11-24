@@ -10,14 +10,14 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
- * Creates the bootstrap admin of [BootstrapAdminProperties] on startup when no admin exists, so that a database without
- * an admin gets one who can create users. [UserInternalService.createInitialAdmin] checks a new admin like any other
- * new user and creates the consumption of the admin in the same transaction. If a user with the configured login name
- * exists, that user becomes the admin. This case occurs after the migration V4, which gives every existing user the
- * role `USER`. The coffee app of SE@UHD has a loader with the same name.
+ * Creates the bootstrap admin of [BootstrapAdminProperties] on startup when no admin exists, because only an admin may
+ * create users. [UserInternalService.createInitialAdmin] checks a new admin like any other new user and creates the
+ * consumption of the admin in the same transaction. If a user has the configured login name, that user becomes the
+ * admin. This case occurs after the migration V4, which gives every existing user the role `USER`. The coffee app of
+ * SE@UHD has a loader with the same name.
  *
- * [StartupDataInitializer] calls [createBootstrapAdmin] after the fixture loader. In the dev profile, this loader then
- * sees the fixture admin `jane_doe` and creates no admin.
+ * [StartupDataInitializer] calls [createBootstrapAdmin] after the fixture loader. In the dev profile, the fixture
+ * user `jane_doe` is then an admin, and this loader creates no admin.
  */
 @Component
 class BootstrapAdminLoader(
@@ -27,8 +27,9 @@ class BootstrapAdminLoader(
     /**
      * Creates the bootstrap admin unless the configuration has no login name or an admin already exists.
      *
-     * @throws IllegalArgumentException if the configuration has an email address but no login name, if it has a login
-     *   name but no email address, first name, or last name, or if the domain refuses the configured user
+     * @throws IllegalArgumentException if the configuration is incomplete or if the domain refuses the configured user.
+     *   The configuration is incomplete if it has an email address but no login name, or a login name but no email
+     *   address, first name, or last name.
      */
     fun createBootstrapAdmin() {
         val properties = bootstrapAdminProperties
@@ -64,11 +65,11 @@ class BootstrapAdminLoader(
     }
 
     /**
-     * Calls [UserInternalService.createInitialAdmin] and calls it once more after a [DuplicationException]. Two
+     * Calls [UserInternalService.createInitialAdmin] and calls it a second time after a [DuplicationException]. Two
      * instances of the app that start on the same empty database at the same time both try to store the admin. The
-     * insert of the second instance fails on the unique login name, its transaction rolls back, and the second call
-     * finds the admin of the first instance and returns null. A duplicate that stays, such as the email address of
-     * another user, throws again.
+     * second instance cannot insert the same login name, and its transaction rolls back. Its second call finds the
+     * admin of the first instance and returns null. If the duplicate remains, such as the email address of another
+     * user, the second call throws the exception again.
      */
     private fun createWithRetry(admin: User): User? =
         try {

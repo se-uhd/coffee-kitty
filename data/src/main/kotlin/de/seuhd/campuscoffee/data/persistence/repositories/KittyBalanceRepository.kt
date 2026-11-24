@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
 
 /**
- * Spring Data JPA repository for [KittyBalanceEntity], whose only row has the id [KittyBalanceEntity.SINGLETON_ID]. The
+ * Spring Data JPA repository for [KittyBalanceEntity]. The only row has the id [KittyBalanceEntity.SINGLETON_ID]. The
  * inherited `findById` reads the kitty balance without a lock. No data adapter uses the repository yet.
  */
 interface KittyBalanceRepository : JpaRepository<KittyBalanceEntity, Int> {

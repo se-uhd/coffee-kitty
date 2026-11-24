@@ -29,8 +29,8 @@ class Response<T : Any>(
         get() = checkNotNull(errorBody) { "The status $status is 2xx, or the response has no body." }
 
     /**
-     * Asserts that a setup request returned the status [expected]. A failed setup step then stops the test before a
-     * later assertion can pass for the wrong reason.
+     * Asserts that a setup request returned the status [expected]. Without this check, a later assertion could pass
+     * only because the setup request failed.
      *
      * @param expected the status code of a successful setup request
      */

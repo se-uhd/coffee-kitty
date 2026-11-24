@@ -11,13 +11,14 @@ import jakarta.persistence.Table
  * `count_corrections`. The column `note` has the width `CountCorrection.MAX_NOTE_LENGTH`.
  *
  * The foreign key `user_id` has `ON DELETE CASCADE`, because a correction belongs to its user, as a consumption does.
- * The foreign key `admin_id` has the default `NO ACTION`, because a correction does not belong to its admin. Deleting
- * an admin who corrected the coffee count of another user fails. JPA loads both users together with the correction,
- * because the read methods of the data adapter map the entity outside a transaction (see `CrudDataServiceImpl`).
+ * The foreign key `admin_id` has the default `NO ACTION`, because a correction does not belong to its admin.
+ * PostgreSQL therefore does not delete an admin who corrected the coffee count of another user. JPA loads both users
+ * together with the correction, because the read methods of the data adapter map the entity outside a transaction (see
+ * `CrudDataServiceImpl`).
  *
  * V5 creates an index for each of the two foreign keys, because PostgreSQL does not create these indexes on its own.
  * The index on `user_id` and `created_at` is for `getAllByUserId`, which returns the corrections of a user, newest
- * first. Both indexes are also for deleting a user, which makes PostgreSQL look for the rows that refer to the user.
+ * first. Both indexes are also for deleting a user, because PostgreSQL then looks for the rows that refer to the user.
  */
 @jakarta.persistence.Entity
 @Table(name = "count_corrections")

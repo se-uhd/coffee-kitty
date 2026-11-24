@@ -12,9 +12,9 @@ import jakarta.persistence.Table
  * an empty note. The column `note` has the width `Payment.MAX_NOTE_LENGTH`.
  *
  * The foreign key `user_id` has the default `NO ACTION`, because a deposit is money in the kitty and must not disappear
- * with its user. Deleting a user with a deposit fails. The index on `user_id` and `created_at` is for the query of the
- * deposits of a user, newest first. JPA loads the user together with the payment, because the read methods of
- * the data adapter map the entity outside a transaction (see `CrudDataServiceImpl`).
+ * with its user. PostgreSQL therefore does not delete a user with a deposit. The index on `user_id` and `created_at` is
+ * for the query of the deposits of a user, newest first. JPA loads the user together with the payment, because the read
+ * methods of the data adapter map the entity outside a transaction (see `CrudDataServiceImpl`).
  */
 @jakarta.persistence.Entity
 @Table(name = "payments")

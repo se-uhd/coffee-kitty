@@ -27,7 +27,8 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as ApiRequestBody
 
 /**
  * Controller under `/api/users` that lists all users, reads a user by id, and creates a user. For each new user, the
- * domain creates a consumption with a coffee count of zero, which [ConsumptionController] serves.
+ * domain creates a consumption with a coffee count of zero. The endpoints of [ConsumptionController] read and change
+ * this consumption.
  */
 @Tag(name = "Users", description = "Listing, reading, and creating users.")
 @RestController
@@ -62,7 +63,7 @@ class UserController(
      * Creates a user and returns 201 Created with the URL of the new user in the `Location` header. In the same
      * transaction, the domain creates the consumption of the user with a coffee count of zero. Only an admin may create
      * a user. The header `X-Acting-User` contains the login name of the acting user (see [CurrentUserProvider]).
-     * Without a known acting user, the response is 401 Unauthorized, and 403 Forbidden if the acting user is not an
+     * The response is 401 Unauthorized without a known acting user and 403 Forbidden if the acting user is not an
      * admin.
      *
      * `ResponseEntity.created` sets the status of the response. springdoc reads `@ResponseStatus` and documents the
@@ -94,8 +95,8 @@ class UserController(
     }
 
     /**
-     * Returns the URL for the `Location` header of a new user: the URL of the current request without its query
-     * string, followed by `/` and [id]. `UserSystemTests` checks that the query string is left out.
+     * Returns the URL for the `Location` header of a new user: the URL of the current request without its query string,
+     * followed by `/` and [id]. `UserSystemTests` checks that the URL does not contain the query string.
      *
      * @param id the id of the new user
      */

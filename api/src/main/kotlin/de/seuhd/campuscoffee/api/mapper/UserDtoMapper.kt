@@ -6,10 +6,10 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
 /**
- * MapStruct mapper between a [User] and a [UserDto]. Every property has the same name in both classes. If one class
- * gets a property that the other class does not have, MapStruct stops the build with an error, because the kapt
- * convention plugin sets `mapstruct.unmappedTargetPolicy` to `ERROR`. [toDomain] sets a missing role to `USER`,
- * because the role of a [User] cannot be null.
+ * MapStruct mapper between a [User] and a [UserDto]. Every property has the same name in both classes. The kapt
+ * convention plugin sets `mapstruct.unmappedTargetPolicy` to `ERROR`. MapStruct therefore stops the build when one
+ * class gets a property that the other class does not have. [toDomain] sets a missing role to `USER`, because the role
+ * of a [User] cannot be null.
  */
 @Mapper(componentModel = "spring")
 interface UserDtoMapper : DtoMapper<User, UserDto> {

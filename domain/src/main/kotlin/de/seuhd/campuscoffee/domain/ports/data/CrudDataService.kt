@@ -27,8 +27,8 @@ interface CrudDataService<DOMAIN : DomainModel<ID>, ID> {
     fun getById(id: ID): DOMAIN
 
     /**
-     * Inserts [domain] under a new id if it has no id. Otherwise, updates the stored object with the same id and keeps
-     * the creation time of that object.
+     * Inserts [domain] under a new id if it has no id. Otherwise, updates the stored object with the same id, except
+     * for its creation time.
      *
      * @param domain the object to store
      * @return the stored object with its id and timestamps

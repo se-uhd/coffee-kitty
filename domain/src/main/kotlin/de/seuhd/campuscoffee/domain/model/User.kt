@@ -11,7 +11,7 @@ import java.util.UUID
  * of [EMAIL_ADDRESS_PATTERN].
  *
  * The data module assigns [id], [createdAt], and [updatedAt]. They are null on a user that is not stored yet. [role]
- * determines which actions the user may perform, and a new user is a [Role.USER] unless an admin sets another role.
+ * determines which actions the user may perform, and it is [Role.USER] by default.
  */
 data class User(
     override val id: UUID? = null,

@@ -8,7 +8,7 @@ import org.junit.platform.suite.api.Suite
 
 /**
  * Runs the acceptance scenarios with Cucumber on the JUnit Platform. The path of the HTML report below is relative to
- * the working directory of the Gradle test task, which is the module directory. The report is therefore written to
+ * the working directory of the Gradle test task, which is the module directory. Cucumber therefore writes the report to
  * `application/build/reports/cucumber/cucumber.html`, and `gradle clean` deletes it.
  */
 @Suite

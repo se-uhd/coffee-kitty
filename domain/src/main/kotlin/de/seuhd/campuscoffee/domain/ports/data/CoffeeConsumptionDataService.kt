@@ -6,8 +6,8 @@ import java.util.UUID
 
 /**
  * Data port for the consumptions, with two lookups by user in addition to the operations of [CrudDataService].
- * `CoffeeConsumptionDataServiceImpl` in the data module implements it. [getAll] returns the consumptions in the order
- * in which they were created.
+ * `CoffeeConsumptionDataServiceImpl` in the data module implements it. [getAll] returns the consumptions, ordered by
+ * creation time.
  */
 interface CoffeeConsumptionDataService : CrudDataService<CoffeeConsumption, UUID> {
     /**

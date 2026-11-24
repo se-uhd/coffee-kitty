@@ -17,17 +17,17 @@ import java.util.UUID
  * DTO to a [User].
  *
  * The OpenAPI definition marks [id], [createdAt], and [updatedAt] as read-only, because the server assigns them.
- * `OpenApiSystemTests` checks that these three properties are read-only. The timestamps are in UTC without an offset.
+ * The timestamps are in UTC without an offset.
  *
  * In the error response, the message of a failed field constraint follows the field name, as in "loginName must have 1
  * to 255 characters".
  *
  * [role] is optional in a request. [UserDtoMapper] sets a missing role to `USER`.
  *
- * Jackson rejects a JSON number or boolean for a `String` property, such as a [loginName] of 12345, because
- * `JsonConfig` turns off the conversion of such a value to its text. Jackson also rejects a JSON number for [role],
- * such as 1, because `application.yaml` sets `spring.jackson.datatype.enum.fail-on-numbers-for-enums` to true. These
- * rejections return a 400 with the error code `BadRequest`.
+ * `JsonConfig` makes Jackson reject a JSON number or boolean for a `String` property, such as a [loginName] of 12345.
+ * Jackson also rejects a JSON number for [role], such as 1, because `application.yaml` sets
+ * `spring.jackson.datatype.enum.fail-on-numbers-for-enums` to true. In both cases, the request gets a 400 with the
+ * error code `BadRequest`.
  */
 data class UserDto(
     @field:Schema(accessMode = Schema.AccessMode.READ_ONLY)

@@ -12,10 +12,11 @@ import java.time.LocalDateTime
 
 /**
  * JPA entity of a consumption, which holds a [user] and the coffee [count] of that user. The unique constraint
- * [USER_UNIQUE_CONSTRAINT] allows one row per user. [coffeeTimes] holds the time in UTC of each recent coffee that is
- * not undone, oldest first, in the table `coffee_times`, which the migration `V3__create_coffee_times_table.sql`
- * creates. The column `position` keeps the order. JPA loads the times together with the consumption, because the read
- * methods of the data adapter map the entity outside a transaction (see `CrudDataServiceImpl`).
+ * [USER_UNIQUE_CONSTRAINT] allows one row per user. [coffeeTimes] holds the time in UTC of each recent coffee that the
+ * user did not undo and that no correction removed, oldest first. The migration `V3__create_coffee_times_table.sql`
+ * creates the table `coffee_times` for the times, and its column `position` stores the order. JPA loads the times
+ * together with the consumption, because the read methods of the data adapter map the entity outside a transaction (see
+ * `CrudDataServiceImpl`).
  */
 @jakarta.persistence.Entity
 @Table(name = "coffee_consumptions")

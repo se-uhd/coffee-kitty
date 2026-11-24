@@ -5,10 +5,10 @@ import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
-// Kotlin configuration of the modules: the Java toolchain and the JVM target, the Spring all-open plugin, ktlint,
-// detekt with the custom KDoc rules of campus-coffee-kdoc, and the Kotlin reflection library that Spring needs at
-// runtime. The all-open plugin opens the classes annotated with @Component or @Transactional, which lets Spring create
-// proxies of these classes. The toolchain and the JVM target use the `java` version from gradle/libs.versions.toml.
+// Kotlin configuration of the modules: the Java toolchain, the JVM target, the Spring all-open plugin, ktlint, detekt
+// with the custom KDoc rules, and the Kotlin reflection library. Spring needs the reflection library at runtime. The
+// all-open plugin opens the classes annotated with @Component or @Transactional, which lets Spring create proxies of
+// these classes. The toolchain and the JVM target use the `java` version from gradle/libs.versions.toml.
 // java-conventions reads the same entry.
 plugins {
     kotlin("jvm")

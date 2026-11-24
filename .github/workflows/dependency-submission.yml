@@ -7,8 +7,8 @@
 name: Dependency submission
 
 on:
-  # Only for main. A snapshot describes the dependencies of one ref, and GitHub raises alerts against the default
-  # branch.
+  # Run only for main, because a snapshot describes the dependencies of one ref and GitHub raises alerts against the
+  # default branch.
   push:
     branches: [ "main" ]
   workflow_dispatch: {} # allow manual runs
@@ -41,7 +41,7 @@ jobs:
         with:
           gradle-version: ${{ steps.gradle.outputs.version }}
           # Submit only the runtimeClasspath of :application, which holds :domain, :api, :data, and every transitive
-          # dependency of the boot jar. An alert then concerns only code that the application runs. Without the project
+          # dependency of the boot jar. GitHub then raises alerts only for these dependencies. Without the project
           # filter, the runtimeClasspath of build-logic, with the Kotlin Gradle plugin, would count too. The anchors
           # `^` and `$` in the configuration filter exclude testRuntimeClasspath.
           dependency-graph-include-projects: '^:application$'

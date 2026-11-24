@@ -9,7 +9,7 @@ import de.seuhd.campuscoffee.domain.model.User
  * "Only an admin may [action]." The coffee app of SE@UHD has the same function.
  *
  * @param actingUser the user who sends the request
- * @param action completes the message "Only an admin may ...", such as "create a user"
+ * @param action the action in the message, such as "create a user"
  * @throws ForbiddenException if [actingUser] is not an admin
  */
 internal fun requireAdmin(

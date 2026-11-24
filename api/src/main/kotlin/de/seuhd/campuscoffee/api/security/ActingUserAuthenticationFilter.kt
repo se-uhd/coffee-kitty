@@ -20,16 +20,17 @@ import org.springframework.web.servlet.HandlerExceptionResolver
  * the principal of the request, with the authority `ROLE_USER` or `ROLE_ADMIN`. Spring Security then treats the request
  * as authenticated, although Coffee Kitty checks no password or token and any client can act as any user. A request
  * with a login name that no user has gets a 401 from [entryPoint] and does not reach a controller. A request without
- * the header continues without a principal, and `SecurityConfig` defines whether its route needs one. Any other
- * exception of the lookup, such as a failed database connection, goes to [exceptionResolver], which handles it like an
- * exception of a controller.
+ * the header continues without a principal, and `SecurityConfig` defines whether its route needs one. If the lookup
+ * throws any other exception, for example without a database connection, the filter passes the exception to
+ * [exceptionResolver]. The resolver passes it to `GlobalExceptionHandler`, like an exception of a controller.
  *
  * `SecurityConfig` creates the filter for its filter chain. The filter is not a Spring bean, because Spring Boot would
  * register a bean of type `Filter` with the servlet container and run it outside the filter chain as well.
  *
  * @param userService the port that looks up the user by login name
  * @param entryPoint  the entry point that responds with 401 Unauthorized to an unknown login name
- * @param exceptionResolver the resolver of Spring MVC that turns any other exception into an `ErrorResponse`
+ * @param exceptionResolver the resolver of Spring MVC that turns any other exception of the lookup into an
+ *   `ErrorResponse`
  */
 class ActingUserAuthenticationFilter(
     private val userService: UserService,
@@ -57,10 +58,10 @@ class ActingUserAuthenticationFilter(
     }
 
     /**
-     * Returns the user with [loginName], or null after the filter has responded to the request, because no user has
-     * [loginName] or the lookup failed.
+     * Returns the user with [loginName]. If no user has [loginName] or the lookup throws any other exception, the
+     * function responds to the request and returns null.
      */
-    @Suppress("TooGenericExceptionCaught") // any failure of the lookup has to become an error response
+    @Suppress("TooGenericExceptionCaught") // every exception of the lookup has to become an error response
     private fun lookUp(
         loginName: String,
         request: HttpServletRequest,
@@ -73,7 +74,7 @@ class ActingUserAuthenticationFilter(
             entryPoint.commence(request, response, BadCredentialsException(UNKNOWN_USER_MESSAGE))
             null
         } catch (e: RuntimeException) {
-            // pass any other failure to GlobalExceptionHandler, which writes an ErrorResponse
+            // pass any other exception to GlobalExceptionHandler, which writes an ErrorResponse
             exceptionResolver.resolveException(request, response, null, e)
             null
         }

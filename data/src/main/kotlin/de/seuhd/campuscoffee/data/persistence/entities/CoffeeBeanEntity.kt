@@ -16,8 +16,8 @@ import java.util.UUID
  * live beans therefore cannot have the same name, ignoring case, but a live bean can have the name of a merged bean.
  * [mergedIntoId] is a plain id column and not a JPA association, because JPA would load a chain of merged beans through
  * an association. The foreign key `merged_into_id` has the default `NO ACTION`. With this default, PostgreSQL does not
- * delete a bean while a merged bean refers to it. A data reset succeeds, because it deletes all beans with one
- * statement, which removes both rows.
+ * delete a bean while a merged bean refers to it. A data reset can delete both rows, because it deletes all
+ * beans with one statement.
  */
 @jakarta.persistence.Entity
 @Table(name = "coffee_beans")
