@@ -1,8 +1,6 @@
 package de.seuhd.campuscoffee.tests.system
 
-import de.seuhd.campuscoffee.api.dtos.ConsumptionDeltaDto
 import de.seuhd.campuscoffee.domain.model.persistedId
-import de.seuhd.campuscoffee.tests.ConsumptionRequests
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.test.context.TestPropertySource
@@ -19,12 +17,12 @@ class UndoWithoutGracePeriodSystemTests : AbstractSystemTest() {
     @Test
     fun `undoing a coffee with a grace period of zero returns 409 Conflict`() {
         val userId = fixtureUser("maxmustermann").persistedId
-        ConsumptionRequests.applyDelta(userId, ConsumptionDeltaDto(1)).requireStatus(200)
+        consumptionRequests.addCoffee(userId).requireStatus(200)
 
-        val response = ConsumptionRequests.undo(userId)
+        val response = consumptionRequests.undo(userId)
 
         assertThat(response.status).isEqualTo(409)
         assertThat(response.error.errorCode).isEqualTo("ConflictException")
-        assertThat(ConsumptionRequests.retrieveConsumption(userId).body.count).isEqualTo(1)
+        assertThat(consumptionRequests.retrieveConsumption(userId).body.count).isEqualTo(1)
     }
 }

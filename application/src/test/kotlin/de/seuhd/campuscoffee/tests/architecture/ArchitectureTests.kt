@@ -128,6 +128,21 @@ class ArchitectureTests {
     }
 
     @Test
+    fun `the system and acceptance tests use no class of the api module`() {
+        // These tests are clients of the REST API. They send request bodies as maps with the JSON field names and read
+        // responses into the classes of Json.kt. If a test used a DTO, a renamed field would change the request of the
+        // test and the response of the server together, and the test would still pass. The same holds for a constant
+        // of the api module, such as the name of a header.
+        noClasses()
+            .that()
+            .resideInAPackage("de.seuhd.campuscoffee.tests..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("de.seuhd.campuscoffee.api..")
+            .check(ClassFileImporter().importPackages("de.seuhd.campuscoffee"))
+    }
+
+    @Test
     fun `the production classes contain no test fixtures`() {
         // TestFixtures and DatabaseCleaner are in the test fixtures of the domain and data modules. If the import of
         // PRODUCTION_CLASSES included them, the rules for production code would also judge the test fixtures, and this

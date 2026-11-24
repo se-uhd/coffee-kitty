@@ -2,24 +2,38 @@ package de.seuhd.campuscoffee.tests
 
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.web.servlet.client.RestTestClient
-import org.springframework.test.web.servlet.client.returnResult
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
+import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Utilities for the system and acceptance tests: the shared PostgreSQL container, the shared [RestTestClient], and
- * [statusCode].
+ * Utilities for the system and acceptance tests: the shared PostgreSQL container and the [RestTestClient] of each
+ * server port.
  */
 object SystemTestUtils {
-    private lateinit var client: RestTestClient
+    /** The header with the login name of the acting user, as a client sends it. */
+    const val ACTING_USER_HEADER = "X-Acting-User"
 
-    /** Binds the shared [RestTestClient] to the server on [port]. */
-    fun configureClient(port: Int) {
-        client = RestTestClient.bindToServer().baseUrl("http://localhost:$port").build()
-    }
+    /**
+     * The challenge in the header `WWW-Authenticate` of every 401, as a client receives it. RFC 9110 requires the
+     * header in a 401.
+     */
+    const val AUTHENTICATION_CHALLENGE = "X-Acting-User realm=\"Coffee Kitty\""
 
-    /** Returns the shared [RestTestClient], which [configureClient] has bound to the server. */
-    fun client(): RestTestClient = client
+    /** The login name of the fixture user who is an admin. */
+    const val ADMIN_LOGIN_NAME = "jane_doe"
+
+    private val clients = ConcurrentHashMap<Int, RestTestClient>()
+
+    /**
+     * Returns the [RestTestClient] for the server on [port]. Each Spring context of the tests serves the API on a port
+     * of its own, and a test passes the port of its context. The function creates one client per port and never binds
+     * a client to another port.
+     *
+     * @param port the port of the server, which `@LocalServerPort` injects
+     */
+    fun clientFor(port: Int): RestTestClient =
+        clients.computeIfAbsent(port) { RestTestClient.bindToServer().baseUrl("http://localhost:$it").build() }
 
     // One PostgreSQL container for all system and acceptance tests in the test JVM. The container starts on first
     // use, and Testcontainers stops it when the JVM shuts down. The tests therefore never close the container,
@@ -35,7 +49,4 @@ object SystemTestUtils {
         registry.add("spring.datasource.username", postgresContainer::getUsername)
         registry.add("spring.datasource.password", postgresContainer::getPassword)
     }
-
-    /** Returns the status code of the response without asserting it. */
-    fun RestTestClient.ResponseSpec.statusCode(): Int = returnResult<ByteArray>().status.value()
 }

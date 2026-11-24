@@ -1,13 +1,13 @@
 package de.seuhd.campuscoffee.tests.system
 
-import de.seuhd.campuscoffee.api.exceptions.ErrorResponse
-import de.seuhd.campuscoffee.api.security.CurrentUserProvider
 import de.seuhd.campuscoffee.domain.model.persistedId
-import de.seuhd.campuscoffee.tests.ConsumptionRequests
+import de.seuhd.campuscoffee.tests.ErrorJson
 import de.seuhd.campuscoffee.tests.Response
-import de.seuhd.campuscoffee.tests.SystemTestUtils.client
+import de.seuhd.campuscoffee.tests.SystemTestUtils.ACTING_USER_HEADER
+import de.seuhd.campuscoffee.tests.SystemTestUtils.ADMIN_LOGIN_NAME
 import de.seuhd.campuscoffee.tests.UserRequests
 import de.seuhd.campuscoffee.tests.toResponse
+import de.seuhd.campuscoffee.tests.utc
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
@@ -20,7 +20,7 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 /**
- * System tests for the [ErrorResponse] body. For a domain exception, the error code is the class name of the exception.
+ * System tests for the [ErrorJson] body. For a domain exception, the error code is the class name of the exception.
  * For an error that Spring MVC or the firewall reports, the error code is the reason phrase of the status without
  * spaces, such as `NotFound`.
  */
@@ -29,8 +29,8 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
      * Sends a GET request to [path]. A test calls this function when the path itself is under test. No function of
      * [UserRequests] sends a request to an unknown path or to a path that the firewall rejects.
      */
-    private fun get(path: String): Response<ErrorResponse> =
-        client()
+    private fun get(path: String): Response<ErrorJson> =
+        client
             .get()
             .uri(path)
             .accept(MediaType.APPLICATION_JSON)
@@ -39,7 +39,7 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
 
     @Test
     fun `getting an unknown user returns 404 Not Found with the error code, the status, the path, and the timestamp`() {
-        val response = UserRequests.retrieveById(UUID.fromString("00000000-0000-0000-0000-000000000001"))
+        val response = userRequests.retrieveById(UUID.fromString("00000000-0000-0000-0000-000000000001"))
 
         assertThat(response.status).isEqualTo(404)
         val error = response.error
@@ -47,7 +47,7 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
         assertThat(error.statusCode).isEqualTo(404)
         assertThat(error.statusMessage).isEqualTo("Not Found")
         assertThat(error.path).isEqualTo("/api/users/00000000-0000-0000-0000-000000000001")
-        assertThat(error.timestamp).isCloseTo(LocalDateTime.now(ZoneOffset.UTC), byLessThanOneMinute)
+        assertThat(utc(error.timestamp)).isCloseTo(LocalDateTime.now(ZoneOffset.UTC), byLessThanOneMinute)
     }
 
     @Test
@@ -70,7 +70,7 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
     fun `posting a text as the delta returns 400 Bad Request without the text in the message`() {
         val userId = fixtureUser("maxmustermann").persistedId
 
-        val response = ConsumptionRequests.applyDelta(userId, mapOf("delta" to "one coffee"))
+        val response = consumptionRequests.applyDelta(userId, mapOf("delta" to "one coffee"))
 
         assertThat(response.status).isEqualTo(400)
         assertThat(response.error.errorCode).isEqualTo("BadRequest")
@@ -89,15 +89,15 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
 
     @Test
     fun `creating a user with a YAML request body returns 415 Unsupported Media Type`() {
-        val usersBefore = UserRequests.retrieveAll().body
+        val usersBefore = userRequests.retrieveAll().body
 
-        val response: Response<ErrorResponse> =
-            client()
+        val response: Response<ErrorJson> =
+            client
                 .post()
                 .uri("/api/users")
                 .contentType(YAML)
                 .accept(MediaType.APPLICATION_JSON)
-                .header(CurrentUserProvider.ACTING_USER_HEADER, ConsumptionRequests.ADMIN_LOGIN_NAME)
+                .header(ACTING_USER_HEADER, ADMIN_LOGIN_NAME)
                 .body(
                     """
                     loginName: yaml_user
@@ -110,21 +110,21 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
 
         assertThat(response.status).isEqualTo(415)
         assertThat(response.error.errorCode).isEqualTo("UnsupportedMediaType")
-        assertThat(UserRequests.retrieveAll().body).isEqualTo(usersBefore)
+        assertThat(userRequests.retrieveAll().body).isEqualTo(usersBefore)
     }
 
     @Test
     fun `creating a user with a wildcard Content-Type returns 415 Unsupported Media Type`() {
-        val usersBefore = UserRequests.retrieveAll().body
+        val usersBefore = userRequests.retrieveAll().body
 
         for (contentType in listOf("*/*", "application/*", "application/*+json")) {
-            val response: Response<ErrorResponse> =
-                client()
+            val response: Response<ErrorJson> =
+                client
                     .post()
                     .uri("/api/users")
                     .header(HttpHeaders.CONTENT_TYPE, contentType)
                     .accept(MediaType.APPLICATION_JSON)
-                    .header(CurrentUserProvider.ACTING_USER_HEADER, ConsumptionRequests.ADMIN_LOGIN_NAME)
+                    .header(ACTING_USER_HEADER, ADMIN_LOGIN_NAME)
                     .body(
                         """{"loginName":"wildcard_user","emailAddress":"w@example.com","firstName":"W","lastName":"U"}"""
                     ).exchange()
@@ -133,13 +133,13 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
             assertThat(response.status).`as`(contentType).isEqualTo(415)
             assertThat(response.error.errorCode).`as`(contentType).isEqualTo("UnsupportedMediaType")
         }
-        assertThat(UserRequests.retrieveAll().body).isEqualTo(usersBefore)
+        assertThat(userRequests.retrieveAll().body).isEqualTo(usersBefore)
     }
 
     @Test
     fun `getting the users with the Accept header for YAML returns 406 Not Acceptable`() {
-        val response: Response<ErrorResponse> =
-            client()
+        val response: Response<ErrorJson> =
+            client
                 .get()
                 .uri("/api/users")
                 .accept(YAML)

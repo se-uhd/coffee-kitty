@@ -21,7 +21,8 @@ import java.time.LocalTime
  * the other coffees one hour before that time.
  */
 class CucumberConsumptionSteps(
-    private val clock: SettableClock
+    private val clock: SettableClock,
+    private val requests: ConsumptionRequests
 ) {
     private lateinit var loginName: String
     private var lastStatus: Int = 0
@@ -61,7 +62,7 @@ class CucumberConsumptionSteps(
 
     @When("the user adds a coffee")
     fun theUserAddsACoffee() {
-        lastStatus = ConsumptionRequests.addCoffee(loginName)
+        lastStatus = requests.addCoffee(requests.userId(loginName)).status
     }
 
     @Given("the user adds a coffee at {time}")
@@ -73,7 +74,7 @@ class CucumberConsumptionSteps(
     @When("the user undoes the coffee at {time}")
     fun theUserUndoesTheCoffeeAt(time: LocalTime) {
         clock.setTime(time)
-        lastStatus = ConsumptionRequests.undoCoffee(loginName)
+        lastStatus = requests.undo(requests.userId(loginName)).status
     }
 
     @Then("the request succeeds and the coffee count is {int}")
@@ -89,10 +90,10 @@ class CucumberConsumptionSteps(
 
     @Then("the coffee count is {int}")
     fun theCoffeeCountIs(count: Int) {
-        assertThat(ConsumptionRequests.coffeeCount(loginName)).isEqualTo(count)
+        assertThat(requests.retrieveConsumption(requests.userId(loginName)).body.count).isEqualTo(count)
     }
 
     private fun addCoffeeSuccessfully() {
-        assertThat(ConsumptionRequests.addCoffee(loginName)).`as`("status of adding a coffee").isEqualTo(200)
+        requests.addCoffee(requests.userId(loginName)).requireStatus(200)
     }
 }
