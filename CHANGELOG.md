@@ -21,8 +21,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `coffee_prices` (the price per cup, at most one row), `payments` (deposits and kitty adjustments), `coffee_beans`
   (beans with a unique name among the live beans), and `coffee_ratings` (scores from 1 to 5). For these tables, the
   data module implements the new data ports `CoffeePriceDataService`, `PaymentDataService`, `CoffeeBeanDataService`,
-  and `CoffeeRatingDataService` with the domain models `CoffeePrice`, `Payment`, `CoffeeBean`, and `CoffeeRating`, and
-  the data reset clears them. The migrations V10 and V11 create the tables `expenses`, `user_balance`, and
+  and `CoffeeRatingDataService` with the domain models `CoffeePrice`, `Payment`, `CoffeeBean`, and `CoffeeRating`. The
+  migrations V10 and V11 create the tables `expenses`, `user_balance`, and
   `kitty_balance`, which have only a JPA entity and a repository so far. The section "Tables Without an Endpoint" in
   `CLAUDE.md` lists what each feature still needs, and GLOSSARY.md defines the new terms.
 - The requirements FR-4 (record a deposit), FR-4b (raise the kitty balance), and FR-6 (record own expenses) in
@@ -38,7 +38,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Unit tests of the domain: `ConsumptionPropertiesTest`, `IdentifiableTest`, and `DomainExceptionsTest`.
   `GracePeriodTest`, `CoffeeConsumptionServiceTest`, and `UserServiceTest` have further tests, such as an undo of the
   only coffee and a login name of one character.
-- `StartupTest` checks that the app without the `dev` profile deletes no data and creates no user on startup.
+- `StartupTest` checks that the app creates no user on startup without a configured bootstrap admin.
 - Integration tests: `CoffeeConsumptionDataServiceIntegrationTest` checks that the database stores and deletes the
   times of the coffees and rejects a negative coffee count. `CrudDataServiceIntegrationTest` checks that
   `UserDataServiceImpl` returns the users ordered by login name and stores the role of a user.
@@ -50,14 +50,50 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Tests of the undo status (FR-9): unit tests of `undoableUntil` and `GracePeriod.closesAt`, and system tests of
   `GET /api/users/{userId}/consumption/undo`. `UserDataServiceIntegrationTest` checks that the database stores an email
   address of 3 or 254 characters and rejects one of 2 or 255 characters.
-- `gradle build` creates a coverage report of all modules with JaCoCo and fails below 90% of the lines or 80% of the
-  branches.
-- `gradle :domain:pitest` runs mutation tests of the domain module with PIT and fails when the tests detect fewer than
-  85% of the mutants that they execute. `gradle build` does not run it.
+- `gradle build` creates a coverage report of all modules with JaCoCo. It fails below 95% of the lines or 85% of the
+  branches, and when no test executes a function of a domain service or a controller.
+- `gradle :domain:pitest` runs mutation tests of the domain services with PIT and fails when the tests detect fewer
+  than 90% of all mutants. `gradle build` does not run it, and the CI workflow runs it after the build.
+- The system and acceptance tests check the JSON field names of the API. They send every request body as a map with the
+  field names and parse the responses into the classes of `Json.kt` with a mapper that fails on an unknown or a missing
+  field. Until now, they used the DTO classes of the api module, and a renamed field passed every test.
+- Architecture tests for four more rules: The data module uses only the models, the exceptions, and the data ports of
+  the domain. A controller function that reads the acting user has the annotation `ActingUserRequired`. The system and
+  acceptance tests use no class of the api module. The production classes contain no test fixtures.
+- ADRs 002 to 007 in `doc/adr/` record the decisions on Spring in the domain, the role checks, the read methods without
+  a transaction, the test fixtures, the validation, and the tests of the JSON field names.
 - `gradle build` runs CPD, the copy-paste detector of PMD, on the production code and fails at a duplicate of 70 tokens.
 
 ### Changed
 
+- Breaking: The api module checks only the structure of a request body, and the domain checks every value. A 400 has
+  the error code `BadRequest` for a missing field, a value of the wrong JSON type, or an unknown field, and the error
+  code `ValidationException` for a value that breaks a rule. The error code therefore changes from `BadRequest` to
+  `ValidationException` for a login name that is too long or has a character that is not allowed, a blank first or last
+  name, a total of a correction that is negative or above 1,000,000, and a note that is blank or longer than 500
+  characters. Until now, both layers checked these rules, and the email address had to pass two different checks.
+- Breaking: A request body with an unknown field returns 400 with the error code `BadRequest`
+  (`spring.jackson.deserialization.fail-on-unknown-properties`). `POST /api/users` with an `id` returned 400 with the
+  error code `ValidationException` until now, and the server ignored the fields `createdAt` and `updatedAt` and any
+  misspelled field.
+- `POST /api/users` reads the new `CreateUserDto`, and `UserDto` is only the response body. Its fields are no longer
+  optional in the OpenAPI definition. `Dto` and `DtoMapper` are removed.
+- The production jar contains neither the fixture users nor code that deletes data. `TestFixtures` is in the test
+  fixtures of the domain module (`src/testFixtures`), and the new `DatabaseCleaner` in the test fixtures of the data
+  module replaces `DataResetService`. It truncates every table that the PostgreSQL catalog lists, including `expenses`,
+  `user_balance`, and `kitty_balance`, which the data reset left out. `CrudDataService.clear`, `FixtureStartupLoader`,
+  `FixturesProperties`, and the keys `campus-coffee.fixtures.load-on-startup` and
+  `campus-coffee.fixtures.reset-on-startup` are removed.
+- `gradle :application:bootTestRun` starts the app with the fixture users (the dev application). Until now,
+  `gradle :application:bootRun --args='--spring.profiles.active=dev'` did, which now starts the app on the data of the
+  previous run.
+- A data adapter throws the new `DataConstraintException` of the domain module for a violated CHECK constraint and for
+  a deletion that a foreign key prevents, instead of Spring's `DataIntegrityViolationException`. The client still gets
+  a 500.
+- `CountCorrectionDataService` has only `insert` and `getAllByUserId`, because a stored correction never changes.
+- `SecurityConfig` reads the routes that need an acting user from the controller functions with the new annotation
+  `ActingUserRequired` instead of a list of paths.
+- The unit tests of the api module are in `api/src/test`.
 - The tests check observable behavior, such as a status, an error code, an exception type, or the stored state, and no
   longer implementation details, such as the wording of a message, an annotation, or a call between domain classes.
   Tests that only repeated another test are removed.

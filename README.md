@@ -60,8 +60,8 @@ architecture. ArchUnit tests check the boundaries between the four modules:
 - `api`: the REST controllers, the data transfer objects (DTOs), the MapStruct DTO mappers, and the exception handler.
 - `data`: the JPA entities and repositories, the MapStruct entity mappers, the implementations of the data ports, and
   the Flyway migrations.
-- `application`: the Spring Boot application that wires the modules together, the configuration profiles, and the
-  fixture loader.
+- `application`: the Spring Boot application that wires the modules together and the configuration profiles. Its test
+  sources hold the dev application, which creates the fixture users.
 
 The included build `build-logic/` holds the convention plugins, which configure Java, Kotlin, ktlint, and detekt in the
 same way for every module (see `doc/adr/001-multi-module-gradle-build-with-convention-plugins.md`). The `detekt-rules`
@@ -115,13 +115,14 @@ following command starts the existing container again, for example after a reboo
 docker start campus-coffee-db
 ```
 
-Start the app in the `dev` profile. The command keeps running and prints the log of the app until you stop it:
+Start the dev application, that is, the app in the `dev` profile with the fixture users (see Test fixtures). The command
+keeps running and prints the log of the app until you stop it:
 
 ```shell
-gradle :application:bootRun --args='--spring.profiles.active=dev'
+gradle :application:bootTestRun
 ```
 
-In the `dev` profile, the app serves the API at `http://localhost:8081/api` and Swagger UI at
+The dev application serves the API at `http://localhost:8081/api` and Swagger UI at
 `http://localhost:8081/api/swagger-ui.html`. The app uses port 8081 instead of the default 8080 to avoid a conflict
 with another local app, and it connects to PostgreSQL on port 5433. The environment variable `SERVER_PORT` overrides
 the port of the app, and `DB_PORT` overrides the port of PostgreSQL.
@@ -157,20 +158,26 @@ another Gradle version, ignore the offer and select the local installation.
 
 3. In the Gradle tool window, click `Sync All Gradle Projects` to load the project with these settings.
 
-## Test fixtures (dev)
+## Test fixtures
 
-On every start in the `dev` profile, the fixture loader runs a data reset, which deletes the users, their consumptions
-and corrections, the payments, the beans, the ratings, and the price. The fixture loader then creates five fixture users
-with a coffee count of zero. Their login names are `jane_doe`, `maxmustermann`, `student2023`, `lisa_lee`, and
-`olivia_lee`. The fixture users get random ids, which change with every restart. `GET /api/users` lists the current ids.
-`domain/src/main/kotlin/de/seuhd/campuscoffee/domain/tests/TestFixtures.kt` defines the fixture users, and the system
-and acceptance tests create the same users before each test. The file also defines a fixed time and consumptions in
-three states, which only the tests use.
+On every start, the dev application deletes the rows of every table and then creates five fixture users with a coffee
+count of zero. Their login names are `jane_doe`, `maxmustermann`, `student2023`, `lisa_lee`, and `olivia_lee`. The
+fixture users get random ids, which change with every restart. `GET /api/users` lists the current ids.
+
+`domain/src/testFixtures/kotlin/de/seuhd/campuscoffee/domain/tests/TestFixtures.kt` defines the fixture users, a fixed
+time, and consumptions in three states, and the tests of every module use them. The system and acceptance tests create
+the same fixture users before each test. The production jar contains neither the fixture users nor code that deletes
+data. The `main` function of the dev application is therefore in the test sources of the application module
+(`DevApplication.kt`), and `bootTestRun` starts it. To keep the data of a run, start the app without the fixtures:
+
+```shell
+gradle :application:bootRun --args='--spring.profiles.active=dev'
+```
 
 ## REST API
 
-The paths in this section are relative to `/api`, and Swagger UI documents every endpoint. Each command requires the app
-to run in the `dev` profile on port 8081. Because the ids change with every restart, a command that needs an id first
+The paths in this section are relative to `/api`, and Swagger UI documents every endpoint. Each command requires the
+dev application on port 8081. Because the ids change with every restart, a command that needs an id first
 looks up the id of the fixture user `jane_doe` with `python3`. A request with an unknown login name in the header
 `X-Acting-User` gets 401 Unauthorized on every route.
 
@@ -184,15 +191,16 @@ curl http://localhost:8081/api/users
 with a coffee count of zero and returns 201 Created with the new user and a `Location` header. Only an admin may create
 a user. The header `X-Acting-User` has to contain the login name of an admin. The endpoint returns 401 Unauthorized
 without the header or for an unknown login name, 403 Forbidden when the acting user is not an admin, 400 Bad Request for
-a missing or malformed field, such as a number for the login name or the role, or an `id` in the body, and 409 Conflict
-when the login name or the email address is taken. Because a filter checks the acting user before the controller reads
+a missing or malformed field, such as a number for the login name or the role, for an unknown field, such as an `id`,
+and for a value that breaks a rule, such as a login name with a space, and 409 Conflict when the login name or the
+email address is taken. Because a filter checks the acting user before the controller reads
 the body, a request without a known acting user gets 401 even with an invalid body. Every 401 has the header
-`WWW-Authenticate: X-Acting-User realm="Coffee Kitty"`, as RFC 9110 requires. In the `dev` profile, the fixture loader
-creates `jane_doe` as an admin. When no admin exists, the app stores a bootstrap admin on startup from the environment
+`WWW-Authenticate: X-Acting-User realm="Coffee Kitty"`, as RFC 9110 requires. The dev application creates `jane_doe` as
+an admin. When no admin exists, the app stores a bootstrap admin on startup from the environment
 variables `BOOTSTRAP_ADMIN_LOGIN_NAME` and `BOOTSTRAP_ADMIN_EMAIL_ADDRESS` (optional: `BOOTSTRAP_ADMIN_FIRST_NAME` and
 `BOOTSTRAP_ADMIN_LAST_NAME`). If a user has that login name, the app gives that user the role `ADMIN`. This case occurs
 after the migration V4, which gives every existing user, `jane_doe` included, the role `USER` in a database that the
-`dev` profile does not reset. With `jane_doe` as the acting user, the command creates the user `ada_lovelace`:
+dev application has not cleaned. With `jane_doe` as the acting user, the command creates the user `ada_lovelace`:
 
 ```shell
 curl --include --request POST --header "Content-Type: application/json" --header "X-Acting-User: jane_doe" \
@@ -282,13 +290,18 @@ The consumption endpoints return 404 Not Found for an unknown user. An error res
 `errorCode`, `message`, `statusCode`, `statusMessage`, `timestamp`, and `path`. For a domain exception, `errorCode` is
 the class name of the exception: `NotFoundException`, `DuplicationException`, `ConflictException`,
 `ForbiddenException`, or `ValidationException`. For any other error, `errorCode` is the reason phrase of the status
-without spaces, such as `BadRequest`. Every timestamp in a response is in UTC and has no offset.
+without spaces, such as `BadRequest`. A 400 has the error code `BadRequest` when the server cannot read the request: A
+field is missing, has the wrong JSON type, or is unknown. It has the error code `ValidationException` when a value
+breaks a rule, such as a login name of 256 characters or a blank note. Every timestamp in a response is in UTC and has
+no offset.
 
 ## Testing
 
 The domain unit tests use Mockito. Docker must be running for the data integration tests, the system tests, and the
-Cucumber acceptance tests, because they run against PostgreSQL in Testcontainers. ArchUnit tests check the layer rules,
-and detekt checks that the classes and functions of the main sources have KDoc.
+Cucumber acceptance tests, because they run against PostgreSQL in Testcontainers. The system and acceptance tests send
+JSON with literal field names and parse the responses into classes of their own, so a renamed field of the API fails
+them. ArchUnit tests check the layer rules, and detekt checks that the classes and functions of the main sources have
+KDoc.
 
 Compile every module, run ktlint, detekt, CPD, and every test, and check the code coverage. Gradle prints
 `BUILD SUCCESSFUL` when every check and every test passes:
@@ -310,16 +323,17 @@ gradle ktlintFormat
 ```
 
 Create the coverage report of all modules, `coverage/build/reports/jacoco/testCodeCoverageReport/html/index.html`.
-`gradle build` also creates it and fails below 90% of the lines or 80% of the branches:
+`gradle build` also creates it. The build fails below 95% of the lines or 85% of the branches, and when no test executes
+a function of a domain service or a controller:
 
 ```shell
 gradle :coverage:testCodeCoverageReport
 ```
 
-Run the mutation tests of the domain module. PIT changes the code, e.g., it negates a condition, and runs the unit
+Run the mutation tests of the domain services. PIT changes the code, e.g., it negates a condition, and runs the unit
 tests of the domain module against each changed version (mutant). The report `domain/build/reports/pitest/index.html`
-lists the mutants that no test detects. The task needs no Docker and fails when the tests detect fewer than 85% of the
-mutants that they execute. `gradle build` does not run it:
+lists the mutants that no test detects. The task needs no Docker and fails when the tests detect fewer than 90% of all
+mutants. `gradle build` does not run it, and the CI workflow runs it after the build:
 
 ```shell
 gradle :domain:pitest
@@ -332,8 +346,8 @@ gradle cpd
 ```
 
 On every push to `main` and on every pull request, the GitHub Actions workflow `.github/workflows/build.yml` runs
-`gradle build`. Before the build, `scripts/check-version-sync.sh` checks that the version in `gradle.properties` equals
-the version of the latest release in `CHANGELOG.md`. After each push to `main`, the workflow
+`gradle build` and `gradle :domain:pitest`. Before the build, `scripts/check-version-sync.sh` checks that the version in
+`gradle.properties` equals the version of the latest release in `CHANGELOG.md`. After each push to `main`, the workflow
 `.github/workflows/dependency-submission.yml` submits the runtime dependencies of the `application` module to GitHub so
 that Dependabot can report a vulnerable dependency.
 
