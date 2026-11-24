@@ -12,8 +12,8 @@ import java.util.UUID
 interface CoffeePriceDataService : CrudDataService<CoffeePrice, UUID> {
     /**
      * Returns the stored price, or null if no price is stored. Null does not mean that a coffee is free. No migration
-     * stores a price, and a data reset deletes the price. The startup and the test setup therefore have to store the
-     * start price, as `BootstrapAdminLoader` stores the first admin.
+     * stores a price, and the tests start with an empty table. The startup and the test setup therefore have to store
+     * the start price, as `BootstrapAdminLoader` stores the first admin.
      */
     fun findCurrent(): CoffeePrice?
 }

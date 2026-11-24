@@ -4,6 +4,10 @@ plugins {
     id("de.seuhd.campuscoffee.jacoco-conventions")
     id("de.seuhd.campuscoffee.kotlin-jpa-conventions")
     id("de.seuhd.campuscoffee.kotlin-kapt-conventions")
+    // Adds the source set src/testFixtures, which holds DatabaseCleaner. The tests of this module use it, and the
+    // application module adds it with testImplementation(testFixtures(project(":data"))). The production jar does not
+    // contain it.
+    `java-test-fixtures`
 }
 
 dependencies {
@@ -20,5 +24,6 @@ dependencies {
     compileOnly(libs.mapstruct)
     kapt(libs.mapstruct.processor)
 
+    testImplementation(testFixtures(project(":domain")))
     testImplementation(libs.testcontainers.postgresql)
 }

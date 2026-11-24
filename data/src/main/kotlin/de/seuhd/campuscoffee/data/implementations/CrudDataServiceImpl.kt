@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 /**
- * Base class of the data adapters. Each data adapter reads, writes, and clears one table through a Spring Data
+ * Base class of the data adapters. Each data adapter reads and writes one table through a Spring Data
  * repository and converts between domain objects and JPA entities with a MapStruct [EntityMapper].
  *
  * [upsert] and [delete] each run in a transaction and flush before they return. The database therefore reports a
@@ -34,11 +34,6 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
     protected val domainClass: Class<DOMAIN>
 ) : CrudDataService<DOMAIN, ID>
     where REPOSITORY : JpaRepository<ENTITY, ID> {
-    override fun clear() {
-        repository.deleteAllInBatch()
-        repository.flush()
-    }
-
     /**
      * Returns all objects ordered by creation time and then by id. An update does not change the position of an object
      * in the list, because it does not change the creation time.

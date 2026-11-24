@@ -47,6 +47,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   letters, an admin whom another admin created, the URL in the `Location` header of a new user, and a text as the
   delta. `FailureSystemTests` checks that a request returns 500 and stores nothing when a data adapter throws an
   exception.
+- Tests of the undo status (FR-9): unit tests of `undoableUntil` and `GracePeriod.closesAt`, and system tests of
+  `GET /api/users/{userId}/consumption/undo`. `UserDataServiceIntegrationTest` checks that the database stores an email
+  address of 3 or 254 characters and rejects one of 2 or 255 characters.
 - `gradle build` creates a coverage report of all modules with JaCoCo and fails below 90% of the lines or 80% of the
   branches.
 - `gradle :domain:pitest` runs mutation tests of the domain module with PIT and fails when the tests detect fewer than

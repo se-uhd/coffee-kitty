@@ -12,9 +12,6 @@ import de.seuhd.campuscoffee.domain.model.DomainModel
  * @param ID     the type of the id, which is [java.util.UUID] for every domain model
  */
 interface CrudDataService<DOMAIN : DomainModel<ID>, ID> {
-    /** Deletes every stored object of this entity. */
-    fun clear()
-
     /** Returns every stored object of this entity. The KDoc of each data port states the order. */
     fun getAll(): List<DOMAIN>
 

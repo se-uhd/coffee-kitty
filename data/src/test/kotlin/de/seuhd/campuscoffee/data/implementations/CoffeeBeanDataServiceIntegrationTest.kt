@@ -12,8 +12,7 @@ import org.springframework.dao.DataIntegrityViolationException
 
 /**
  * Integration tests of [CoffeeBeanDataServiceImpl] against PostgreSQL. The partial unique index on the bean names
- * ignores case and leaves out the merged beans. `DataResetIntegrationTest` checks that a data reset deletes a merged
- * bean.
+ * ignores case and leaves out the merged beans.
  */
 class CoffeeBeanDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     @Autowired

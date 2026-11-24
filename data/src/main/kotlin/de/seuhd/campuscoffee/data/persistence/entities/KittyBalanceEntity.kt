@@ -14,8 +14,7 @@ import jakarta.persistence.Table
  * already reads the row with a lock.
  *
  * The class does not extend [Entity], because the table has neither a random id nor timestamps (see
- * [UserBalanceEntity]). `DataResetServiceImpl` cannot clear the table without a data port, so a data reset does not
- * change the row.
+ * [UserBalanceEntity]).
  */
 @jakarta.persistence.Entity
 @Table(name = "kitty_balance")

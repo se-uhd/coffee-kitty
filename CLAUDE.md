@@ -315,12 +315,13 @@ The tests are in these places:
   `StartupTest` starts the startup tasks in a Spring context with `application.yaml` and mocked ports.
 - Integration tests: the classes in `data/src/test/kotlin/`. `CrudDataServiceIntegrationTest` tests the base class and
   the data adapters of the users, the consumptions, and the corrections. `CoffeeConsumptionDataServiceIntegrationTest`
-  has further tests of the data adapter of the consumptions, and each data adapter of Tables Without an Endpoint has a
-  test class of its own, such as `PaymentDataServiceIntegrationTest`. `ExpenseAndBalanceRepositoryIntegrationTest` tests
-  the tables without a data port through their repositories and deletes their rows after each test, because the data
-  reset does not clear them. `DataResetIntegrationTest` checks that the data reset clears every table with a data port.
-  The integration tests extend `AbstractDataIntegrationTest`, which runs each test in the Spring context of
-  `DataTestApplication` against PostgreSQL in Testcontainers.
+  has further tests of the data adapter of the consumptions, `UserDataServiceIntegrationTest` tests the limits of the
+  database for the length of an email address, and each data adapter of Tables Without an Endpoint has a test class of
+  its own, such as `PaymentDataServiceIntegrationTest`. `ExpenseAndBalanceRepositoryIntegrationTest` tests the tables
+  without a data port through their repositories and deletes their rows after each test, because the data reset does not
+  clear them. `DataResetIntegrationTest` checks that the data reset clears every table with a data port. The integration
+  tests extend `AbstractDataIntegrationTest`, which runs each test in the Spring context of `DataTestApplication`
+  against PostgreSQL in Testcontainers.
 - System tests: the classes in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/system/`, such as
   `UserSystemTests`. They extend `AbstractSystemTest` and send their requests through `UserRequests` and
   `ConsumptionRequests` in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/`, which use Spring's

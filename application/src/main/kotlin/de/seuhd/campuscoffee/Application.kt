@@ -6,7 +6,7 @@ import org.springframework.boot.runApplication
 
 /**
  * The Spring Boot application class. `@ConfigurationPropertiesScan` registers every `@ConfigurationProperties` class
- * in this package and its subpackages, such as `FixturesProperties`.
+ * in this package and its subpackages, such as `BootstrapAdminProperties`.
  */
 @SpringBootApplication
 @ConfigurationPropertiesScan

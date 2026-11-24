@@ -22,10 +22,9 @@ import jakarta.persistence.Table
  * positive, a negative share, and an empty [note]. The column `note` has a width of 500 characters.
  *
  * The foreign keys `buyer_user_id` and `bean_id` have the default `NO ACTION`, because an expense moved money and must
- * not disappear with its buyer or its bean. PostgreSQL therefore does not delete a buyer or a bean
- * with an expense. `DataResetServiceImpl` cannot clear the table without a data port, and a data reset cannot delete
- * the users while the table has a row. JPA loads the buyer and the bean together with the expense, because a data
- * adapter maps the entity outside a transaction (see `CrudDataServiceImpl`).
+ * not disappear with its buyer or its bean. PostgreSQL therefore does not delete a buyer or a bean with an expense. JPA
+ * loads the buyer and the bean together with the expense, because a data adapter maps the entity outside a transaction
+ * (see `CrudDataServiceImpl`).
  */
 @jakarta.persistence.Entity
 @Table(name = "expenses")

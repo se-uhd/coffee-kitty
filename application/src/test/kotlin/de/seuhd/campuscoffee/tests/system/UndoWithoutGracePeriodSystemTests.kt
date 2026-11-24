@@ -8,11 +8,11 @@ import org.junit.jupiter.api.Test
 import org.springframework.test.context.TestPropertySource
 
 /**
- * System test for an undo after the grace period, with the system clock. The test sets the grace period,
- * `campus-coffee.consumption.grace-period`, to zero, so that the grace period of a coffee has passed when the next
- * request arrives. If the app did not read this key, the default grace period of 5 minutes would apply. The undo would
- * then succeed, and the test would fail. The acceptance scenarios in `consumption.feature` check the end of the default
- * grace period with the `SettableClock`.
+ * System tests for an undo and for the undo status after the grace period, with the system clock. The class sets the
+ * grace period, `campus-coffee.consumption.grace-period`, to zero, so that the grace period of a coffee has passed when
+ * the next request arrives. If the app did not read this key, the default grace period of 5 minutes would apply. The
+ * undo would then succeed, the undo status would be undoable, and both tests would fail. The acceptance scenarios in
+ * `consumption.feature` check the end of the default grace period with the `SettableClock`.
  */
 @TestPropertySource(properties = ["campus-coffee.consumption.grace-period=0s"])
 class UndoWithoutGracePeriodSystemTests : AbstractSystemTest() {

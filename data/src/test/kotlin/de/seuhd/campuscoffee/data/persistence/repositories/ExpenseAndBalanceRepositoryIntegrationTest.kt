@@ -12,7 +12,6 @@ import de.seuhd.campuscoffee.domain.ports.data.CoffeeBeanDataService
 import de.seuhd.campuscoffee.domain.ports.data.UserDataService
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -23,7 +22,7 @@ import org.springframework.transaction.support.TransactionTemplate
 /**
  * Integration tests of the tables `expenses`, `user_balance`, and `kitty_balance` against PostgreSQL. Each of these
  * tables has a JPA entity and a repository but no data port yet. The tests therefore write and read the rows through
- * the repositories. After each test, [deleteRows] deletes the rows, because the data reset does not clear these tables.
+ * the repositories.
  */
 class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest() {
     @Autowired
@@ -63,13 +62,6 @@ class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest()
         buyer = requireNotNull(userRepository.findByIdOrNull(requireNotNull(user.id)))
         val storedBean = coffeeBeanDataService.upsert(CoffeeBean(name = "Ethiopia Sidamo"))
         bean = requireNotNull(coffeeBeanRepository.findByIdOrNull(requireNotNull(storedBean.id)))
-    }
-
-    @AfterEach
-    fun deleteRows() {
-        expenseRepository.deleteAllInBatch()
-        userBalanceRepository.deleteAllInBatch()
-        kittyBalanceRepository.deleteAllInBatch()
     }
 
     /** Returns a bean purchase of [buyer] for 1299 cents, of which the kitty pays [kittyAmountCents]. */

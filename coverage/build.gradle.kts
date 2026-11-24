@@ -38,10 +38,9 @@ val aggregateReport = tasks.named<JacocoReport>("testCodeCoverageReport") {
     }
 }
 
-// The coverageGate task leaves out the fixture classes, the Application class, and the generated mappers. The minimums
-// below are those of the coffee app of SE@UHD. Raise them as the coverage grows, and never lower them to make a build
-// pass.
-val gateExclusions = listOf("de/seuhd/campuscoffee/domain/tests/**", "**/Application*", "**/*MapperImpl.*")
+// The coverageGate task leaves out the Application class and the generated mappers. The minimums below are those of the
+// coffee app of SE@UHD. Raise them as the coverage grows, and never lower them to make a build pass.
+val gateExclusions = listOf("**/Application*", "**/*MapperImpl.*")
 
 val coverageGate = tasks.register<JacocoCoverageVerification>("coverageGate") {
     group = "verification"
