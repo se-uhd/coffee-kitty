@@ -70,7 +70,60 @@ with a line "Avoid:", which lists words not to use for the concept.
   API: `ConsumptionCorrectionDto.note`, `CountCorrectionDto.note`. Code: `CountCorrection.note`,
   `CountCorrection.MAX_NOTE_LENGTH`, `count_corrections.note`, `Payment.note`, `payments.note`, `expenses.note`.
   Avoid: comment, reason (for the field).
-- **role**: What a user may do in Coffee Kitty, either `USER` or `ADMIN`. An admin may also create users.
+- **euro cents**: The unit of every amount of money in the code and in the database, as an integer, so that sums have
+  no rounding errors.
+  Code: `amountCents`, `balanceCents`, `amount_cents`, `balance_cents`.
+- **price per cup**: The one price of a coffee in euro cents, which applies to every user and which an admin sets. Each
+  coffee lowers the balance of its user by the price per cup at the time of the coffee, so a new price applies only to
+  the coffees added after the change. Coffee Kitty stores at most one price, and no endpoint reads or sets it yet. No
+  price is stored after the migrations or after a data reset, so the startup has to store the start price.
+  Code: `CoffeePrice`, `CoffeePriceDataService`, `coffee_prices`.
+- **balance**: A user's amount of money in euro cents, negative when the user owes the kitty money and positive when the
+  kitty owes the user money. Coffees lower the balance, and deposits and the private shares of the user's expenses
+  raise it. The table `user_balance` holds the balance of each user, but no code writes it yet.
+  Code: `UserBalanceEntity`, `user_balance`.
+  Avoid: member balance, account.
+- **kitty**: The group's shared cash in euro cents, whose current amount is the kitty balance. Deposits raise the kitty,
+  the kitty shares of expenses lower it, and kitty adjustments change it in either direction. The kitty never goes
+  negative. The table `kitty_balance` holds the kitty balance in one row, but no code writes it yet.
+  Code: `KittyBalanceEntity`, `kitty_balance`.
+  Avoid: fund, coffee fund.
+- **payment**: A deposit or a kitty adjustment, which an admin records. A coffee is not a payment, because it lowers the
+  balance of the user without moving cash.
+  Code: `Payment`, `PaymentDataService`, `payments`.
+- **deposit**: Cash that a user pays into the kitty and that an admin records. A deposit raises the balance of the user
+  and the kitty by the same amount, which is positive (FR-4 in `requirements/FR-4-record-deposit.md` and FR-4b in
+  `requirements/FR-4b-raise-kitty-balance.md`). No endpoint records a deposit yet.
+  Code: `Payment` with a `user`.
+  Avoid: settlement, top-up.
+- **kitty adjustment**: A change of the kitty that an admin makes and that belongs to no user, such as the initial cash
+  in the kitty. Its amount is positive or negative but not zero.
+  Code: `Payment` without a `user`.
+  Avoid: correction (for a change of the kitty).
+- **expense**: Money that a user, the buyer, spent for the group, either a bean purchase or any other expense. FR-6 in
+  `requirements/FR-6-record-own-expense.md` specifies how a user records an expense that they paid with their own money.
+  So far, Coffee Kitty has only the table, the JPA entity, and the repository for expenses, without a domain model.
+  Code: `ExpenseEntity`, `ExpenseEntity.buyer`, `expenses`, `buyer_user_id`.
+  Avoid: outlay, purchase (except in bean purchase).
+- **bean purchase**: The kind of expense for coffee beans, which refers to a bean and has a weight in grams.
+  Code: `BEANS`, `ExpenseEntity.bean`, `ExpenseEntity.weightGrams`.
+- **other expense**: The kind of expense for anything except beans, such as filters or milk, without a bean or a weight.
+  Code: `OTHER`.
+- **private share / kitty share**: The two parts of an expense, which add up to its amount. The private share raises the
+  balance of the buyer, and the kitty share lowers the kitty.
+  Code: `ExpenseEntity.privateAmountCents`, `ExpenseEntity.kittyAmountCents`.
+- **bean**: One named kind of coffee beans, which bean purchases and ratings refer to. A live bean has a name that no
+  other live bean has, ignoring case. An admin can merge a bean into another bean, and the merged bean stays as an
+  inactive record that refers to the bean that it was merged into.
+  Code: `CoffeeBean`, `CoffeeBean.mergedIntoId`, `CoffeeBeanDataService`, `coffee_beans`.
+- **rating**: A user's score for a bean. The ratings of a user for the same bean accumulate, and a rating moves no
+  money.
+  Code: `CoffeeRating`, `CoffeeRatingDataService`, `coffee_ratings`.
+- **score**: The number from 1 to 5 of a rating.
+  Code: `CoffeeRating.value`, `coffee_ratings.value`.
+  Avoid: value (in prose), rating (for the number).
+- **role**: What a user may do in Coffee Kitty, either `USER` or `ADMIN`. An admin may also create users, correct coffee
+  counts, and list the corrections of a user.
   API: `UserDto.role`. Code: `Role`, `User.role`, `users.role`, `requireAdmin`.
 - **acting user**: The user who sends a request, identified by the login name in the header `X-Acting-User`. Because
   Coffee Kitty has no authentication yet, any client can act as any user. API: `X-Acting-User`, `WWW-Authenticate:

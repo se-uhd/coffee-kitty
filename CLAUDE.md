@@ -6,15 +6,19 @@ Coffee Kitty is a minimal coffee counter with the architecture of the coffee app
 Group at Heidelberg University. The package prefix `de.seuhd` stands for the group. Coffee Kitty is the running example
 of a software engineering lecture, and students extend it over the semester. A user has a login name, an email address,
 and a first and a last name. Each user has exactly one consumption, which holds a coffee count that starts at zero. The
-REST API lists, creates, and reads users, reads a coffee count, adds one coffee at a time, and undoes the most recent
-coffee within 5 minutes. `requirements/` holds the functional requirements, such as FR-3 for the undo. Every user has a
-role, `USER` or `ADMIN`, and only an admin may create a user. The app has no authentication yet: The header
-`X-Acting-User` of a request contains the login name of the acting user. `ActingUserAuthenticationFilter` in
-`api/.../security/` resolves the login name in this header to a `User` before the controllers run, and
-`CurrentUserProvider` returns that user to the controllers. The controllers pass that user to the domain, which checks
-the role with `requireAdmin` in `AuthorizationUtil.kt`, as the coffee app of SE@UHD does. The app has no frontend. In
-the dev profile, Swagger UI documents the API. `GLOSSARY.md` defines one term for each concept. Use these terms in code,
-messages, and documentation.
+REST API lists, creates, and reads users, reads a coffee count, adds one coffee at a time, undoes the most recent coffee
+within 5 minutes, and reads the undo status, which states whether that undo is possible. An admin can also correct a
+coffee count with a note and list the corrections of a user. `requirements/` holds the functional requirements, such as
+FR-3 for the undo, FR-8 for the correction, and FR-9 for the undo status. FR-4, FR-4b, and FR-6 specify deposits and
+expenses, which the app does not implement yet. Every user has a role, `USER` or `ADMIN`, and only an admin may create a
+user, correct a coffee count, or list the corrections. The app has no authentication yet: The header `X-Acting-User` of
+a request contains the login name of the acting user. `ActingUserAuthenticationFilter` in `api/.../security/` resolves
+the login name in this header to a `User` before the controllers run, and `CurrentUserProvider` returns that user to the
+controllers. The controllers pass that user to the domain, which checks the role with `requireAdmin` in
+`AuthorizationUtil.kt`, as the coffee app of SE@UHD does. The app has no frontend. In the dev profile, Swagger UI
+documents the API. The data module already holds the tables of later features, such as the price per cup, deposits,
+expenses, beans, ratings, and balances, which no endpoint uses yet (see Tables Without an Endpoint). `GLOSSARY.md`
+defines one term for each concept. Use these terms in code, messages, and documentation.
 
 ## Architecture
 
