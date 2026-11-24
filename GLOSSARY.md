@@ -218,15 +218,16 @@ with a line "Avoid:", which lists words not to use for the concept.
   of the exception. For any other error, `errorCode` is the reason phrase of the status without spaces, such as
   `BadRequest`.
   Code: `ErrorResponse`, `GlobalExceptionHandler`, `writeErrorResponse`.
-- **domain exception**: An exception class in `domain/.../exceptions/`. `GlobalExceptionHandler` maps each of these
-  classes to a status and uses the class name as the error code. `NotFoundException` (404) means that a lookup found no
-  stored object, for example no user with the id in the path. `DuplicationException` (409) means that a request repeats
-  a value that must be unique, such as the login name or the email address of another user. `ConflictException` (409)
-  means that a well-formed request does not apply to the current state, such as an undo after the grace period.
-  `ForbiddenException` (403) means that the acting user may not perform the action, such as creating a user without the
-  role `ADMIN`. `ValidationException` (400) means that a request breaks a rule of the domain or of a controller, such as
-  an integer delta other than +1 or an id in the body of `POST /api/users`. A request body that fails Bean Validation or
-  cannot be read, such as a body with a delta of 1.9, gets a 400 with the error code `BadRequest` instead.
+- **domain exception**: A subclass of `DomainException` in `domain/.../exceptions/`. `GlobalExceptionHandler` maps each
+  of these classes to a status and uses the class name as the error code. `NotFoundException` (404) means that a lookup
+  found no stored object, for example no user with the id in the path. `DuplicationException` (409) means that a request
+  repeats a value that must be unique, such as the login name or the email address of another user. `ConflictException`
+  (409) means that a well-formed request does not apply to the current state, such as an undo after the grace period.
+  `ForbiddenException` (403) means that the acting user may not perform the action, such as creating a user or
+  correcting a coffee count without the role `ADMIN`. `ValidationException` (400) means that a request breaks a rule of
+  the domain or of a controller, such as an integer delta other than +1 or an id in the body of `POST /api/users`. A
+  request body that fails Bean Validation or cannot be read, such as a body with a delta of 1.9, gets a 400 with the
+  error code `BadRequest` instead.
 - **firewall**: The `StrictHttpFirewall` of Spring Security, which rejects a request with `;`, `//`, `..`, or an encoded
   slash in the path or with a control character in a header value. Security rules and Spring MVC can read such a
   request differently. A rejected request gets 400 Bad Request with the error code `BadRequest`, and the message of

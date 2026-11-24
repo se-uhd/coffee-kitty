@@ -1,17 +1,18 @@
 package de.seuhd.campuscoffee.api.exceptions
 
 import de.seuhd.campuscoffee.domain.exceptions.ConflictException
+import de.seuhd.campuscoffee.domain.exceptions.DomainException
 import de.seuhd.campuscoffee.domain.exceptions.DuplicationException
 import de.seuhd.campuscoffee.domain.exceptions.ForbiddenException
 import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
 import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import io.github.oshai.kotlinlogging.KotlinLogging
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.validation.FieldError
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -25,55 +26,37 @@ import java.time.ZoneOffset
 /**
  * Exception handler for all controllers. The body of every error response is an [ErrorResponse].
  *
- * [handleMappedException] maps each domain exception to a status and uses the class name of the exception as the
+ * [handleDomainException] maps each domain exception to a status and uses the class name of the exception as the
  * error code. The base class [ResponseEntityExceptionHandler] maps each standard Spring MVC exception to its status
- * code. Examples are the exceptions for a wrong HTTP method, an unreadable body, and an unknown path.
- * [handleExceptionInternal] builds the error response for the standard Spring MVC exceptions. [handleGenericException]
- * returns a 500 for every other exception.
+ * code. Examples are the exceptions for an unsupported HTTP method, a body that Jackson cannot read, and an unknown
+ * path. [handleExceptionInternal] builds the error response for the standard Spring MVC exceptions.
+ * [handleGenericException] returns a 500 for every other exception.
  *
  * A failed `require` or `check` throws an `IllegalArgumentException` or an `IllegalStateException`. Such an exception
  * indicates a bug in the server code, and [handleGenericException] logs the exception with its stack trace at ERROR.
  * The log line for a domain exception does not contain a looked-up or duplicate value, such as a login name. The
  * handler passes every log message that can contain client input, such as the request path, through [loggableText].
- * The stack traces that it logs at ERROR are not cleaned.
+ * The stack traces that the handler logs at ERROR do not pass through [loggableText].
  */
 @ControllerAdvice
 class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     /**
-     * Returns an error response for a domain exception, with the status from [configFor] and the class name of the
-     * exception as the error code. The method calls [handleGenericException] for an exception that [configFor] does
-     * not map.
-     *
-     * To add a domain exception, list its class in the `@ExceptionHandler` annotation of this method and add an entry
-     * to [configFor]. If the class or the entry is missing, the client gets a 500. If the message of the new exception
-     * can contain a value from the client, such as a login name, add a branch to [logMessageOf] that returns a message
-     * without that value.
+     * Returns an error response for a domain exception, with the status from [statusOf] and the class name of the
+     * exception as the error code. To add a domain exception, create a subclass of [DomainException] and add its status
+     * to [statusOf].
      *
      * @param exception the domain exception
      * @param request   the current web request
      */
-    @ExceptionHandler(
-        NotFoundException::class,
-        DuplicationException::class,
-        ConflictException::class,
-        ForbiddenException::class,
-        ValidationException::class
-    )
-    fun handleMappedException(
-        exception: Exception,
+    @ExceptionHandler(DomainException::class)
+    fun handleDomainException(
+        exception: DomainException,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        val config = configFor(exception) ?: return handleGenericException(exception, request)
-        log.info { "${config.label} on ${describe(request)}: ${loggableText(logMessageOf(exception))}" }
-        return respond(
-            config.httpStatus,
-            errorBody(
-                config.httpStatus,
-                request,
-                exception.message.orEmpty(),
-                errorCode = exception.javaClass.simpleName
-            )
-        )
+        val status = statusOf(exception)
+        val errorCode = exception.javaClass.simpleName
+        log.info { "$errorCode -> $status on ${describe(request)}: ${loggableText(exception.logMessage)}" }
+        return respond(status, errorBody(status, request, exception.message, errorCode))
     }
 
     /**
@@ -81,12 +64,12 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
      * `require`. Every such response has the fixed message "An unexpected error occurred." The log line at ERROR
      * contains the method and path of the request and the exception with its stack trace.
      *
-     * One `IllegalArgumentException` is an error of the client: Spring throws it while it reads a request with a
-     * wildcard in the `Content-Type` header (an asterisk as the type or as the subtype), before it asks a message
-     * converter. Such a request gets a 415 with the error code `UnsupportedMediaType`, like every other media type
-     * that the API does not read, and the handler logs it at INFO.
+     * One `IllegalArgumentException` is an error of the client. Spring throws it for a request with a wildcard in the
+     * `Content-Type` header, that is, an asterisk as the type or as the subtype. At that point, Spring has not called a
+     * message converter yet. Such a request gets a 415 with the error code `UnsupportedMediaType`, like a request with
+     * any other media type that the API does not read. The handler logs the request at INFO.
      *
-     * @param exception the unexpected exception
+     * @param exception the exception that no other handler maps
      * @param request   the current web request
      */
     @ExceptionHandler(Exception::class)
@@ -108,8 +91,9 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
 
     /**
      * Returns a 400 with the error code `BadRequest` for a request body that fails Bean Validation (`@Valid`). The
-     * message joins the validation errors with "; ", and each field error starts with the field name. The handler
-     * logs the message at INFO.
+     * message contains the field errors, separated by "; ", and each field error starts with the field name. An error
+     * of a constraint on the class would have no field name, but no DTO has such a constraint. The handler logs the
+     * message at INFO.
      */
     override fun handleMethodArgumentNotValid(
         ex: MethodArgumentNotValidException,
@@ -118,26 +102,21 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         request: WebRequest
     ): ResponseEntity<Any>? {
         val message =
-            ex.bindingResult.allErrors.joinToString("; ") { error ->
-                when (error) {
-                    is FieldError -> "${error.field} ${error.defaultMessage}"
-                    else -> error.defaultMessage ?: "The request is invalid."
-                }
-            }
+            ex.bindingResult.fieldErrors.joinToString("; ") { error -> "${error.field} ${error.defaultMessage}" }
         log.info { "Request validation failed on ${describe(request)}: ${loggableText(message)}" }
         return respond(status, errorBody(status, request, message), headers)
     }
 
     /**
-     * Builds the error response for an exception that [ResponseEntityExceptionHandler] handles, such as the exception
-     * for a malformed body, an unsupported method or media type, or an unknown path. [handleMethodArgumentNotValid]
-     * handles a failed Bean Validation instead. The error response has the reason phrase of the status as its message
-     * and the same phrase without spaces as its error code. The error response does not contain the message or the
-     * class name of the exception, because the message for a body that cannot be parsed can quote a value from the
-     * body.
+     * Builds the error response for an exception that [ResponseEntityExceptionHandler] maps to a status. Examples are
+     * the exceptions for a body that Jackson cannot read, an unsupported method or media type, and an unknown path.
+     * [handleMethodArgumentNotValid] builds the error response for a failed Bean Validation. The error response has the
+     * reason phrase of the status as its message and the same phrase without spaces as its error code. It does not
+     * contain the message or the class name of the exception. For example, the message for a body that Jackson cannot
+     * read can quote a value from the body.
      *
-     * A 4xx is logged at INFO with the class name of the exception, the status, and the method and path of the
-     * request. The message of the exception is logged at DEBUG. A 5xx is logged at ERROR with the stack trace.
+     * The handler logs a 4xx at INFO with the class name of the exception, the status, and the method and path of the
+     * request. It logs the message of the exception at DEBUG. It logs a 5xx at ERROR with the stack trace.
      */
     override fun handleExceptionInternal(
         ex: Exception,
@@ -150,7 +129,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             log.error(ex) { "${ex.javaClass.simpleName} -> $statusCode on ${describe(request)}" }
         } else {
             log.info { "${ex.javaClass.simpleName} -> $statusCode on ${describe(request)}" }
-            log.debug { "${ex.javaClass.simpleName} detail: ${loggableText(ex.message)}" }
+            log.debug { "${ex.javaClass.simpleName} detail: ${loggableText("${ex.message}")}" }
         }
         val reason = HttpStatus.valueOf(statusCode.value()).reasonPhrase
         return respond(statusCode, errorBody(statusCode, request, reason), headers)
@@ -185,56 +164,33 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             statusCode = status.value(),
             statusMessage = HttpStatus.valueOf(status.value()).reasonPhrase,
             timestamp = LocalDateTime.now(ZoneOffset.UTC),
-            path = extractPath(request)
+            path = request.servletRequest().requestURI
         )
 
     /** Returns the method and path of [request] for a log line, without the query string. */
     private fun describe(request: WebRequest): String =
-        (request as? ServletWebRequest)?.request?.let { "${it.method} ${loggableText(it.requestURI)}" }
-            ?: "an unknown request"
+        request.servletRequest().let { "${it.method} ${loggableText(it.requestURI)}" }
 
-    /** Returns the path of [request], or "unknown" for a request that is not a servlet request. */
-    private fun extractPath(request: WebRequest): String =
-        (request as? ServletWebRequest)?.request?.requestURI ?: "unknown"
+    /** Returns the servlet request of this request. Spring MVC passes a [ServletWebRequest] to an exception handler. */
+    private fun WebRequest.servletRequest(): HttpServletRequest = (this as ServletWebRequest).request
 
-    /** Returns the message of [exception] for the log, without a looked-up or duplicate value, such as a login name. */
-    private fun logMessageOf(exception: Exception): String? =
+    /** Returns the status of the error response for [exception]. */
+    private fun statusOf(exception: DomainException): HttpStatus =
         when (exception) {
-            is DuplicationException -> exception.logMessage
-            is NotFoundException -> exception.logMessage
-            else -> exception.message
-        }
-
-    /** Returns the status and the log label for a domain exception, or null for any other exception. */
-    private fun configFor(exception: Exception): ExceptionConfig? =
-        when (exception) {
-            is NotFoundException -> ExceptionConfig(HttpStatus.NOT_FOUND, "Resource not found")
-            is DuplicationException -> ExceptionConfig(HttpStatus.CONFLICT, "Duplicate resource")
-            is ConflictException -> ExceptionConfig(HttpStatus.CONFLICT, "Conflict with the current state")
-            is ForbiddenException -> ExceptionConfig(HttpStatus.FORBIDDEN, "Action not allowed")
-            is ValidationException -> ExceptionConfig(HttpStatus.BAD_REQUEST, "Domain validation failed")
-            else -> null
+            is NotFoundException -> HttpStatus.NOT_FOUND
+            is DuplicationException, is ConflictException -> HttpStatus.CONFLICT
+            is ForbiddenException -> HttpStatus.FORBIDDEN
+            is ValidationException -> HttpStatus.BAD_REQUEST
         }
 
     /**
-     * Returns [text] as a single log line. The function replaces every control character, such as CR and LF, and
-     * every Unicode line or paragraph separator with a space. This replacement stops a client from forging a log entry
-     * with a line break. The function then cuts the result to [MAX_LOGGED_LENGTH] characters to stop a long value from
-     * flooding the log. Null becomes an empty string.
+     * Returns [text] as a single log line. The function replaces every control character, such as CR and LF, and every
+     * Unicode line or paragraph separator with a space. A client therefore cannot forge a log entry with a line break.
+     * The function then cuts the result to [MAX_LOGGED_LENGTH] characters, because a client could otherwise fill the
+     * log with a long value.
      */
-    private fun loggableText(text: String?): String =
-        text.orEmpty().replace(CONTROL_AND_LINE_SEPARATOR_CHARACTERS, " ").take(MAX_LOGGED_LENGTH)
-
-    /**
-     * The HTTP status and the log label that [configFor] assigns to a domain exception.
-     *
-     * @property httpStatus the status of the error response
-     * @property label the prefix of the log line
-     */
-    private data class ExceptionConfig(
-        val httpStatus: HttpStatus,
-        val label: String
-    )
+    private fun loggableText(text: String): String =
+        text.replace(CONTROL_AND_LINE_SEPARATOR_CHARACTERS, " ").take(MAX_LOGGED_LENGTH)
 
     private companion object {
         private val log = KotlinLogging.logger {}
@@ -249,17 +205,14 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
          */
         private val CONTROL_AND_LINE_SEPARATOR_CHARACTERS = Regex("[\\p{Cc}\\u2028\\u2029]")
 
-        /** The maximum number of characters that [loggableText] keeps of a text that can contain client input. */
+        /** The maximum length of a text that [loggableText] returns. */
         private const val MAX_LOGGED_LENGTH = 500
     }
 }
 
 /**
- * Returns whether the `Content-Type` header of the request has an asterisk as its type or as its subtype, also before
- * a suffix such as `+json`. A header that is absent or is not a media type is not a wildcard.
+ * Returns whether the media type in the `Content-Type` header has an asterisk as its type or as its subtype. An
+ * asterisk before a suffix, such as `+json`, also counts. A request without the header has no wildcard.
  */
 private fun WebRequest.hasWildcardContentType(): Boolean =
-    getHeader(HttpHeaders.CONTENT_TYPE)
-        ?.let { header -> runCatching { MediaType.parseMediaType(header) }.getOrNull() }
-        ?.let { mediaType -> mediaType.isWildcardType || mediaType.isWildcardSubtype }
-        ?: false
+    '*' in getHeader(HttpHeaders.CONTENT_TYPE).orEmpty().substringBefore(';')
