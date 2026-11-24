@@ -16,9 +16,8 @@ import org.springframework.dao.DataIntegrityViolationException
 /**
  * Links a unique constraint to the domain model and the field that must be unique. `CrudDataServiceImpl.upsert` uses
  * the mapping to convert a violation of the constraint into a [DuplicationException] (409) with the field and the
- * duplicate value. Every unique constraint and unique index of a table needs an entry in [REGISTRY]. A violation of a
- * constraint without an entry reaches `GlobalExceptionHandler` as a `DataIntegrityViolationException` and becomes a
- * 500.
+ * duplicate value. Every unique constraint and unique index of a table needs an entry in [REGISTRY]. For a violation of
+ * a constraint without an entry, `CrudDataServiceImpl` throws a `DataConstraintException`, and the client gets a 500.
  *
  * @param D the domain model with the unique field
  * @property constraintName the name of the constraint or unique index, as the migration declares it
