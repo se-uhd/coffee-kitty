@@ -1,6 +1,7 @@
 package de.seuhd.campuscoffee.data.implementations
 
 import de.seuhd.campuscoffee.data.integration.AbstractDataIntegrationTest
+import de.seuhd.campuscoffee.domain.exceptions.DataConstraintException
 import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
 import de.seuhd.campuscoffee.domain.model.CoffeeBean
 import de.seuhd.campuscoffee.domain.model.CoffeeRating
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.dao.DataIntegrityViolationException
 import java.util.UUID
 
 /**
@@ -100,9 +100,9 @@ class CoffeeRatingDataServiceIntegrationTest : AbstractDataIntegrationTest() {
 
     @ParameterizedTest
     @ValueSource(ints = [0, 6])
-    fun `upsert throws DataIntegrityViolationException for a score of 0 or 6`(value: Int) {
+    fun `upsert throws DataConstraintException for a score of 0 or 6`(value: Int) {
         assertThatThrownBy { coffeeRatingDataService.upsert(CoffeeRating(user = user, bean = bean, value = value)) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
+            .isInstanceOf(DataConstraintException::class.java)
         assertThat(coffeeRatingDataService.getAll()).isEmpty()
     }
 
@@ -124,12 +124,12 @@ class CoffeeRatingDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `deleting a rated bean throws DataIntegrityViolationException`() {
+    fun `deleting a rated bean throws DataConstraintException`() {
         coffeeRatingDataService.upsert(CoffeeRating(user = user, bean = bean, value = 4))
 
         // the foreign key bean_id has the default NO ACTION
         assertThatThrownBy { coffeeBeanDataService.delete(requireNotNull(bean.id)) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
+            .isInstanceOf(DataConstraintException::class.java)
         assertThat(coffeeRatingDataService.getAll()).hasSize(1)
     }
 }

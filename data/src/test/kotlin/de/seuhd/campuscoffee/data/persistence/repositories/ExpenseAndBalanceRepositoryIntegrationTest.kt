@@ -6,6 +6,7 @@ import de.seuhd.campuscoffee.data.persistence.entities.ExpenseEntity
 import de.seuhd.campuscoffee.data.persistence.entities.KittyBalanceEntity
 import de.seuhd.campuscoffee.data.persistence.entities.UserBalanceEntity
 import de.seuhd.campuscoffee.data.persistence.entities.UserEntity
+import de.seuhd.campuscoffee.domain.exceptions.DataConstraintException
 import de.seuhd.campuscoffee.domain.model.CoffeeBean
 import de.seuhd.campuscoffee.domain.model.User
 import de.seuhd.campuscoffee.domain.ports.data.CoffeeBeanDataService
@@ -173,22 +174,22 @@ class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest()
     }
 
     @Test
-    fun `deleting the buyer of an expense throws DataIntegrityViolationException`() {
+    fun `deleting the buyer of an expense throws DataConstraintException`() {
         expenseRepository.saveAndFlush(otherExpense().apply { id = randomId() })
 
         // the foreign key buyer_user_id has the default NO ACTION, because an expense must not disappear with its buyer
         assertThatThrownBy { userDataService.delete(requireNotNull(buyer.id)) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
+            .isInstanceOf(DataConstraintException::class.java)
         assertThat(expenseRepository.count()).isEqualTo(1)
     }
 
     @Test
-    fun `deleting a purchased bean throws DataIntegrityViolationException`() {
+    fun `deleting a purchased bean throws DataConstraintException`() {
         expenseRepository.saveAndFlush(beanPurchase().apply { id = randomId() })
 
         // the foreign key bean_id has the default NO ACTION, as buyer_user_id has
         assertThatThrownBy { coffeeBeanDataService.delete(requireNotNull(bean.id)) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
+            .isInstanceOf(DataConstraintException::class.java)
         assertThat(expenseRepository.count()).isEqualTo(1)
     }
 

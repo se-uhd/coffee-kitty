@@ -1,6 +1,7 @@
 package de.seuhd.campuscoffee.data.implementations
 
 import de.seuhd.campuscoffee.data.integration.AbstractDataIntegrationTest
+import de.seuhd.campuscoffee.domain.exceptions.DataConstraintException
 import de.seuhd.campuscoffee.domain.exceptions.DuplicationException
 import de.seuhd.campuscoffee.domain.model.CoffeeBean
 import de.seuhd.campuscoffee.domain.ports.data.CoffeeBeanDataService
@@ -8,7 +9,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.dao.DataIntegrityViolationException
 
 /**
  * Integration tests of [CoffeeBeanDataServiceImpl] against PostgreSQL. The partial unique index on the bean names
@@ -49,22 +49,22 @@ class CoffeeBeanDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `upsert throws DataIntegrityViolationException for an active merged bean or an inactive unmerged bean`() {
+    fun `upsert throws DataConstraintException for an active merged bean or an inactive unmerged bean`() {
         val target = coffeeBeanDataService.upsert(CoffeeBean(name = "Kenya AA"))
         val other = coffeeBeanDataService.upsert(CoffeeBean(name = "Kenia AA"))
 
         assertThatThrownBy { coffeeBeanDataService.upsert(other.copy(mergedIntoId = target.id)) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
+            .isInstanceOf(DataConstraintException::class.java)
         assertThatThrownBy { coffeeBeanDataService.upsert(other.copy(active = false)) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
+            .isInstanceOf(DataConstraintException::class.java)
     }
 
     @Test
-    fun `upsert throws DataIntegrityViolationException for a bean merged into itself`() {
+    fun `upsert throws DataConstraintException for a bean merged into itself`() {
         val bean = coffeeBeanDataService.upsert(CoffeeBean(name = "Kenya AA"))
 
         assertThatThrownBy { coffeeBeanDataService.upsert(bean.copy(active = false, mergedIntoId = bean.id)) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
+            .isInstanceOf(DataConstraintException::class.java)
     }
 
     @Test
@@ -105,16 +105,16 @@ class CoffeeBeanDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `upsert throws DataIntegrityViolationException for an empty bean name`() {
+    fun `upsert throws DataConstraintException for an empty bean name`() {
         assertThatThrownBy { coffeeBeanDataService.upsert(CoffeeBean(name = "")) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
+            .isInstanceOf(DataConstraintException::class.java)
     }
 
     @Test
-    fun `deleting a bean with a merged bean throws DataIntegrityViolationException`() {
+    fun `deleting a bean with a merged bean throws DataConstraintException`() {
         val merged = storeMergedBean("Guatemala")
 
         assertThatThrownBy { coffeeBeanDataService.delete(requireNotNull(merged.mergedIntoId)) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
+            .isInstanceOf(DataConstraintException::class.java)
     }
 }

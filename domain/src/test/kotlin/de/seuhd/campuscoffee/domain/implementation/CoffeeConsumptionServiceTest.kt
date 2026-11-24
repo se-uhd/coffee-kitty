@@ -66,13 +66,13 @@ class CoffeeConsumptionServiceTest {
     private fun stubCorrection(current: CoffeeConsumption) {
         whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(current)
         whenever(dataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
-        whenever(correctionDataService.upsert(any())).thenAnswer { it.arguments[0] as CountCorrection }
+        whenever(correctionDataService.insert(any())).thenAnswer { it.arguments[0] as CountCorrection }
     }
 
     /** Asserts that the service stored neither a consumption nor a correction. */
     private fun verifyNothingStored() {
         verify(dataService, never()).upsert(any())
-        verify(correctionDataService, never()).upsert(any())
+        verify(correctionDataService, never()).insert(any())
     }
 
     @Test
@@ -200,7 +200,7 @@ class CoffeeConsumptionServiceTest {
 
         assertThat(result.count).isEqualTo(1)
         verify(dataService).upsert(consumption(1))
-        verify(correctionDataService).upsert(
+        verify(correctionDataService).insert(
             CountCorrection(user = user, admin = admin, countBefore = 3, countAfter = 1, note = note)
         )
     }
@@ -254,7 +254,7 @@ class CoffeeConsumptionServiceTest {
         val result = service.correctCount(userId, 3, note, admin)
 
         assertThat(result).isEqualTo(consumption(3, coffeeAddedAt))
-        verify(correctionDataService).upsert(
+        verify(correctionDataService).insert(
             CountCorrection(user = user, admin = admin, countBefore = 3, countAfter = 3, note = note)
         )
     }
@@ -309,7 +309,7 @@ class CoffeeConsumptionServiceTest {
 
         service.correctCount(userId, 1, longNote, admin)
 
-        verify(correctionDataService).upsert(argThat { note == longNote })
+        verify(correctionDataService).insert(argThat { note == longNote })
     }
 
     @Test

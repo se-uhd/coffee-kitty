@@ -3,6 +3,7 @@ package de.seuhd.campuscoffee.data.implementations
 import de.seuhd.campuscoffee.data.mapper.EntityMapper
 import de.seuhd.campuscoffee.data.persistence.ConstraintMapping
 import de.seuhd.campuscoffee.data.persistence.entities.Entity
+import de.seuhd.campuscoffee.domain.exceptions.DataConstraintException
 import de.seuhd.campuscoffee.domain.exceptions.DuplicationException
 import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
 import de.seuhd.campuscoffee.domain.model.DomainModel
@@ -20,8 +21,8 @@ import java.util.UUID
  *
  * [upsert] and [delete] each run in a transaction and flush before they return. The database therefore reports a
  * constraint violation inside these methods and not at the commit. [upsert] throws a [DuplicationException] (409) for
- * the violation of a unique constraint that `ConstraintMapping.REGISTRY` lists. Any other violation reaches the caller
- * unchanged.
+ * the violation of a unique constraint that `ConstraintMapping.REGISTRY` lists. For any other violation, [upsert] and
+ * [delete] throw a [DataConstraintException], so that no exception of Spring or Hibernate crosses the data port.
  *
  * @param DOMAIN     the domain model type
  * @param ENTITY     the JPA entity type
@@ -50,6 +51,7 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
      * @throws NotFoundException if no row has the id of the object, or if the object references a row that does not
      *   exist (see `EntityReferenceResolver`)
      * @throws DuplicationException if the object violates a unique constraint that `ConstraintMapping.REGISTRY` lists
+     * @throws DataConstraintException if the object violates any other constraint
      */
     @Transactional
     override fun upsert(domain: DOMAIN): DOMAIN {
@@ -64,7 +66,7 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
             try {
                 repository.saveAndFlush(entity)
             } catch (e: DataIntegrityViolationException) {
-                throw duplicationOrNull(e, domain) ?: e
+                throw duplicationOrNull(e, domain) ?: constraintException(e)
             }
         return mapper.fromEntity(saved)
     }
@@ -74,11 +76,17 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
      * the deleted row, such as the consumption of a deleted user.
      *
      * @throws NotFoundException if no row has [id]
+     * @throws DataConstraintException if a foreign key without `ON DELETE CASCADE` references the row
      */
     @Transactional
     override fun delete(id: ID) {
-        repository.delete(loadOrThrow(id))
-        repository.flush()
+        val entity = loadOrThrow(id)
+        try {
+            repository.delete(entity)
+            repository.flush()
+        } catch (e: DataIntegrityViolationException) {
+            throw constraintException(e)
+        }
     }
 
     /**
@@ -109,6 +117,10 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
             .constraintNameOf(exception)
             ?.let { ConstraintMapping.forConstraint(it) }
             ?.duplicationFor(domain)
+
+    /** Returns the [DataConstraintException] for [exception], with the name of the violated constraint if known. */
+    private fun constraintException(exception: DataIntegrityViolationException): DataConstraintException =
+        DataConstraintException(domainClass, ConstraintMapping.constraintNameOf(exception), exception)
 
     private companion object {
         /** Sort order of [getAll] by creation time and then by id. */
