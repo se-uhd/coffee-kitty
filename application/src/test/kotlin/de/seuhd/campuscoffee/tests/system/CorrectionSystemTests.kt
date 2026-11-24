@@ -5,7 +5,7 @@ import de.seuhd.campuscoffee.tests.ConsumptionRequests
 import de.seuhd.campuscoffee.tests.CorrectionJson
 import de.seuhd.campuscoffee.tests.SystemTestUtils.ADMIN_LOGIN_NAME
 import de.seuhd.campuscoffee.tests.SystemTestUtils.AUTHENTICATION_CHALLENGE
-import de.seuhd.campuscoffee.tests.utc
+import de.seuhd.campuscoffee.tests.parseUtc
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.BeforeEach
@@ -19,14 +19,14 @@ import java.util.UUID
 
 /**
  * System tests for correcting a coffee count and for listing the corrections (FR-8). The tests send their requests
- * through [ConsumptionRequests]. Before each test, the fixture user `maxmustermann` adds three coffees. The acting user
+ * through [ConsumptionRequests]. Before each test, the user fixture `maxmustermann` adds three coffees. The acting user
  * of the requests of FR-8 is the admin `jane_doe`, unless a test sets another acting user or leaves the header
  * `X-Acting-User` out.
  */
 class CorrectionSystemTests : AbstractSystemTest() {
     private val note = "Double tap on 16.11."
 
-    private fun userId(): UUID = fixtureUser(USER_LOGIN_NAME).persistedId
+    private fun userId(): UUID = userFixture(USER_LOGIN_NAME).persistedId
 
     @BeforeEach
     fun addThreeCoffees() {
@@ -203,7 +203,7 @@ class CorrectionSystemTests : AbstractSystemTest() {
         assertThat(corrections.map { Triple(it.countBefore, it.countAfter, it.note) })
             .containsExactly(Triple(1, 2, "One coffee too many removed"), Triple(3, 1, note))
         assertThat(corrections.map { it.adminLoginName }).containsOnly(ADMIN_LOGIN_NAME)
-        assertThat(utc(corrections.first().createdAt))
+        assertThat(parseUtc(corrections.first().createdAt))
             .isCloseTo(LocalDateTime.now(ZoneOffset.UTC), within(1, ChronoUnit.MINUTES))
     }
 
@@ -250,7 +250,7 @@ class CorrectionSystemTests : AbstractSystemTest() {
     }
 
     private companion object {
-        /** The login name of the fixture user without the role ADMIN whose coffee count the tests correct. */
+        /** The login name of the user fixture without the role ADMIN whose coffee count the tests correct. */
         const val USER_LOGIN_NAME = "maxmustermann"
     }
 }

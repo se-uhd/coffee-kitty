@@ -6,8 +6,8 @@ import de.seuhd.campuscoffee.tests.Response
 import de.seuhd.campuscoffee.tests.SystemTestUtils.ACTING_USER_HEADER
 import de.seuhd.campuscoffee.tests.SystemTestUtils.ADMIN_LOGIN_NAME
 import de.seuhd.campuscoffee.tests.UserRequests
+import de.seuhd.campuscoffee.tests.parseUtc
 import de.seuhd.campuscoffee.tests.toResponse
-import de.seuhd.campuscoffee.tests.utc
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
@@ -47,7 +47,7 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
         assertThat(error.statusCode).isEqualTo(404)
         assertThat(error.statusMessage).isEqualTo("Not Found")
         assertThat(error.path).isEqualTo("/api/users/00000000-0000-0000-0000-000000000001")
-        assertThat(utc(error.timestamp)).isCloseTo(LocalDateTime.now(ZoneOffset.UTC), byLessThanOneMinute)
+        assertThat(parseUtc(error.timestamp)).isCloseTo(LocalDateTime.now(ZoneOffset.UTC), byLessThanOneMinute)
     }
 
     @Test
@@ -68,7 +68,7 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
 
     @Test
     fun `posting a text as the delta returns 400 Bad Request without the text in the message`() {
-        val userId = fixtureUser("maxmustermann").persistedId
+        val userId = userFixture("maxmustermann").persistedId
 
         val response = consumptionRequests.applyDelta(userId, mapOf("delta" to "one coffee"))
 

@@ -16,7 +16,7 @@ import org.springframework.test.context.TestPropertySource
 class UndoWithoutGracePeriodSystemTests : AbstractSystemTest() {
     @Test
     fun `undoing a coffee with a grace period of zero returns 409 Conflict`() {
-        val userId = fixtureUser("maxmustermann").persistedId
+        val userId = userFixture("maxmustermann").persistedId
         consumptionRequests.addCoffee(userId).requireStatus(200)
 
         val response = consumptionRequests.undo(userId)

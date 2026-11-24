@@ -39,7 +39,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   most recent coffee or null. `undoable` is true exactly when `POST` to the same path would undo a coffee at that time.
   `GracePeriod.closesAt` returns the end of a grace period, and `ConsumptionRequests.retrieveUndoStatus` sends the
   request for the system tests. GLOSSARY.md defines the term undo status.
-- `TestFixtures` has test fixtures beyond the fixture users. `admin()` and `regularUser()` return one fixture user each,
+- `TestFixtures` has test fixtures beyond the user fixtures. `admin()` and `regularUser()` return one user fixture each,
   and `FIXED_TIME` and `fixedClock()` set the time of a test. `consumptionWithoutCoffee`, `consumptionWithRecentCoffee`,
   and `consumptionWithOldCoffee` return consumptions in three states. GLOSSARY.md defines the term test fixture.
 - Unit tests of the domain: `ConsumptionPropertiesTest`, `IdentifiableTest`, and `DomainExceptionsTest`.
@@ -87,14 +87,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   misspelled field.
 - `POST /api/users` reads the new `CreateUserDto`, and `UserDto` is only the response body. The OpenAPI definition marks
   every field of a response body as required. Until now, it marked none. `Dto` and `DtoMapper` no longer exist.
-- The production jar contains neither the fixture users nor code that deletes data. `TestFixtures` is in the test
+- The production jar contains neither the user fixtures nor code that deletes data. `TestFixtures` is in the test
   fixtures of the domain module (`src/testFixtures`), and the new `DatabaseCleaner` in the test fixtures of the data
   module replaces `DataResetService`. `DatabaseCleaner` truncates every table that the PostgreSQL catalog lists,
   including `expenses`, `user_balance`, and `kitty_balance`, which the data reset left out. `CrudDataService.clear`,
   `FixtureStartupLoader`, `FixturesProperties`, and the keys `campus-coffee.fixtures.load-on-startup` and
   `campus-coffee.fixtures.reset-on-startup` no longer exist.
-- `gradle :application:bootTestRun` starts the app with the fixture users (the dev application). Until now,
-  `gradle :application:bootRun --args='--spring.profiles.active=dev'` started the app with the fixture users. This
+- `gradle :application:bootTestRun` starts the app with the user fixtures (the dev application). Until now,
+  `gradle :application:bootRun --args='--spring.profiles.active=dev'` started the app with the user fixtures. This
   command now starts the app on the data of the previous run.
 - A data adapter throws the new `DataConstraintException` of the domain module for a violated CHECK constraint and for
   a deletion that a foreign key prevents, instead of Spring's `DataIntegrityViolationException`. The client still gets
@@ -103,6 +103,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `SecurityConfig` reads the routes that need an acting user from the controller functions with the new annotation
   `ActingUserRequired` instead of a list of paths.
 - The unit tests of the api module are in `api/src/test`.
+- The messages of three errors have new wording: "The coffee count must not be negative.", "The coffee count must not
+  exceed 1000000.", and "The grace period of the most recent coffee has passed." The message for an invalid first or
+  last name states the rules in parallel form. In the OpenAPI definition, the description of the path parameter
+  `userId` is "The id of the user.", and the summary of `GET /users/{userId}/consumption/undo` uses the term undo
+  status.
+- The data adapters are in the package `data.implementation`, as the domain services are in `domain.implementation`.
+  Until now, the package was `data.implementations`.
+- GLOSSARY.md calls a user of `TestFixtures` a user fixture instead of a fixture user, and the code and the
+  documentation use this term.
 - The tests check observable behavior, such as a status, an error code, an exception type, or the stored state. They no
   longer check implementation details, such as the wording of a message, an annotation, or a call between domain
   classes. Tests that only repeated another test no longer exist.

@@ -55,7 +55,7 @@ class ConsumptionController(
     @Operation(summary = "Get a user's coffee count.")
     @GetMapping("")
     fun get(
-        @Parameter(description = "Unique identifier of the user.", required = true)
+        @Parameter(description = "The id of the user.", required = true)
         @PathVariable userId: UUID
     ): ResponseEntity<ConsumptionDto> =
         ResponseEntity.ok(consumptionDtoMapper.toDto(coffeeConsumptionService.getByUserId(userId)))
@@ -70,8 +70,8 @@ class ConsumptionController(
      */
     @Operation(summary = "Add a coffee to a user's coffee count (a delta of +1).")
     @PostMapping("")
-    fun change(
-        @Parameter(description = "Unique identifier of the user.", required = true)
+    fun applyDelta(
+        @Parameter(description = "The id of the user.", required = true)
         @PathVariable userId: UUID,
         @ApiRequestBody(description = "The delta to apply, which must be +1.", required = true)
         @RequestBody
@@ -88,10 +88,10 @@ class ConsumptionController(
      *
      * @param userId the id of the user
      */
-    @Operation(summary = "Undo the user's most recent coffee within the grace period after adding it.")
+    @Operation(summary = "Undo the most recent coffee of a user within its grace period.")
     @PostMapping("/undo")
     fun undo(
-        @Parameter(description = "Unique identifier of the user.", required = true)
+        @Parameter(description = "The id of the user.", required = true)
         @PathVariable userId: UUID
     ): ResponseEntity<ConsumptionDto> =
         ResponseEntity.ok(consumptionDtoMapper.toDto(coffeeConsumptionService.undo(userId)))
@@ -103,10 +103,10 @@ class ConsumptionController(
      *
      * @param userId the id of the user
      */
-    @Operation(summary = "Get whether the user can undo their most recent coffee, and until when.")
+    @Operation(summary = "Get the undo status of a user.")
     @GetMapping("/undo")
     fun undoStatus(
-        @Parameter(description = "Unique identifier of the user.", required = true)
+        @Parameter(description = "The id of the user.", required = true)
         @PathVariable userId: UUID
     ): ResponseEntity<UndoStatusDto> {
         val undoableUntil = coffeeConsumptionService.undoableUntil(userId)
@@ -127,13 +127,13 @@ class ConsumptionController(
     @Parameter(
         `in` = ParameterIn.HEADER,
         name = CurrentUserProvider.ACTING_USER_HEADER,
-        description = "Login name of the acting user, who has to be an admin.",
+        description = "The login name of the acting user, who has to be an admin.",
         required = true
     )
     @ActingUserRequired
     @PutMapping("")
     fun correctCount(
-        @Parameter(description = "Unique identifier of the user.", required = true)
+        @Parameter(description = "The id of the user.", required = true)
         @PathVariable userId: UUID,
         @ApiRequestBody(
             description = "The corrected coffee count, from 0 to 1,000,000, and a note with the reason.",
@@ -162,13 +162,13 @@ class ConsumptionController(
     @Parameter(
         `in` = ParameterIn.HEADER,
         name = CurrentUserProvider.ACTING_USER_HEADER,
-        description = "Login name of the acting user, who has to be an admin.",
+        description = "The login name of the acting user, who has to be an admin.",
         required = true
     )
     @ActingUserRequired
     @GetMapping("/corrections")
     fun getCorrections(
-        @Parameter(description = "Unique identifier of the user.", required = true)
+        @Parameter(description = "The id of the user.", required = true)
         @PathVariable userId: UUID
     ): ResponseEntity<List<CountCorrectionDto>> {
         val corrections = coffeeConsumptionService.getCorrections(userId, currentUserProvider.currentUser())

@@ -138,13 +138,13 @@ with a line "Avoid:", which lists words not to use for the concept.
   role `ADMIN`. Otherwise, it creates the configured user.
   Code: `BootstrapAdminLoader`, `BootstrapAdminProperties`, `StartupDataInitializer`,
   `UserInternalService.createInitialAdmin`.
-- **fixture user**: One of the five users in `TestFixtures`, such as `jane_doe`, the only admin among them. The dev
+- **user fixture**: One of the five users in `TestFixtures`, such as `jane_doe`, the only admin among them. The dev
   application creates these users with a coffee count of zero on every start, and the system and acceptance tests
   create them the same way before each test.
-  Code: `TestFixtures`, `DevDataSeeder`.
+  Code: `TestFixtures`, `DevFixtureLoader`.
   Avoid: seeded user.
 - **test fixture**: A test object with fixed values that several tests share, or the state that a test prepares before
-  it runs the code under test. `TestFixtures` holds the shared test objects: the fixture users, a fixed time with a
+  it runs the code under test. `TestFixtures` holds the shared test objects: the user fixtures, a fixed time with a
   clock that shows it, and three consumptions. One consumption has no coffee, one has a recent coffee, and one has an
   old coffee. At the fixed time, the grace period of the old coffee has passed. A function with `@BeforeEach` prepares
   the state that each test of a class needs, such as a stored user. `TestFixtures` and the database cleaner are in the
@@ -210,12 +210,15 @@ with a line "Avoid:", which lists words not to use for the concept.
   the data.
   Code: `DatabaseCleaner.clean`.
   Avoid: data reset.
-- **dev application**: The app in the dev profile with the fixture users, which `gradle :application:bootTestRun`
-  starts. On every start, it runs the database cleaner and creates the fixture users through
+- **dev application**: The app in the dev profile with the user fixtures, which `gradle :application:bootTestRun`
+  starts. On every start, it runs the database cleaner and creates the user fixtures through
   `UserInternalService.create` before it serves requests. Its `main` function is in the test sources of the application
   module, because it uses the test fixtures.
-  Code: `DevApplication.kt`, `DevDataConfiguration`, `DevDataSeeder`.
-  Avoid: fixture loader, startup loader.
+  Code: `DevApplication.kt`, `DevDataConfiguration`.
+- **fixture loader**: The component of the dev application that runs the database cleaner and creates the user fixtures
+  on every start.
+  Code: `DevFixtureLoader`.
+  Avoid: seeder, startup loader.
 - **dev profile**: The Spring profile `dev` for running the app locally. In this profile, the app serves the API and
   Swagger UI on port 8081 and connects to PostgreSQL on port 5433. The dev application runs in this profile. The tests
   run without it.

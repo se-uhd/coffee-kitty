@@ -22,7 +22,7 @@ import javax.sql.DataSource
  * The Spring context and the hook for every acceptance scenario. Cucumber accepts only one class with
  * [CucumberContextConfiguration], and the step classes therefore contain only step definitions. The Spring context uses
  * the same PostgreSQL container as the system tests. Before each scenario, [beforeEach] deletes the rows of every table
- * with the [DatabaseCleaner] and creates the fixture users at a coffee count of zero. The nested
+ * with the [DatabaseCleaner] and creates the user fixtures at a coffee count of zero. The nested
  * [ScenarioConfiguration] adds the [SettableClock], which the step definitions set to the times in the scenarios, and
  * the [ConsumptionRequests], through which they send their requests.
  */

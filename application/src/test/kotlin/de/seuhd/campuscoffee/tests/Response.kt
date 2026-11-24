@@ -41,7 +41,7 @@ class Response<T : Any>(
 
 /**
  * Reads the status code, the headers, and the body of this response into a [Response]. For a status of 2xx, the
- * function parses the body as [T], and for any other status as an [ErrorJson]. It parses with [STRICT_JSON], so a body
+ * function parses the body as [T], and for any other status as an [ErrorJson]. It parses with [STRICT_JSON_MAPPER], so a body
  * with other fields than the target class fails the test.
  */
 inline fun <reified T : Any> RestTestClient.ResponseSpec.toResponse(): Response<T> {
@@ -51,7 +51,7 @@ inline fun <reified T : Any> RestTestClient.ResponseSpec.toResponse(): Response<
     return Response(
         status = result.status.value(),
         headers = result.responseHeaders,
-        successBody = if (successful) bytes?.let { STRICT_JSON.readValue(it, jacksonTypeRef<T>()) } else null,
-        errorBody = if (successful) null else bytes?.let { STRICT_JSON.readValue(it, ErrorJson::class.java) }
+        successBody = if (successful) bytes?.let { STRICT_JSON_MAPPER.readValue(it, jacksonTypeRef<T>()) } else null,
+        errorBody = if (successful) null else bytes?.let { STRICT_JSON_MAPPER.readValue(it, ErrorJson::class.java) }
     )
 }

@@ -34,7 +34,7 @@ class FailureSystemTests : AbstractSystemTest() {
         val response = userRequests.create(newUser)
 
         assertThat(response.status).isEqualTo(500)
-        assertThat(userService.getAll()).hasSize(fixtureUsers.size)
+        assertThat(userService.getAll()).hasSize(userFixtures.size)
     }
 
     @Test

@@ -14,7 +14,7 @@ import java.util.UUID
 
 /**
  * Domain implementation of [UserService] and [UserInternalService]. [create] checks the values of every new user,
- * including the fixture users and the bootstrap admin, which no request creates. [create] stores the user and the
+ * including the user fixtures and the bootstrap admin, which no request creates. [create] stores the user and the
  * user's consumption in one transaction. If [create] cannot store the consumption, the rollback removes the user too.
  */
 @Service
@@ -118,8 +118,8 @@ class UserServiceImpl(
     ) {
         if (name.isBlank() || name.length > User.MAX_NAME_LENGTH || name.any { it.isISOControl() }) {
             throw ValidationException(
-                "A $field must have 1 to ${User.MAX_NAME_LENGTH} characters, not only spaces, and no control " +
-                    "characters."
+                "A $field must have 1 to ${User.MAX_NAME_LENGTH} characters, must not be blank, and must not contain " +
+                    "a control character."
             )
         }
     }

@@ -9,8 +9,8 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 /**
- * The test fixtures, that is, the test objects with fixed values that the tests share. They are the five fixture users,
- * the fixed time [FIXED_TIME] with a clock that shows it, and consumptions in three states. Only the fixture user
+ * The test fixtures, that is, the test objects with fixed values that the tests share. They are the five user fixtures,
+ * the fixed time [FIXED_TIME] with a clock that shows it, and consumptions in three states. Only the user fixture
  * `jane_doe` is an admin. The tests of every module use these objects, and the dev application creates the fixture
  * users on every start. `TestFixtures` is in the source set `src/testFixtures` of the domain module. The other modules
  * add it to their test classpath, and the production jar does not contain it.
@@ -58,20 +58,20 @@ object TestFixtures {
             )
         )
 
-    /** Returns the fixture users, which have no ids or timestamps because they are not stored. */
+    /** Returns the user fixtures, which have no ids or timestamps because they are not stored. */
     fun getUserFixtures(): List<User> = USER_LIST
 
-    /** Returns the fixture user who is an admin, `jane_doe`. The coffee app of SE@UHD has a function with this name. */
+    /** Returns the user fixture who is an admin, `jane_doe`. The coffee app of SE@UHD has a function with this name. */
     fun admin(): User = getUserFixtures().first { it.role == Role.ADMIN }
 
     /**
-     * Returns a fixture user who is not an admin, `maxmustermann`. The coffee app of SE@UHD has a function with this
+     * Returns a user fixture who is not an admin, `maxmustermann`. The coffee app of SE@UHD has a function with this
      * name.
      */
     fun regularUser(): User = getUserFixtures().first { it.role == Role.USER }
 
     /**
-     * Creates the fixture users through [userInternalService] and returns the stored users. Each user gets a
+     * Creates the user fixtures through [userInternalService] and returns the stored users. Each user gets a
      * consumption with a coffee count of zero.
      *
      * @param userInternalService the port that creates the users without an acting user
@@ -90,7 +90,7 @@ object TestFixtures {
 
     /**
      * Returns the consumption of [user] without a coffee, as `UserService.create` stores it for a new user. Like the
-     * fixture users, the three consumptions have no ids or timestamps, because they are not stored.
+     * user fixtures, the three consumptions have no ids or timestamps, because they are not stored.
      *
      * @param user the user of the consumption
      */

@@ -57,7 +57,7 @@ class ArchitectureTests {
     fun `the production packages have no cycles`() {
         // Fails on a cycle between production packages, inside a module or across modules. Each package is a slice of
         // its own. With one slice per module, the rule would miss a cycle inside a module, such as a cycle between
-        // data.implementations and data.mapper. The rule leaves out the test classes, because it checks the structure
+        // data.implementation and data.mapper. The rule leaves out the test classes, because it checks the structure
         // of the production code. RootInclusiveSliceAssignment includes the classes of the root package, such as
         // Application and BootstrapAdminLoader.
         slices()

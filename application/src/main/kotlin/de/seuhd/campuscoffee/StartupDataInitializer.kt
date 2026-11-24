@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component
  * has migrated the schema and before the embedded web server accepts requests. The coffee app of SE@UHD has a class
  * with the same name.
  *
- * The production code creates no fixture users and deletes no data. The dev application in the test sources of this
- * module does both before it serves requests (see `DevDataSeeder`).
+ * The production code creates no user fixtures and deletes no data. The dev application in the test sources of this
+ * module does both before it serves requests (see `DevFixtureLoader`).
  *
  * @param bootstrapAdminLoader the bootstrap admin loader
  */
