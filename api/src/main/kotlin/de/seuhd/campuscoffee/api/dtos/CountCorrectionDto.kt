@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 /**
  * One correction in the response of `GET /api/users/{userId}/consumption/corrections`: The admin with
  * [adminLoginName] set the coffee count from [countBefore] to [countAfter] and explained the correction in [note]. The
- * class does not implement [Dto], because no endpoint reads or changes a single correction by id.
+ * class has no id, because no endpoint reads a single correction by id.
  */
 data class CountCorrectionDto(
     @field:Schema(description = "The coffee count before the correction.")

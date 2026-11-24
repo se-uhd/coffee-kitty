@@ -11,7 +11,6 @@ import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.NullAndEmptySource
 import org.junit.jupiter.params.provider.ValueSource
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -101,7 +100,7 @@ class CorrectionSystemTests : AbstractSystemTest() {
         val response = consumptionRequests.correctCount(userId(), -1, note)
 
         assertThat(response.status).isEqualTo(400)
-        assertThat(response.error.errorCode).isEqualTo("BadRequest")
+        assertThat(response.error.errorCode).isEqualTo("ValidationException")
         assertThat(count()).isEqualTo(3)
     }
 
@@ -121,7 +120,7 @@ class CorrectionSystemTests : AbstractSystemTest() {
             consumptionRequests.correctCount(userId(), 1_000_001, note)
 
         assertThat(response.status).isEqualTo(400)
-        assertThat(response.error.errorCode).isEqualTo("BadRequest")
+        assertThat(response.error.errorCode).isEqualTo("ValidationException")
         assertThat(count()).isEqualTo(3)
     }
 
@@ -134,14 +133,23 @@ class CorrectionSystemTests : AbstractSystemTest() {
         assertThat(count()).isEqualTo(3)
     }
 
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = ["   "])
-    fun `correcting a coffee count without a note or with a blank note returns 400 Bad Request`(blankNote: String?) {
-        val response = consumptionRequests.correctCount(userId(), 1, blankNote)
+    @Test
+    fun `correcting a coffee count without a note returns 400 Bad Request with the error code BadRequest`() {
+        val response = consumptionRequests.correctCount(userId(), mapOf("total" to 1))
 
         assertThat(response.status).isEqualTo(400)
         assertThat(response.error.errorCode).isEqualTo("BadRequest")
+        assertThat(count()).isEqualTo(3)
+        assertThat(corrections()).isEmpty()
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["", "   "])
+    fun `correcting a coffee count with a blank note returns 400 Bad Request`(blankNote: String) {
+        val response = consumptionRequests.correctCount(userId(), 1, blankNote)
+
+        assertThat(response.status).isEqualTo(400)
+        assertThat(response.error.errorCode).isEqualTo("ValidationException")
         assertThat(count()).isEqualTo(3)
         assertThat(corrections()).isEmpty()
     }
@@ -162,7 +170,7 @@ class CorrectionSystemTests : AbstractSystemTest() {
             consumptionRequests.correctCount(userId(), 1, "a".repeat(501))
 
         assertThat(response.status).isEqualTo(400)
-        assertThat(response.error.errorCode).isEqualTo("BadRequest")
+        assertThat(response.error.errorCode).isEqualTo("ValidationException")
         assertThat(count()).isEqualTo(3)
     }
 

@@ -1,9 +1,9 @@
 package de.seuhd.campuscoffee.api.controller
 
+import de.seuhd.campuscoffee.api.dtos.CreateUserDto
 import de.seuhd.campuscoffee.api.dtos.UserDto
 import de.seuhd.campuscoffee.api.mapper.UserDtoMapper
 import de.seuhd.campuscoffee.api.security.CurrentUserProvider
-import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import de.seuhd.campuscoffee.domain.model.persistedId
 import de.seuhd.campuscoffee.domain.ports.api.UserService
 import io.swagger.v3.oas.annotations.Operation
@@ -45,7 +45,7 @@ class UserController(
     @Operation(summary = "Get all users.")
     @GetMapping("")
     fun getAll(): ResponseEntity<List<UserDto>> =
-        ResponseEntity.ok(userService.getAll().map { userDtoMapper.fromDomain(it) })
+        ResponseEntity.ok(userService.getAll().map { userDtoMapper.toDto(it) })
 
     /**
      * Returns the user with [id].
@@ -57,7 +57,7 @@ class UserController(
     fun getById(
         @Parameter(description = "Unique identifier of the user to retrieve.", required = true)
         @PathVariable id: UUID
-    ): ResponseEntity<UserDto> = ResponseEntity.ok(userDtoMapper.fromDomain(userService.getById(id)))
+    ): ResponseEntity<UserDto> = ResponseEntity.ok(userDtoMapper.toDto(userService.getById(id)))
 
     /**
      * Creates a user and returns 201 Created with the URL of the new user in the `Location` header. In the same
@@ -69,8 +69,7 @@ class UserController(
      * `ResponseEntity.created` sets the status of the response. springdoc reads `@ResponseStatus` and documents the
      * status 201 instead of 200 in the OpenAPI definition.
      *
-     * @param dto the user to create, without an id
-     * @throws ValidationException if the body contains an id
+     * @param dto the fields of the user to create
      */
     @Operation(summary = "Create a user (admin).")
     @Parameter(
@@ -82,16 +81,12 @@ class UserController(
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("")
     fun create(
-        @ApiRequestBody(description = "The user to create, without an ID.", required = true)
+        @ApiRequestBody(description = "The fields of the user to create.", required = true)
         @RequestBody
-        @Valid dto: UserDto
+        @Valid dto: CreateUserDto
     ): ResponseEntity<UserDto> {
-        val actingUser = currentUserProvider.currentUser()
-        if (dto.id != null) {
-            throw ValidationException("ID must not be set when creating a user.")
-        }
-        val created = userService.create(userDtoMapper.toDomain(dto), actingUser)
-        return ResponseEntity.created(locationOf(created.persistedId)).body(userDtoMapper.fromDomain(created))
+        val created = userService.create(userDtoMapper.toDomain(dto), currentUserProvider.currentUser())
+        return ResponseEntity.created(locationOf(created.persistedId)).body(userDtoMapper.toDto(created))
     }
 
     /**

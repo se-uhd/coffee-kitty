@@ -6,9 +6,9 @@ import java.util.UUID
 /**
  * Domain model of a person whose coffees the app counts. Instances are immutable. The constants in the companion
  * object are the limits for a new user. `UserServiceImpl.create` checks these limits for every new user, including
- * the fixture users. It also refuses a blank name and a name with a control character. Bean Validation on `UserDto`
- * checks the same limits before a request reaches the domain, but it checks the email address with `@Email` instead
- * of [EMAIL_ADDRESS_PATTERN].
+ * the fixture users and the bootstrap admin. It also refuses a blank name and a name with a control character. The api
+ * module checks only that a request contains every field. `CreateUserDto` repeats the limits in `@Schema` annotations
+ * to document them in the OpenAPI definition.
  *
  * The data module assigns [id], [createdAt], and [updatedAt]. They are null on a user that is not stored yet. [role]
  * determines which actions the user may perform, and it is [Role.USER] by default.
@@ -36,18 +36,10 @@ data class User(
 
         /**
          * The regular expression that a whole email address must match. The address needs exactly one at sign, at
-         * least one character on each side of the at sign, and no whitespace. The `@Email` check on `UserDto`
-         * refuses some addresses that this pattern accepts, such as `a,b@se.de` and `a..b@se.de`. Conversely, it
-         * accepts a quoted local part such as `"jane doe"@se.de`, which this pattern refuses.
+         * least one character on each side of the at sign, and no whitespace. An address that matches has therefore at
+         * least three characters, which the check constraint on `users.email_address` requires as well.
          */
         const val EMAIL_ADDRESS_PATTERN = "[^@\\s]+@[^@\\s]+"
-
-        /**
-         * The minimum length of an email address, which the check constraint on `users.email_address` requires.
-         * `UserDto` checks this length with `@Size`, because `@Email` accepts an empty string. The domain does not
-         * check the length, because every address that matches [EMAIL_ADDRESS_PATTERN] has at least three characters.
-         */
-        const val MIN_EMAIL_LENGTH = 3
 
         /** The maximum length of an email address. The column `users.email_address` has the same width. */
         const val MAX_EMAIL_LENGTH = 254
