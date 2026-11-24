@@ -20,7 +20,8 @@ import java.util.UUID
  * clash. Kotlin code still writes `entity.id`. Because `getId()` overrides a getter of the Java interface
  * [Persistable], Kotlin treats `getId()` and `setId()` as the property `id`.
  *
- * [Entity] extends this class with timestamps, and every JPA entity extends [Entity].
+ * [Entity] extends this class with timestamps, and every JPA entity except [UserBalanceEntity] and [KittyBalanceEntity]
+ * extends [Entity].
  */
 @MappedSuperclass
 abstract class PersistableEntity : Persistable<UUID> {
