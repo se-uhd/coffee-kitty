@@ -311,6 +311,15 @@ class CoffeeConsumptionServiceTest {
     }
 
     @Test
+    fun `getCorrections returns the corrections of the user for an admin`() {
+        val correction = CountCorrection(user = user, admin = admin, countBefore = 3, countAfter = 1, note = note)
+        whenever(dataService.getByUserId(userId)).thenReturn(consumption(1))
+        whenever(correctionDataService.getAllByUserId(userId)).thenReturn(listOf(correction))
+
+        assertThat(service.getCorrections(userId, admin)).containsExactly(correction)
+    }
+
+    @Test
     fun `getCorrections throws ForbiddenException for a user who is not an admin`() {
         assertThrows<ForbiddenException> { service.getCorrections(userId, user) }
     }

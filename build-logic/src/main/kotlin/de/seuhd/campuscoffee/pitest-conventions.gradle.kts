@@ -5,7 +5,12 @@ import org.gradle.api.artifacts.VersionCatalogsExtension
 
 // PIT changes the code of a module, e.g., it negates a condition, and runs the tests of the module against each changed
 // version (mutant). Only the domain module applies this plugin, because its unit tests run without Spring and
-// PostgreSQL. `check` does not run the `pitest` task. The report is in build/reports/pitest/.
+// PostgreSQL. `check` does not run the `pitest` task, and CI runs it in a step of its own. The report is in
+// build/reports/pitest/.
+//
+// PIT changes only the classes in domain/.../implementation/, which hold the business logic. The unit tests of the
+// domain module must detect the mutants of these classes. The models are data classes without logic, and the system
+// tests of the application module execute them.
 plugins {
     id("info.solidsoft.pitest")
 }
@@ -19,9 +24,18 @@ configure<PitestPluginExtension> {
     outputFormats.set(listOf("HTML", "XML"))
     timestampedReports.set(false)
     failWhenNoMutations.set(false)
-    // The task fails when the tests detect fewer than 85% of the mutants that they execute. The share of all mutants
-    // would also count the code that only the system tests execute. Raise the value as the tests improve.
-    testStrengthThreshold.set(85)
+    targetClasses.set(listOf("de.seuhd.campuscoffee.domain.implementation.*"))
+    // The task fails when the tests detect fewer than 90% of all mutants (mutationThreshold). This share also counts
+    // the mutants in code that no unit test executes, so a domain function without a unit test lowers it. The test
+    // strength counts only the mutants that a test executes and cannot detect such a function. The mutants that survive
+    // today are null checks that the Kotlin compiler generates and that no test can make fail. Raise both values as
+    // the tests improve.
+    // Until 2026-12-08, PIT leaves out the two domain functions of the undo status (FR-9). Their tests are the
+    // reference solution of assignment 7, which the repository does not contain before that date. Delete this line
+    // when the tests are on the main branch.
+    excludedMethods.set(listOf("undoableUntil", "closesAt"))
+    mutationThreshold.set(90)
+    testStrengthThreshold.set(90)
     threads.set(1)
     timeoutConstInMillis.set(30_000)
     jvmArgs.set(listOf("-XX:+EnableDynamicAgentLoading", "-Xshare:off", "--sun-misc-unsafe-memory-access=allow"))
