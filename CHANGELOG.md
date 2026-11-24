@@ -49,15 +49,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Integration tests: `CoffeeConsumptionDataServiceIntegrationTest` checks that the database stores and deletes the
   times of the coffees and rejects a negative coffee count. `CrudDataServiceIntegrationTest` checks that
   `UserDataServiceImpl` returns the users ordered by login name and stores the role of a user.
-  `UserDataServiceIntegrationTest` checks that the database stores an email address of 3 or 254 characters and rejects
-  one of 2 or 255 characters.
 - System tests for an undo at a coffee count of zero and for an undo with a grace period of zero
   (`UndoWithoutGracePeriodSystemTests`). Further system tests check login names of 1, 255, and 256 characters, an email
   address with capital letters, and an admin whom another admin created. They also check the URL in the `Location`
   header of a new user and a text as the delta. `FailureSystemTests` checks that a request returns 500 and stores
   nothing when a data adapter throws an exception.
-- Tests of the undo status (FR-9): unit tests of `undoableUntil` and `GracePeriod.closesAt`, and system tests of
-  `GET /api/users/{userId}/consumption/undo`.
+- The undo status (FR-9) has no tests yet, because they are the reference solution of assignment 7. Until 2026-12-08,
+  the coverage gate and PIT leave out the functions `undoableUntil`, `GracePeriod.closesAt`, and
+  `ConsumptionController.undoStatus`.
 - `gradle build` creates a coverage report of all modules with JaCoCo. The build fails below 95% of the lines or 85% of
   the branches, and when the tests do not execute every function of a domain service or a controller.
 - `gradle :domain:pitest` runs mutation tests of the domain services with PIT and fails when the tests detect fewer

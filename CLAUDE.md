@@ -335,12 +335,11 @@ The tests are in these places:
   startup task in a Spring context with `application.yaml` and a mocked port.
 - Integration tests: the classes in `data/src/test/kotlin/`. `CrudDataServiceIntegrationTest` tests the base class and
   the data adapters of the users, the consumptions, and the corrections. `CoffeeConsumptionDataServiceIntegrationTest`
-  has further tests of the data adapter of the consumptions. `UserDataServiceIntegrationTest` tests the limits of the
-  database for the length of an email address. Each data adapter of Tables Without an Endpoint has a test class of its
-  own, such as `PaymentDataServiceIntegrationTest`. `ExpenseAndBalanceRepositoryIntegrationTest` tests the tables
-  without a data port through their repositories. The integration tests extend `AbstractDataIntegrationTest`, which runs
-  each test in the Spring context of `DataTestApplication` against PostgreSQL in Testcontainers and cleans the database
-  before each test (see Test Fixtures).
+  has further tests of the data adapter of the consumptions. Each data adapter of Tables Without an Endpoint has a test
+  class of its own, such as `PaymentDataServiceIntegrationTest`. `ExpenseAndBalanceRepositoryIntegrationTest` tests the
+  tables without a data port through their repositories. The integration tests extend `AbstractDataIntegrationTest`,
+  which runs each test in the Spring context of `DataTestApplication` against PostgreSQL in Testcontainers and cleans
+  the database before each test (see Test Fixtures).
 - System tests: the classes in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/system/`, such as
   `UserSystemTests`. They extend `AbstractSystemTest`, which creates a `UserRequests` and a `ConsumptionRequests` for
   the server port of its Spring context. These classes in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/`
@@ -418,6 +417,12 @@ rules (`coverage/build.gradle.kts`). The first rule fails the build when the tes
 minimums as the coverage grows, and never lower them to make a build pass. A ratio over all modules cannot detect a
 single function without a test, so the second rule requires that a test executes every function of a domain service and
 of a controller.
+
+Until 2026-12-08, both gates leave out the functions of the undo status (FR-9): `undoableUntil`, `GracePeriod.closesAt`,
+and `ConsumptionController.undoStatus`. Their tests are the reference solution of assignment 7, which students submit
+by that date, so the public repository does not contain them yet. On that date, add the tests and delete the exemptions
+in `coverage/build.gradle.kts` and `pitest-conventions.gradle.kts`. Never commit these tests to a pushed branch before
+that date.
 
 `gradle :domain:pitest` runs the mutation testing tool PIT on the classes in `domain/.../implementation/`. PIT changes
 the code, e.g., by negating a condition, and runs the unit tests of the domain module against each changed version
