@@ -13,8 +13,8 @@ Each coffee costs the same price. Users want to see what they owe.
 - The price per cup is 0.50 €, and the balance of maxmustermann is 2.00 €. After maxmustermann adds a coffee, the
   balance is 1.50 €.
 - With a balance of 0.00 €, a coffee lowers the balance to -0.50 €.
-- The price per cup changes from 0.50 € to 0.60 €. The change does not alter the balance of maxmustermann. A coffee
-  that maxmustermann adds after the change lowers the balance by 0.60 €.
+- The price per cup changes from 0.50 € to 0.60 €. The balance of maxmustermann stays the same. A coffee that
+  maxmustermann adds after the change lowers the balance by 0.60 €.
 - A coffee does not change the kitty balance.
 
 ## Verification Method

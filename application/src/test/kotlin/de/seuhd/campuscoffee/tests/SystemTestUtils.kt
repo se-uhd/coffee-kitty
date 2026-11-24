@@ -43,7 +43,9 @@ object SystemTestUtils {
         PostgreSQLContainer(DockerImageName.parse("postgres:18-alpine")).apply { start() }
     }
 
-    /** Points the Spring datasource at the shared PostgreSQL container. */
+    /**
+     * Configures the Spring datasource with the URL, the username, and the password of the shared PostgreSQL container.
+     */
     fun configurePostgresContainer(registry: DynamicPropertyRegistry) {
         registry.add("spring.datasource.url", postgresContainer::getJdbcUrl)
         registry.add("spring.datasource.username", postgresContainer::getUsername)

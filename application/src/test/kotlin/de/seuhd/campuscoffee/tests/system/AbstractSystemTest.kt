@@ -20,10 +20,10 @@ import org.springframework.test.web.servlet.client.RestTestClient
 import javax.sql.DataSource
 
 /**
- * Base class of the system tests. The Spring Boot test context uses the shared PostgreSQL container and serves the API
- * on a random port. Before each test, [beforeEach] deletes the rows of every table with the [DatabaseCleaner], creates
- * the fixture users at a coffee count of zero, and creates [userRequests] and [consumptionRequests] for the port of
- * this context.
+ * The base class of the system tests. The Spring Boot test context uses the shared PostgreSQL container and serves the
+ * API on a random port. Before each test, [beforeEach] deletes the rows of every table with the [DatabaseCleaner],
+ * creates the fixture users at a coffee count of zero, and creates [userRequests] and [consumptionRequests] for the
+ * port of this context.
  */
 @SpringBootTest(
     classes = [Application::class],

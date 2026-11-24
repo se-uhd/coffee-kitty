@@ -13,9 +13,9 @@ ktlint {
     version.set(libs.versions.ktlint.tool)
 }
 
-// The configuration `cpd` holds the command line of PMD. The `cpd` task runs its copy-paste detector (CPD) on the
-// Kotlin production code. CPD compares sequences of tokens and leaves out whitespace and comments. A duplicate of 70
-// tokens is a copy of about 10 to 13 lines.
+// The configuration `cpd` holds the command-line interface (CLI) of PMD. The `cpd` task runs the copy-paste detector
+// (CPD) of PMD on the Kotlin production code. CPD compares sequences of tokens and leaves out whitespace and comments.
+// A duplicate of 70 tokens is a copy of about 10 to 13 lines.
 val cpd =
     configurations.create("cpd") {
         isCanBeConsumed = false

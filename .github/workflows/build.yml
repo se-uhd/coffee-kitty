@@ -1,8 +1,8 @@
 name: Build Coffee Kitty
 
-# For a pull request, the workflow builds the merge of the pull request branch into the base branch. The
-# `pull_request` trigger has no branch filter, and the workflow also builds pull requests into branches other than
-# main. The `push` trigger builds changes that reach main without a pull request.
+# For a pull request, the workflow builds the merge of the pull request branch into the base branch. The `pull_request`
+# trigger has no branch filter, so the workflow also builds pull requests into branches other than main. The `push`
+# trigger builds changes that reach main without a pull request.
 on:
   push:
     branches: [ "main" ]

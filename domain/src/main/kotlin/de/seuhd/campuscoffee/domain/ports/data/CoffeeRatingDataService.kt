@@ -19,7 +19,7 @@ interface CoffeeRatingDataService : CrudDataService<CoffeeRating, UUID> {
 
     /**
      * Returns the ratings of the bean with [beanId], oldest first. The list is empty for a bean without ratings and for
-     * an unknown bean. It does not contain the ratings of a bean that was merged into this bean.
+     * an unknown bean. It does not contain the ratings of a bean that an admin merged into this bean.
      *
      * @param beanId the id of the rated bean
      */

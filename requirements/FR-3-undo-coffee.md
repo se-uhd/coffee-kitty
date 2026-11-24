@@ -8,16 +8,16 @@ count by one.
 ## Rationale
 
 Users sometimes add a coffee by mistake, for example with a double tap. Without an undo, they cannot lower their coffee
-count, and a wrong entry remains recorded. Assumption: 5 minutes are enough to notice a mistake.
+count, and a wrong coffee count remains recorded. Assumption: 5 minutes are enough to notice a mistake.
 
 ## Success Criteria
 
-- A coffee added at 10:00:00 and undone at 10:05:00 lowers the count from 3 to 2.
+- An undo at 10:05:00 of a coffee added at 10:00:00 lowers the count from 3 to 2.
 - An undo at 10:05:01 returns 409 Conflict, and the count stays 3.
 - With a coffee count of 0, an undo returns 409 Conflict, and the count stays 0.
-- With coffees added at 09:00:00, 09:00:00, and 10:00:00, an undo at 10:01:00 lowers the count from 3 to 2, and a
-  second undo at 10:02:00 returns 409 Conflict, because the coffee from 09:00:00 is outside its grace period. The count
-  stays 2.
+- With coffees added at 09:00:00, 09:00:00, and 10:00:00, an undo at 10:01:00 lowers the count from 3 to 2. A second
+  undo at 10:02:00 returns 409 Conflict, because the coffee from 09:00:00 is outside its grace period. The count stays
+  2.
 - With coffees added at 09:00:00, 09:00:00, 10:00:00, and 10:01:00, undos at 10:02:00 and 10:03:00 lower the count
   from 4 to 2.
 
@@ -29,7 +29,7 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
 ## Supporting Information
 
 - User requirement (parent): "If I tap twice by mistake, I want to fix it myself."
-- Changes the rule that the coffee count is never reduced (README.md and GLOSSARY.md of Coffee Kitty 0.1.0).
+- Changes the rule that nothing lowers the coffee count (README.md and GLOSSARY.md of Coffee Kitty 0.1.0).
 - FR-8, FR-9, and FR-11 depend on this requirement: FR-8 corrects a coffee count after the grace period, FR-9 reports
   whether an undo is possible, and FR-11 specifies the balance after an undo.
 - Verified by: consumption.feature, the Scenario Outline "Undo a coffee within the grace period" and the four scenarios

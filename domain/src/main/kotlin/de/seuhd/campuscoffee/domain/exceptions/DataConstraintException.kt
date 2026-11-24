@@ -2,8 +2,9 @@ package de.seuhd.campuscoffee.domain.exceptions
 
 /**
  * Thrown by a data port when the database refuses to store or to delete a domain object because of a constraint other
- * than a unique constraint. Examples are a CHECK constraint, such as a negative coffee count, and a foreign key that
- * prevents the deletion of a referenced row. A violated unique constraint causes a [DuplicationException] instead.
+ * than a unique constraint. Examples are a CHECK constraint, such as the constraint that rejects a negative coffee
+ * count, and a foreign key that prevents the deletion of a referenced row. A violated unique constraint causes a
+ * [DuplicationException] instead.
  *
  * The exception is not a [DomainException], because it reports a missing check in the domain and not an error of the
  * client. A domain service has to check a rule before it calls the data port, and the constraint of the database is

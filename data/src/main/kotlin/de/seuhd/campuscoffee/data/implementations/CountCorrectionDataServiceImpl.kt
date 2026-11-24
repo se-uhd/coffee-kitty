@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 /**
- * Data adapter that implements the [CountCorrectionDataService] port on the `count_corrections` table. The business
+ * Data adapter that implements the [CountCorrectionDataService] port on the table `count_corrections`. The business
  * rules, such as the check that only an admin corrects a coffee count, are in the domain services. The port offers only
  * [insert] and [getAllByUserId], because a stored correction never changes. The class still extends
  * [CrudDataServiceImpl], whose `upsert` stores the new row for [insert].

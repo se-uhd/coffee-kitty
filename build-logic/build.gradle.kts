@@ -14,8 +14,9 @@ dependencies {
     implementation(libs.pitest.gradle.plugin)
 }
 
-// Lint the convention plugins with the ktlint version of the subprojects. The root `check` task runs ktlintCheck of
-// build-logic. The filter excludes the accessors that Gradle generates under build/ for the precompiled script plugins.
+// Lint the convention plugins with the ktlint version of the subprojects. The root `check` task runs the ktlintCheck
+// task of build-logic. The filter excludes the accessors that Gradle generates under build/ for the precompiled script
+// plugins.
 ktlint {
     version.set(libs.versions.ktlint.tool)
     filter {

@@ -27,8 +27,8 @@ domain without a request.
 
 ## Considered Options
 
-* Bean Validation in the api module only. The domain trusts its callers. A user that no request creates is then not
-  checked.
+* Bean Validation in the api module only. The domain checks no value. No module then checks a user that no request
+  creates.
 * Both modules check every rule, with the same constants. Each rule exists twice, and the two error codes remain.
 * The api module checks the structure of a request, and the domain checks the values.
 
@@ -37,16 +37,16 @@ domain without a request.
 The api module checks the structure, and the domain checks the values (the third option). A request DTO has nullable
 properties with `@NotNull` and no other constraint. Jackson rejects a value of the wrong JSON type and a field that the
 DTO does not have. Such a request gets a 400 with the error code `BadRequest`. A domain service checks every rule for a
-value and throws a `ValidationException`, which becomes a 400 with the error code `ValidationException`. `UserDto` is
-split: `CreateUserDto` is the request body, and `UserDto` is the response body with non-null properties.
+value and throws a `ValidationException`, which becomes a 400 with the error code `ValidationException`. This decision
+splits `UserDto`: `CreateUserDto` is the request body, and `UserDto` is the response body with non-null properties.
 
 ## Consequences
 
 * Each rule has one place, and the two error codes of a 400 have distinct meanings.
-* Breaking: The error code of a 400 changes for the requests whose values the DTOs checked until now, and a body with an
-  unknown field, such as `id`, is rejected.
-* A request with several invalid values reports only the first one, because a domain service throws at the first
-  violation. Bean Validation reported all of them.
+* Breaking: The error code of a 400 changes for a request with a value that the DTOs checked until now. Jackson also
+  rejects a body with an unknown field, such as `id`.
+* The error response to a request with several invalid values reports only the first one, because a domain service
+  throws at the first violation. Bean Validation reported all of them.
 * The OpenAPI definition gets the limits from `@Schema` annotations on the request DTOs, which repeat the constants of
   the domain model for documentation only.
-* The controllers contain no rule, and a domain exception is thrown only in the domain.
+* The controllers contain no rule, and only the domain throws a domain exception.

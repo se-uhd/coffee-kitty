@@ -5,16 +5,15 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotNull
 
 /**
- * Request body of `PUT /api/users/{userId}/consumption`, with which an admin corrects the coffee count of a user to
+ * The request body of `PUT /api/users/{userId}/consumption`, with which an admin corrects the coffee count of a user to
  * [total] and explains the correction in [note] (FR-8). The coffee app of SE@UHD has a DTO with the same name and the
  * fields `total` and `note`, in which the note is optional.
- *
  * The class checks only the structure of the body. Bean Validation rejects a body without a [total] or without a
  * [note], and the request gets a 400 with the error code `BadRequest`. The domain checks the values in
- * `CoffeeConsumptionService.correctCount`: It rejects a [total] that is negative or above [CountCorrection.MAX_TOTAL]
- * and a [note] that is blank, longer than [CountCorrection.MAX_NOTE_LENGTH] characters, or contains the NUL character.
- * It throws a `ValidationException` (400). The `@Schema` annotations only document these limits in the OpenAPI
- * definition.
+ * `CoffeeConsumptionService.correctCount`. It rejects a [total] that is negative or above [CountCorrection.MAX_TOTAL]
+ * and a [note] that is blank, is longer than [CountCorrection.MAX_NOTE_LENGTH] characters, or contains the NUL
+ * character. It throws a `ValidationException` (400). The `@Schema` annotations only document these limits in the
+ * OpenAPI definition.
  */
 data class ConsumptionCorrectionDto(
     @field:NotNull

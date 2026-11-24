@@ -111,7 +111,7 @@ class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest()
 
     /**
      * Asserts that the database refuses to store each of [expenses], each under a new id. The function checks every
-     * expense and reports each one that the database stored by its description.
+     * expense and reports the description of each expense that the database stored.
      *
      * @param expenses the expenses, each with a description for the failure message
      */

@@ -14,10 +14,9 @@ import java.util.UUID
  * Data treats an entity with an id as stored, and `repository.save()` calls `merge`, which first runs a SELECT for the
  * row. This class implements [Persistable], and [isNew] returns true until JPA loads or inserts the row. `save()`
  * therefore inserts a new entity without the SELECT.
- *
  * The private field `entityId` holds the id, and the functions `getId()` and `setId()` read and write it. A Kotlin
  * property named `id` would generate a second `getId()` next to the override of [Persistable.getId], and the two would
- * clash. Kotlin code still writes `entity.id`. Because `getId()` overrides a getter of the Java interface
+ * clash. Kotlin code still accesses the id as `entity.id`. Because `getId()` overrides a getter of the Java interface
  * [Persistable], Kotlin treats `getId()` and `setId()` as the property `id`.
  *
  * [Entity] extends this class with timestamps, and every JPA entity except [UserBalanceEntity] and [KittyBalanceEntity]
@@ -35,7 +34,7 @@ abstract class PersistableEntity : Persistable<UUID> {
     override fun getId(): UUID? = entityId
 
     /**
-     * Sets the id. Kotlin code writes `entity.id = value` to call this function.
+     * Sets the id. In Kotlin code, the assignment `entity.id = value` calls this function.
      *
      * @param value the new id
      */

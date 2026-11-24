@@ -28,8 +28,8 @@ class BootstrapAdminLoader(
      * Creates the bootstrap admin unless the configuration has no login name or an admin already exists.
      *
      * @throws IllegalArgumentException if the configuration is incomplete or if the domain refuses the configured user.
-     *   The configuration is incomplete if it has an email address but no login name, or a login name but no email
-     *   address, first name, or last name.
+     *   The configuration is incomplete if it has an email address but no login name. It is also incomplete if it has a
+     *   login name and the email address, the first name, or the last name is missing.
      */
     fun createBootstrapAdmin() {
         val properties = bootstrapAdminProperties

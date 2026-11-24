@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 /**
- * Configuration of the OpenAPI definition. `@OpenAPIDefinition` sets the title and the description of the API, and
+ * The configuration of the OpenAPI definition. `@OpenAPIDefinition` sets the title and the description of the API, and
  * [apiVersionCustomizer] sets the version at runtime from the build.
  */
 @Configuration

@@ -8,7 +8,7 @@ import tools.jackson.databind.cfg.CoercionInputShape
 import tools.jackson.databind.type.LogicalType
 
 /**
- * Configuration of the JSON mapper with which Spring MVC reads the request bodies. `application.yaml` holds the
+ * The configuration of the JSON mapper with which Spring MVC reads the request bodies. `application.yaml` holds the
  * settings of the JSON mapper that Spring Boot offers as properties under `spring.jackson`. This class holds the
  * setting that has no property.
  */

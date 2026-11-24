@@ -16,14 +16,14 @@ with a line "Avoid:", which lists words not to use for the concept.
   sorts the users by this name, and the consumption endpoints return it together with the coffee count.
   API: `loginName`. Code: `User.loginName`, `login_name`.
   Avoid: login (for the name).
-- **email address**: A user's unique address of the form name@domain, at most 254 characters long. Because the app
-  trims the address and stores it in lowercase, `Jane@se.de` and `jane@se.de` count as the same address.
+- **email address**: A user's unique address of the form name@domain, at most 254 characters long. Because the app trims
+  the address and stores it in lowercase, `Jane@se.de` and `jane@se.de` are the same address.
   API: `emailAddress`. Code: `User.emailAddress`, `email_address`.
   Avoid: email (for the address).
 - **coffee**: One cup that a user drinks. Adding a cup raises the user's coffee count by one.
   API: `POST /api/users/{userId}/consumption` with `delta` 1. Code: `CoffeeConsumptionService.applyDelta`.
   Avoid: bump (a count).
-- **coffee count**: A user's total number of coffees. The number starts at zero when the user is created. Adding a
+- **coffee count**: A user's total number of coffees. The number starts at zero when the app creates the user. Adding a
   coffee raises it by one, an undo lowers it by one, and a correction sets it to the count that an admin chooses.
   API: `ConsumptionDto.count`. Code: `CoffeeConsumption.count`, `coffee_consumptions.count`.
 - **consumption**: The stored record that holds the coffee count of one user and the time of each recent coffee that the
@@ -58,27 +58,27 @@ with a line "Avoid:", which lists words not to use for the concept.
 - **correction**: An admin's change of a user's coffee count to a new count, which the admin explains in a note (FR-8 in
   `requirements/FR-8-correct-coffee-count.md`). An admin can correct a coffee count at any time, even after the grace
   period. Coffee Kitty stores each correction with the count before, the count after, the note, the admin, and the time
-  of the correction. A correction to a lower count removes the newest coffees, and an undo then applies to the newest
-  coffee that remains. A correction to a higher count adds coffees that cannot be undone.
+  of the correction. A correction to a lower count removes the most recent coffees, and an undo then applies to the most
+  recent coffee that remains. A correction to a higher count adds coffees that the user cannot undo.
   API: `PUT /api/users/{userId}/consumption`, `ConsumptionCorrectionDto` (`total`, `note`),
   `GET /api/users/{userId}/consumption/corrections`, `CountCorrectionDto`. Code:
   `CoffeeConsumptionService.correctCount`, `CountCorrection`, `count_corrections`.
   Avoid: adjustment, override, reset (for a coffee count).
-- **note**: The text with which an admin explains a correction, such as "Double tap on 16.11." A correction needs a
-  note that is not blank and has at most 500 characters. A note can span several lines. A payment and an expense can
-  have an optional note of at most 500 characters.
+- **note**: The text with which an admin explains a correction, such as "Double tap on 16.11." A correction needs a note
+  that is not blank and has at most 500 characters. A note can span several lines. A payment and an expense can have a
+  note of at most 500 characters.
   API: `ConsumptionCorrectionDto.note`, `CountCorrectionDto.note`. Code: `CountCorrection.note`,
   `CountCorrection.MAX_NOTE_LENGTH`, `count_corrections.note`, `Payment.note`, `payments.note`, `expenses.note`.
   Avoid: comment, reason (for the field).
-- **euro cents**: The unit of every amount of money in the code and in the database, as an integer, so that sums have
-  no rounding errors.
+- **euro cents**: The unit of every amount of money in the code and in the database. Each amount is an integer, so that
+  sums have no rounding errors.
   Code: `amountCents`, `balanceCents`, `amount_cents`, `balance_cents`.
 - **price per cup**: The one price of a coffee in euro cents, which applies to every user and which an admin sets. Each
   coffee lowers the balance of its user by the price per cup at the time of the coffee, so a new price applies only to
   the coffees added after the change (FR-5 in `requirements/FR-5-pay-for-coffee.md`). An undo raises the balance by the
   amount by which the coffee lowered it (FR-11 in `requirements/FR-11-credit-undone-coffee.md`). Coffee Kitty stores at
-  most one price, and no endpoint reads or sets it yet. No price is stored after the migrations, so the startup has to
-  store the start price.
+  most one price, and no endpoint reads or sets it yet. No migration stores a price, so the startup has to store the
+  start price.
   Code: `CoffeePrice`, `CoffeePriceDataService`, `coffee_prices`, `coffee_times.price_cents`.
 - **balance**: A user's amount of money in euro cents, negative when the user owes the kitty money and positive when the
   kitty owes the user money. Coffees lower the balance, and deposits and the private shares of the user's expenses
@@ -116,11 +116,11 @@ with a line "Avoid:", which lists words not to use for the concept.
   Code: `ExpenseEntity.privateAmountCents`, `ExpenseEntity.kittyAmountCents`.
 - **bean**: One named kind of coffee beans, which bean purchases and ratings refer to. A live bean has a name that no
   other live bean has, ignoring case. An admin can merge a bean into another bean, and the merged bean stays as an
-  inactive record that refers to the bean that it was merged into.
+  inactive record that refers to the other bean.
   Code: `CoffeeBean`, `CoffeeBean.mergedIntoId`, `CoffeeBeanDataService`, `coffee_beans`.
-- **rating**: A user's score for a bean. The ratings of a user for the same bean accumulate, and a rating moves no
-  money. FR-12 in `requirements/FR-12-rate-a-bean.md` specifies how a user rates a bean. No endpoint records a rating
-  yet.
+- **rating**: The stored record of one score that a user gives a bean. A new rating of a user for the same bean does not
+  replace an earlier rating, and a rating moves no money. FR-12 in `requirements/FR-12-rate-a-bean.md` specifies how a
+  user rates a bean. No endpoint records a rating yet.
   Code: `CoffeeRating`, `CoffeeRatingDataService`, `coffee_ratings`.
 - **score**: The number from 1 to 5 of a rating.
   Code: `CoffeeRating.value`, `coffee_ratings.value`.
@@ -145,9 +145,9 @@ with a line "Avoid:", which lists words not to use for the concept.
   Avoid: seeded user.
 - **test fixture**: A test object with fixed values that several tests share, or the state that a test prepares before
   it runs the code under test. `TestFixtures` holds the shared test objects: the fixture users, a fixed time with a
-  clock that shows it, a consumption without a coffee, a consumption with a recent coffee, and a consumption with an old
-  coffee. At the fixed time, the grace period of the old coffee has passed. A function with `@BeforeEach` prepares the
-  state that each test of a class needs, such as a stored user. `TestFixtures` and the database cleaner are in the
+  clock that shows it, and three consumptions. One consumption has no coffee, one has a recent coffee, and one has an
+  old coffee. At the fixed time, the grace period of the old coffee has passed. A function with `@BeforeEach` prepares
+  the state that each test of a class needs, such as a stored user. `TestFixtures` and the database cleaner are in the
   Gradle source set `src/testFixtures` of their module, which the production jar does not contain.
   Code: `TestFixtures`, `FIXED_TIME`, `fixedClock`, `consumptionWithRecentCoffee`, `DatabaseCleaner`.
 
@@ -182,8 +182,8 @@ with a line "Avoid:", which lists words not to use for the concept.
   response. A request DTO has nullable properties, and Bean Validation rejects a missing field (`@NotNull`) before the
   controller function runs. A request DTO checks no value: The domain checks the values and throws a
   `ValidationException`. A response DTO has only non-null properties. A MapStruct mapper in `api/.../mapper/` converts
-  between a domain object and the matching classes. `UserDtoMapper` converts a `User` to a `UserDto` and a
-  `CreateUserDto` to a `User`, `ConsumptionDtoMapper` converts a `CoffeeConsumption` to a `ConsumptionDto`, and
+  between a domain object and the matching DTOs. `UserDtoMapper` converts a `User` to a `UserDto` and a `CreateUserDto`
+  to a `User`, `ConsumptionDtoMapper` converts a `CoffeeConsumption` to a `ConsumptionDto`, and
   `CountCorrectionDtoMapper` a `CountCorrection` to a `CountCorrectionDto`. `ConsumptionDeltaDto` and
   `ConsumptionCorrectionDto` have no mapper, because the controller passes their values to the domain. `UndoStatusDto`
   has no mapper either, because the controller creates it from the result of `CoffeeConsumptionService.undoableUntil`.
@@ -193,20 +193,21 @@ with a line "Avoid:", which lists words not to use for the concept.
   `KittyBalanceEntity` extends the base class `Entity`. The tables of these two classes have neither a random id nor
   timestamps. An entity mapper converts between an instance of a JPA entity and the matching domain object.
   Code: `UserEntity`, `CoffeeConsumptionEntity`, `UserEntityMapper`.
-- **upsert**: The operation of a data port that inserts or updates a domain object. A domain object without an id is
-  inserted as a new row under a new random `UUID`. For a domain object with an id, the operation updates the stored row
-  with that id, or throws a `NotFoundException` when no row has that id. A violation of a unique constraint that
-  `ConstraintMapping.REGISTRY` lists becomes a `DuplicationException`, and a violation of any other constraint a
-  `DataConstraintException`.
+- **upsert**: The operation of a data port that inserts or updates a domain object. The operation inserts a domain
+  object without an id as a new row under a new random `UUID`. For a domain object with an id, the operation updates the
+  stored row with that id, or throws a `NotFoundException` when no row has that id. The operation throws a
+  `DuplicationException` when a row violates a unique constraint that `ConstraintMapping.REGISTRY` lists, and a
+  `DataConstraintException` when a row violates any other constraint.
   Code: `CrudDataService.upsert`, `CrudDataServiceImpl.upsert`.
 - **migration**: A versioned SQL file in `data/src/main/resources/db/migration/`. At startup, Flyway applies every such
   file that it has not applied to the database before, in version order. A migration that others have applied, such as
   a pushed migration, must not change (CLAUDE.md, Database).
   Code: `V1__create_users_table.sql`, `V2__create_coffee_consumptions_table.sql`.
-- **database cleaner**: The class in the test fixtures of the data module that deletes the rows of every table of the
-  app. It reads the names of the tables from the PostgreSQL catalog and truncates them in one statement. The data
-  integration, system, and acceptance tests run it before each test, and the dev application runs it on every start. The
-  production jar does not contain it, so neither a client nor a configuration of a deployed app can delete the data.
+- **database cleaner**: The class in the source set `src/testFixtures` of the data module that deletes the rows of every
+  table of the app. It reads the names of the tables from the PostgreSQL catalog and truncates them in one statement.
+  The data integration, system, and acceptance tests run it before each test, and the dev application runs it on every
+  start. The production jar does not contain it, so neither a client nor a configuration of a deployed app can delete
+  the data.
   Code: `DatabaseCleaner.clean`.
   Avoid: data reset.
 - **dev application**: The app in the dev profile with the fixture users, which `gradle :application:bootTestRun`
@@ -232,12 +233,12 @@ with a line "Avoid:", which lists words not to use for the concept.
   `ForbiddenException` (403) means that the acting user may not perform the action, such as creating a user or
   correcting a coffee count without the role `ADMIN`. `ValidationException` (400) means that a value in a request breaks
   a rule of the domain, such as an integer delta other than +1 or a login name of 256 characters. A request body that
-  the api module cannot read gets a 400 with the error code `BadRequest` instead: a body without a required field, with
-  a value of the wrong JSON type, such as a delta of 1.9, or with an unknown field. `DataConstraintException` is not a
-  domain exception. A data port throws it when the database refuses a row that the domain should have refused, and the
+  the api module cannot read gets a 400 with the error code `BadRequest` instead. Such a body lacks a required field,
+  has an unknown field, or has a value of the wrong JSON type, such as a delta of 1.9. `DataConstraintException` is not
+  a domain exception. A data port throws it when the database refuses a row that the domain should have refused, and the
   client gets a 500.
 - **firewall**: The `StrictHttpFirewall` of Spring Security, which rejects a request with `;`, `//`, `..`, or an encoded
-  slash in the path or with a control character in a header value. Security rules and Spring MVC can read such a
-  request differently. A rejected request gets 400 Bad Request with the error code `BadRequest`, and the message of
-  the error response does not quote the request.
+  slash in the path or with a control character in a header value. The firewall rejects such a request because security
+  rules and Spring MVC can read it differently. A rejected request gets 400 Bad Request with the error code
+  `BadRequest`, and the message of the error response does not quote the request.
   Code: `SecurityConfig.requestRejectedHandler`, `RequestRejectedExceptionHandler`.

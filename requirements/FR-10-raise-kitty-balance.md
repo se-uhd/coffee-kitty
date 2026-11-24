@@ -14,13 +14,14 @@ Coffee Kitty does not change the kitty balance yet.
 
 - The kitty balance is 0.00 €. After the admin jane_doe records a deposit of 10.00 € for maxmustermann and a deposit of
   2.50 € for student2023, the kitty balance is 12.50 €.
-- A request to record a deposit that returns 400 Bad Request or 403 Forbidden (FR-4) does not change the kitty balance.
+- A request to record a deposit does not change the kitty balance when it returns 400 Bad Request or 403 Forbidden
+  (FR-4).
 
 ## Verification Method
 
-Test: unit tests of the raised kitty balance and the refused requests, complemented by integration tests of the stored
-kitty balance, system tests of the refused requests, and a Cucumber scenario of the first success criterion. All tests
-except the unit tests run against PostgreSQL in Testcontainers.
+Test: unit tests of the raised kitty balance and the refused requests. Further tests complement them: integration tests
+of the stored kitty balance, system tests of the refused requests, and a Cucumber scenario of the first success
+criterion. All tests except the unit tests run against PostgreSQL in Testcontainers.
 Who: developer of the change. When: before the merge. Where: GitHub Actions.
 
 ## Supporting Information

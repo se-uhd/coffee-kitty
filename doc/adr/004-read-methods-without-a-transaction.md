@@ -27,11 +27,11 @@ the decision and names the condition for a change.
 * Read methods without a transaction and eager associations. A read method works for a caller with and without a
   transaction. Hibernate loads the associations of every row, also when the caller does not need them, and runs one
   query per referenced row for a list (N+1 queries).
-* Read methods with `@Transactional(readOnly = true)` and lazy associations. The adapter maps the entity inside the
-  transaction, and a query can fetch only what its caller needs. Every read method needs the annotation, and a missing
-  one fails only at runtime with a `LazyInitializationException`.
-* Open Session in View. A lazy association loads until the response is written. The request then holds a database
-  connection for its whole duration, and a query can run while Jackson serializes the response.
+* Read methods with `@Transactional(readOnly = true)` and lazy associations. The data adapter maps the JPA entity inside
+  the transaction, and a query can fetch only what its caller needs. Every read method needs the annotation, and a read
+  method without it fails only at runtime with a `LazyInitializationException`.
+* Open Session in View. A lazy association loads until the server has written the response. The request then holds a
+  database connection for its whole duration, and a query can run while Jackson serializes the response.
 
 ## Decision(s)
 
@@ -42,7 +42,7 @@ reads and maps the entity inside a `@Transactional` method.
 
 ## Consequences
 
-* A new association is eager by default (`@ManyToOne`) or has to be declared eager (`@ElementCollection`).
+* A new association is eager by default (`@ManyToOne`), or a developer has to declare it eager (`@ElementCollection`).
 * `getAll` of an entity with associations runs N+1 queries. No endpoint calls such a function for a long list today.
 * Revisit this decision when an endpoint lists many rows with associations, such as the payments of all users. The
   second option then replaces this one in a new ADR.

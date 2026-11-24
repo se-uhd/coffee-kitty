@@ -31,10 +31,10 @@ class UserEntity : Entity() {
     var role: Role? = null
 
     companion object {
-        /** Name of the unique constraint on the login name. */
+        /** The name of the unique constraint on the login name. */
         const val LOGIN_NAME_UNIQUE_CONSTRAINT = "uq_users_login_name"
 
-        /** Name of the unique constraint on the email address. */
+        /** The name of the unique constraint on the email address. */
         const val EMAIL_ADDRESS_UNIQUE_CONSTRAINT = "uq_users_email_address"
     }
 }

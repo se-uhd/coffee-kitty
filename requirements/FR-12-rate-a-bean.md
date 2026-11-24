@@ -7,7 +7,7 @@ recent coffee.
 
 ## Rationale
 
-The group buys different beans. A user rates the beans right after adding a coffee, and the ratings of a bean show the
+The group buys different beans. A user rates a bean right after adding a coffee, and the ratings of a bean show the
 group which beans to buy again.
 
 ## Success Criteria
@@ -24,9 +24,9 @@ group which beans to buy again.
 
 ## Verification Method
 
-Test: unit tests of the limits for the score and of the rating of the most recent coffee, complemented by integration
-tests of the stored rating, system tests of the status codes, and a Cucumber scenario of the first three success
-criteria. All tests except the unit tests run against PostgreSQL in Testcontainers.
+Test: unit tests of the limits for the score and of the rating of the most recent coffee. Further tests complement them:
+integration tests of the stored rating, system tests of the status codes, and a Cucumber scenario of the first three
+success criteria. All tests except the unit tests run against PostgreSQL in Testcontainers.
 Who: developer of the change. When: before the merge. Where: GitHub Actions.
 
 ## Supporting Information
@@ -36,4 +36,4 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
 - Depends on the bean, the rating, and the score (GLOSSARY.md). The migration V9 creates the table `coffee_ratings`.
 - The coffee app of SE@UHD has further rules for ratings, for which Coffee Kitty has no requirement yet: An undo removes
   the rating of the undone coffee. An admin corrects or deletes a rating. A list shows the average score and the number
-  of ratings of each bean, and the ratings of a merged bean count for the bean that it was merged into.
+  of ratings of each bean. The ratings of a merged bean count for the bean that an admin merged it into.

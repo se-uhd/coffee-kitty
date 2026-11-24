@@ -6,11 +6,10 @@ import javax.sql.DataSource
  * Deletes the rows of every table of the app, so that each test and each start of the dev application begins with an
  * empty database. The class is in the test fixtures of the data module. The production jar does not contain it, and a
  * deployed app therefore cannot delete its data.
- *
- * [clean] reads the names of the tables from the PostgreSQL catalog and does not list them. A table that a new
- * migration creates is cleaned without a change to this class. One `TRUNCATE` statement empties all tables together,
- * so the foreign keys between them do not require an order. The table `flyway_schema_history` keeps its rows, because
- * Flyway reads from it which migrations it has applied.
+ * [clean] reads the names of the tables from the PostgreSQL catalog and does not list them. Without a change to this
+ * class, [clean] also cleans a table that a new migration creates. One `TRUNCATE` statement empties all tables
+ * together, so the foreign keys between them do not require an order. The table `flyway_schema_history` keeps its rows,
+ * because Flyway reads from it which migrations it has applied.
  *
  * @param dataSource the data source of the database to clean
  */

@@ -28,18 +28,18 @@ assistant pays back the money from the kitty or forgets the receipts.
 
 ## Verification Method
 
-Test: unit tests of the limits for the amount, the weight, and the note, the rules for bean purchases and other
-expenses, and the raised balance, complemented by integration tests of the stored expense and the stored balance, system
-tests of the status codes, and a Cucumber scenario of the first success criterion. All tests except the unit tests run
-against PostgreSQL in Testcontainers.
+Test: unit tests of the limits for the amount, the weight, and the note, of the rules for bean purchases and other
+expenses, and of the raised balance. Further tests complement them: integration tests of the stored expense and the
+stored balance, system tests of the status codes, and a Cucumber scenario of the first success criterion. All tests
+except the unit tests run against PostgreSQL in Testcontainers.
 Who: developer of the change. When: before the merge. Where: GitHub Actions.
 
 ## Supporting Information
 
 - Parent, from the team assistant: "When someone buys something for the group with their own money, such as a bag of
   beans, they record it as an expense."
-- Input, from the team assistant: A bean purchase has the name of the beans and a weight from 100 g to 1,000 g. Any other
-  expense, such as filters or milk, has neither. A note is optional and has at most 500 characters.
+- Input, from the team assistant: A bean purchase has the name of the beans and a weight from 100 g to 1,000 g. Any
+  other expense, such as filters or milk, has neither. A note is optional and has at most 500 characters.
 - The private share of the expense is its full amount, and the kitty share is 0 (GLOSSARY.md).
 - Depends on the balance of a user (GLOSSARY.md).
 - TBD (open): Can users correct or delete their own expenses? Contact person: team assistant.
