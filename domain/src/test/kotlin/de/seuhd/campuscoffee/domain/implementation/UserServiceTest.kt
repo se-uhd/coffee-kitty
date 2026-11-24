@@ -21,7 +21,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 /**
- * Unit tests for [UserServiceImpl] with Mockito mocks of [UserDataService] and [CoffeeConsumptionDataService].
+ * The unit tests for [UserServiceImpl] with Mockito mocks of [UserDataService] and [CoffeeConsumptionDataService].
  */
 class UserServiceTest {
     private val userDataService: UserDataService = mock()

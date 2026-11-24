@@ -53,7 +53,7 @@ class UserController(
      *
      * @param id the id of the user
      */
-    @Operation(summary = "Get a user by ID.")
+    @Operation(summary = "Get a user by id.")
     @GetMapping("/{id}")
     fun getById(
         @Parameter(description = "The id of the user.", required = true)
@@ -67,8 +67,8 @@ class UserController(
      * The response is 401 Unauthorized without a known acting user and 403 Forbidden if the acting user is not an
      * admin.
      *
-     * `ResponseEntity.created` sets the status of the response. springdoc reads `@ResponseStatus` and documents the
-     * status 201 instead of 200 in the OpenAPI definition.
+     * `ResponseEntity.created` sets the status of the response. The annotation `@ResponseStatus` is for springdoc,
+     * which reads it and documents the status 201 instead of 200 in the OpenAPI definition.
      *
      * @param dto the fields of the user to create
      */

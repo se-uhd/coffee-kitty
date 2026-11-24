@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 
 /**
  * Responds with the 401 of [JsonAuthenticationEntryPoint] when a controller throws an [AuthenticationException].
- * [CurrentUserProvider.currentUser] throws such an exception when a route that `SecurityConfig` does not protect needs
- * an acting user and the request has none. This handler has the highest precedence, because `GlobalExceptionHandler`
- * would otherwise turn the exception into a 500.
+ * [CurrentUserProvider.currentUser] throws such an exception when an endpoint that `SecurityConfig` does not protect
+ * needs an acting user and the request has none. This handler has the highest precedence, because
+ * `GlobalExceptionHandler` would otherwise turn the exception into a 500.
  *
  * @param entryPoint the entry point that writes the 401
  */

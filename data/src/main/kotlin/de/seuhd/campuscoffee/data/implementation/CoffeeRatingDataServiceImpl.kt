@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service
 import java.util.UUID
 
 /**
- * Data adapter that implements the [CoffeeRatingDataService] port on the table `coffee_ratings`. Business rules, such
- * as when a user may rate a bean, belong in a domain service. Coffee Kitty has no domain service for the ratings yet.
- * [upsert] throws a `NotFoundException` for a rating that references a user or a bean that does not exist (see
+ * The data adapter that implements the [CoffeeRatingDataService] port on the table `coffee_ratings`. Business rules,
+ * such as when a user may rate a bean, belong in a domain service. Coffee Kitty has no domain service for the ratings
+ * yet. [upsert] throws a `NotFoundException` for a rating that references a user or a bean that does not exist (see
  * [CrudDataServiceImpl]).
  */
 @Service

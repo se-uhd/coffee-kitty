@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 
 /**
- * Integration tests of [CoffeePriceDataServiceImpl] against PostgreSQL. The table `coffee_prices` holds at most one
+ * The integration tests of [CoffeePriceDataServiceImpl] against PostgreSQL. The table `coffee_prices` holds at most one
  * price.
  */
 class CoffeePriceDataServiceIntegrationTest : AbstractDataIntegrationTest() {
@@ -35,7 +35,7 @@ class CoffeePriceDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `upsert stores a new amount of the price and does not change createdAt`() {
+    fun `upsert stores a new amount of the price`() {
         val created = coffeePriceDataService.upsert(CoffeePrice(amountCents = 50))
 
         val updated = coffeePriceDataService.upsert(created.copy(amountCents = 0, createdAt = null, updatedAt = null))

@@ -62,7 +62,7 @@ architecture. ArchUnit tests check the boundaries between the four modules:
 - `api`: the REST controllers, the data transfer objects (DTOs), the MapStruct DTO mappers, and the exception handler.
 - `data`: the JPA entities and repositories, the MapStruct entity mappers, the implementations of the data ports, and
   the Flyway migrations.
-- `application`: the Spring Boot application that wires the modules together and the configuration profiles. Its test
+- `application`: the configuration profiles and the Spring Boot application that wires the modules together. Its test
   sources hold the dev application, which creates the user fixtures.
 
 The included build `build-logic/` holds the convention plugins, which configure Java, Kotlin, ktlint, and detekt in the
@@ -182,7 +182,7 @@ gradle :application:bootRun --args='--spring.profiles.active=dev'
 The paths in this section are relative to `/api`, and Swagger UI documents every endpoint. Each command requires the
 dev application on port 8081. Because the ids change with every restart, a command that needs an id first
 looks up the id of the user fixture `jane_doe` with `python3`. A request with an unknown login name in the header
-`X-Acting-User` gets 401 Unauthorized on every route.
+`X-Acting-User` gets 401 Unauthorized on every endpoint.
 
 `GET /users` returns all users as a JSON array, ordered by login name:
 
@@ -198,12 +198,15 @@ Bad Request for a missing or malformed field, such as a number for the login nam
 status for an unknown field, such as an `id`, and for a value that breaks a rule, such as a login name with a space. It
 returns 409 Conflict when another user has the login name or the email address. A request without a known acting user
 gets 401 even with an invalid body, because a filter checks the acting user before the controller reads the body. Every
-401 has the header `WWW-Authenticate: X-Acting-User realm="Coffee Kitty"`, as RFC 9110 requires. The dev application
-creates `jane_doe` as an admin. When no admin exists, the app stores a bootstrap admin on startup from the environment
-variables `BOOTSTRAP_ADMIN_LOGIN_NAME` and `BOOTSTRAP_ADMIN_EMAIL_ADDRESS` (optional: `BOOTSTRAP_ADMIN_FIRST_NAME` and
-`BOOTSTRAP_ADMIN_LAST_NAME`). If a user has that login name, the app gives that user the role `ADMIN`. This case occurs
-in a database that the dev application has not cleaned, because the migration V4 gives every existing user, `jane_doe`
-included, the role `USER`. With `jane_doe` as the acting user, the command creates the user `ada_lovelace`:
+401 has the header `WWW-Authenticate: X-Acting-User realm="Coffee Kitty"`, as RFC 9110 requires.
+
+The dev application creates `jane_doe` as an admin. When no admin exists, the app stores a bootstrap admin on startup
+from the environment variables `BOOTSTRAP_ADMIN_LOGIN_NAME` and `BOOTSTRAP_ADMIN_EMAIL_ADDRESS` (optional:
+`BOOTSTRAP_ADMIN_FIRST_NAME` and `BOOTSTRAP_ADMIN_LAST_NAME`). If a user has that login name, the app gives that user
+the role `ADMIN`. This case occurs in a database that the dev application has not cleaned, because the migration V4
+gives every existing user, `jane_doe` included, the role `USER`.
+
+With `jane_doe` as the acting user, the command creates the user `ada_lovelace`:
 
 ```shell
 curl --include --request POST --header "Content-Type: application/json" --header "X-Acting-User: jane_doe" \
@@ -267,8 +270,9 @@ the correction with its note, and returns the corrected coffee count as `{ "logi
 correct a coffee count. The header `X-Acting-User` has to contain the login name of an admin. The endpoint returns 401
 Unauthorized without the header or for an unknown login name, and 403 Forbidden when the acting user is not an admin. It
 returns 400 Bad Request for a missing or negative total, for a total above 1,000,000, and for a missing or blank note. A
-note has at most 500 characters. These limits and the rule that only an admin may read the corrections hold until the
-group lead answers the TBDs of FR-8. The command sets the coffee count of `jane_doe` to 1:
+note has at most 500 characters. These limits and the rule that only an admin may list the corrections hold until the
+group lead, the contact person of FR-8, answers its open questions (TBDs). The command sets the coffee count of
+`jane_doe` to 1:
 
 ```shell
 USER_ID=$(curl -s http://localhost:8081/api/users |

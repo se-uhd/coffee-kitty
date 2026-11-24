@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 /**
- * Domain implementation of [UserService] and [UserInternalService]. [create] checks the values of every new user,
+ * The domain implementation of [UserService] and [UserInternalService]. [create] checks the values of every new user,
  * including the user fixtures and the bootstrap admin, which no request creates. [create] stores the user and the
  * user's consumption in one transaction. If [create] cannot store the consumption, the rollback removes the user too.
  */

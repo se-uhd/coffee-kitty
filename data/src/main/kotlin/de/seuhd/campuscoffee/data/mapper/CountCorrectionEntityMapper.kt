@@ -7,11 +7,11 @@ import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 
 /**
- * MapStruct mapper between [CountCorrection] domain objects and [CountCorrectionEntity] JPA entities. [toEntity] and
- * [updateEntity] set [CountCorrectionEntity.user] and [CountCorrectionEntity.admin] to the stored users, which
- * [EntityReferenceResolver] loads by the ids of [CountCorrection.user] and [CountCorrection.admin]. Saving a
- * correction then leaves both user rows unchanged. [fromEntity] maps both users with all fields through
- * [UserEntityMapper]. [updateEntity] does not copy the id or the timestamps (see [EntityMapper.updateEntity]).
+ * The MapStruct mapper between [CountCorrection] domain objects and [CountCorrectionEntity] JPA entities. [toEntity]
+ * and [updateEntity] set [CountCorrectionEntity.user] and [CountCorrectionEntity.admin] to the stored users, which
+ * [EntityReferenceResolver] loads by the ids of [CountCorrection.user] and [CountCorrection.admin]. Saving a correction
+ * then leaves both user rows unchanged. [fromEntity] maps both users with all fields through [UserEntityMapper].
+ * [updateEntity] does not copy the id or the timestamps (see [EntityMapper.updateEntity]).
  */
 @Mapper(componentModel = "spring", uses = [UserEntityMapper::class, EntityReferenceResolver::class])
 interface CountCorrectionEntityMapper : EntityMapper<CountCorrection, CountCorrectionEntity> {

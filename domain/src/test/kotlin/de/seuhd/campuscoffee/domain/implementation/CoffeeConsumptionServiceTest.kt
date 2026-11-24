@@ -25,7 +25,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 /**
- * Unit tests for [CoffeeConsumptionServiceImpl] with Mockito mocks of [CoffeeConsumptionDataService] and
+ * The unit tests for [CoffeeConsumptionServiceImpl] with Mockito mocks of [CoffeeConsumptionDataService] and
  * [CountCorrectionDataService] and a fixed clock. [serviceAt] creates the service with a clock fixed at a given time.
  * [TestFixtures] holds the users, the fixed time, the clock, and the consumptions without a coffee, with a recent
  * coffee, and with an old coffee. [consumption] returns a consumption with any other count and times.

@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID
 
 /**
- * Spring Data JPA repository for [CountCorrectionEntity]. Spring Data implements this interface at runtime and
+ * The Spring Data JPA repository for [CountCorrectionEntity]. Spring Data implements this interface at runtime and
  * derives the query of each method declared here from the method name.
  */
 interface CountCorrectionRepository : JpaRepository<CountCorrectionEntity, UUID> {

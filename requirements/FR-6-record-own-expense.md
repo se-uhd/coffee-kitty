@@ -13,7 +13,7 @@ assistant pays back the money from the kitty or forgets the receipts.
 ## Success Criteria
 
 - The balance of maxmustermann is 0.00 €. After maxmustermann records a bean purchase of 12.99 € for 500 g of beans, the
-  balance is 12.99 €. After maxmustermann records another expense, 4.50 € for filters, the balance is 17.49 €.
+  balance is 12.99 €. After maxmustermann records an expense of 4.50 € for filters, the balance is 17.49 €.
 - An expense of 0.01 € raises a balance of 0.00 € to 0.01 €, and an expense of 1,000.00 € raises a balance of 0.00 € to
   1,000.00 €.
 - A request to record an expense of 0.00 € or of 1,000.01 € returns 400 Bad Request, and the balance stays the same.

@@ -17,7 +17,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 /**
- * Unit tests for [BootstrapAdminLoader] with a mocked [UserInternalService]. A configuration with a login name also
+ * The unit tests for [BootstrapAdminLoader] with a mocked [UserInternalService]. A configuration with a login name also
  * needs an email address, a first name, and a last name.
  */
 class BootstrapAdminLoaderTest {
@@ -87,7 +87,9 @@ class BootstrapAdminLoaderTest {
                 lastName = "Admin"
             )
 
-        /** Returns copies of [completeProperties], each without a value that a configuration with a login name needs. */
+        /**
+         * Returns copies of [completeProperties], each without a value that a configuration with a login name needs.
+         */
         @JvmStatic
         fun incompleteProperties() =
             listOf(

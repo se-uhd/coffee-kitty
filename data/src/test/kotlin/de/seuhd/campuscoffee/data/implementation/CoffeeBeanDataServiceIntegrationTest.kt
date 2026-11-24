@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 
 /**
- * Integration tests of [CoffeeBeanDataServiceImpl] against PostgreSQL. The partial unique index on the bean names
+ * The integration tests of [CoffeeBeanDataServiceImpl] against PostgreSQL. The partial unique index on the bean names
  * ignores case and leaves out the merged beans.
  */
 class CoffeeBeanDataServiceIntegrationTest : AbstractDataIntegrationTest() {
@@ -36,7 +36,7 @@ class CoffeeBeanDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `upsert stores the new name of a bean and does not change createdAt`() {
+    fun `upsert stores the new name of a bean`() {
         val created = coffeeBeanDataService.upsert(CoffeeBean(name = "Ethiopia Sidamo"))
 
         val updated =

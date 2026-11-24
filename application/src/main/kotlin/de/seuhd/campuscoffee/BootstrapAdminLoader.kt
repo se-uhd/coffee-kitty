@@ -16,8 +16,8 @@ import org.springframework.stereotype.Component
  * admin. This case occurs after the migration V4, which gives every existing user the role `USER`. The coffee app of
  * SE@UHD has a loader with the same name.
  *
- * [StartupDataInitializer] calls [createBootstrapAdmin] on startup. The dev application creates the user fixtures, and
- * the user fixture `jane_doe` is an admin.
+ * [StartupDataInitializer] calls [createBootstrapAdmin] on startup. The dev application needs no bootstrap admin,
+ * because its user fixture `jane_doe` is an admin.
  */
 @Component
 class BootstrapAdminLoader(

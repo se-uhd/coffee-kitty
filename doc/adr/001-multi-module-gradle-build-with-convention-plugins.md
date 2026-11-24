@@ -24,11 +24,11 @@ Each adapter may use only the domain, and the domain may use none of the other p
 the domain and both adapters. ArchUnit tests check these rules on the compiled classes, but only when the tests run.
 
 The parts need mostly the same build setup: the Java 25 toolchain, the Kotlin compiler options, the Spring Boot bill of
-materials (BOM), the test dependencies, the arguments of the test Java virtual machine (JVM), ktlint, and detekt with
-the custom KDoc rules. Some parts need more, such as the Kotlin JPA plugin for the JPA adapter and kapt (the Kotlin
-annotation processing tool) for the MapStruct mappers of both adapters. Coffee Kitty is the running example of a
-lecture, and the first unit of the lecture covers build automation with Gradle. The coffee app of SE@UHD, which has the
-same architecture, builds with Gradle as well.
+materials (BOM), and the test dependencies. The setup also includes the arguments of the test Java virtual machine
+(JVM), ktlint, and detekt with the custom KDoc rules. Some parts need more, such as the Kotlin JPA plugin for the JPA
+adapter and kapt (the Kotlin annotation processing tool) for the MapStruct mappers of both adapters. Coffee Kitty is the
+running example of a lecture, and the first unit of the lecture covers build automation with Gradle. The coffee app of
+SE@UHD, which has the same architecture, builds with Gradle as well.
 
 ## Considered Options
 
@@ -38,10 +38,10 @@ same architecture, builds with Gradle as well.
 * A multi-module build that shares the setup through `subprojects {}` or `allprojects {}` blocks in the root build
   script. The module graph turns an undeclared dependency between modules into a compile error, and the shared setup is
   in one file. A block applies to every project that it matches. A setup for only some modules therefore needs a filter
-  by project name, and the build script of a subproject does not show what the root script adds to that subproject.
-  [Gradle's documentation](https://docs.gradle.org/current/userguide/sharing_build_logic_between_subprojects.html)
-  calls this cross-project configuration an improper way to share build logic and recommends convention plugins in
-  `buildSrc` or in an included build named `build-logic` instead.
+  by project name. The build script of a subproject also does not show what the root script adds to that subproject.
+  [Gradle's documentation](https://docs.gradle.org/current/userguide/sharing_build_logic_between_subprojects.html) calls
+  this cross-project configuration an improper way to share build logic and recommends convention plugins in `buildSrc`
+  or in an included build named `build-logic` instead.
 * A multi-module build with an included build, `build-logic/`, that holds precompiled script plugins (convention
   plugins) and imports the version catalog of the main build. The module graph enforces the layers as in the second
   option, and each module applies only the convention plugins that it needs. `build-logic/` is a second build, and its
@@ -56,7 +56,7 @@ The build is a multi-module build with the convention plugins in the included bu
 The module graph turns a dependency across layers into a compile error before any test runs. The single project cannot
 catch such a dependency at compile time. Each module names the convention plugins that it applies in its own
 `plugins {}` block. A `subprojects {}` block would instead configure the module from the root script, and the build
-file of the module would not show this configuration. Unlike the Maven option, the build stays on Gradle, which the
+script of the module would not show this configuration. Unlike the Maven option, the build stays on Gradle, which the
 lecture teaches.
 
 `build-logic/` holds the following convention plugins, and a subproject applies each of them by the id
@@ -80,13 +80,13 @@ Java version for the toolchain and the Kotlin target.
 * A class fails to compile when it imports from a module that its own module does not depend on. The ArchUnit tests
   still check the rules that the module graph cannot express, such as the rule that no controller depends on a data
   port.
-* The build file of a module lists only the convention plugins that the module applies and the dependencies of the
+* The build script of a module lists only the convention plugins that the module applies and the dependencies of the
   module. To see the full setup of a module, a reader has to open the convention plugins in `build-logic/`.
 * One change in `build-logic/` updates the shared setup of every module that applies the changed convention plugin.
 * `build-logic/build.gradle.kts` lists the jar of every Gradle plugin that a convention plugin applies.
   `build-logic/settings.gradle.kts` imports the version catalog from `../gradle/libs.versions.toml` and declares the
-  repositories of `build-logic/`: Maven Central and the Gradle Plugin Portal. The Gradle Plugin Portal is needed for the
-  ktlint Gradle plugin, which Maven Central does not publish.
+  repositories of `build-logic/`: Maven Central and the Gradle Plugin Portal. `build-logic/` needs the Gradle Plugin
+  Portal for the ktlint Gradle plugin, which Maven Central does not publish.
 * Gradle compiles `build-logic/` before the first build and after each change to it.
 * The root `build.gradle.kts` declares the Kotlin Gradle plugin with `apply false`, so that one classloader provides it
   to every convention plugin.

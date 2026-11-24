@@ -22,7 +22,7 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 /**
- * System tests for listing, reading, and creating users. The tests send their requests through [UserRequests]. A
+ * The system tests for listing, reading, and creating users. The tests send their requests through [UserRequests]. A
  * request that creates a user has the admin `jane_doe` as the acting user, unless a test sets another acting user or
  * leaves the header `X-Acting-User` out.
  */
@@ -277,7 +277,7 @@ class UserSystemTests : AbstractSystemTest() {
     @Test
     fun `creating a user without a required field and without the acting user header returns 401 Unauthorized`() {
         // With an acting user, the body without an email address returns 400. Without the rule of SecurityConfig for
-        // this route, Spring MVC would validate the body first, and this request would return 400 as well.
+        // this endpoint, Spring MVC would validate the body first, and this request would return 400 as well.
         val response = userRequests.create(newUser() - "emailAddress", actingUser = null)
 
         assertThat(response.status).isEqualTo(401)

@@ -13,8 +13,8 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 /**
- * Data adapter that implements the [CoffeeConsumptionDataService] port on the table `coffee_consumptions`. The business
- * rules are in the domain services. Every user has exactly one consumption. A lookup that finds no consumption
+ * The data adapter that implements the [CoffeeConsumptionDataService] port on the table `coffee_consumptions`. The
+ * business rules are in the domain services. Every user has exactly one consumption. A lookup that finds no consumption
  * therefore throws a [NotFoundException] for the user. [upsert] throws a `DuplicationException` for a second
  * consumption of a user (see [CrudDataServiceImpl]).
  */

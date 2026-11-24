@@ -5,7 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 /**
- * Unit tests for the log messages of [NotFoundException] and [DuplicationException]. A log message goes into the
+ * The unit tests for the log messages of [NotFoundException] and [DuplicationException]. A log message goes into the
  * server log and leaves out a looked-up or duplicate value, such as a login name.
  */
 class DomainExceptionsTest {

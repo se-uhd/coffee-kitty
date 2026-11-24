@@ -5,9 +5,9 @@ import de.seuhd.campuscoffee.domain.model.CountCorrection
 import java.util.UUID
 
 /**
- * Data port for the corrections. `CountCorrectionDataServiceImpl` in the data module implements it. Coffee Kitty never
- * changes or deletes a stored correction, because the corrections record who changed a coffee count and why. The port
- * therefore does not extend [CrudDataService] and offers neither an update nor a deletion.
+ * The data port for the corrections. `CountCorrectionDataServiceImpl` in the data module implements it. Coffee Kitty
+ * never changes or deletes a stored correction, because the corrections record who changed a coffee count and why. The
+ * port therefore does not extend [CrudDataService] and offers neither an update nor a deletion.
  */
 interface CountCorrectionDataService {
     /**

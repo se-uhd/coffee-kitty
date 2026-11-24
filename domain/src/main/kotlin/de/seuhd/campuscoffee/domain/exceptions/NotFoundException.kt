@@ -12,7 +12,7 @@ class NotFoundException : DomainException {
      * @param id          the id that no object has
      */
     constructor(domainClass: Class<*>, id: Any) :
-        super("${domainClass.simpleName} with ID $id does not exist.")
+        super("${domainClass.simpleName} with id $id does not exist.")
 
     /**
      * Creates an exception for a failed lookup by a field value.

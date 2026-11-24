@@ -7,7 +7,7 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.Table
 
 /**
- * JPA entity of a user. The companion object holds the names of the unique constraints that the migration
+ * The JPA entity of a user. The companion object holds the names of the unique constraints that the migration
  * `V1__create_users_table.sql` declares. `ConstraintMapping` refers to the constraints by these names.
  */
 @jakarta.persistence.Entity

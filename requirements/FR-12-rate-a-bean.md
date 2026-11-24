@@ -12,12 +12,12 @@ group which beans to buy again.
 
 ## Success Criteria
 
-- maxmustermann adds a coffee and rates the bean "Ethiopia Sidamo" with a score of 4. The bean has one rating, with a
-  score of 4.
-- maxmustermann then rates the same bean with a score of 2 before adding another coffee. The bean has one rating, with
-  a score of 2.
-- maxmustermann adds a second coffee and rates the bean with a score of 5. The bean has two ratings, with the scores 2
-  and 5.
+- The user maxmustermann adds a coffee and rates the bean "Ethiopia Sidamo" with a score of 4. The bean has one rating,
+  with a score of 4.
+- The user then rates the same bean with a score of 2 before adding another coffee. The bean has one rating, with a
+  score of 2.
+- The user adds a second coffee and rates the bean with a score of 5. The bean has two ratings, with the scores 2 and
+  5.
 - With a coffee count of 0, a request to rate a bean returns 409 Conflict, and the bean has no rating.
 - A request to rate a bean with a score of 0 or 6 returns 400 Bad Request, and the bean has no rating.
 - A request to rate an unknown bean returns 404 Not Found.

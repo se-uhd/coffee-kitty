@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service
 import java.util.UUID
 
 /**
- * Data adapter that implements the [UserDataService] port on the table `users`. The business rules are in the domain
- * services. [upsert] throws a `DuplicationException` for a login name or an email address that another user has (see
- * [CrudDataServiceImpl]).
+ * The data adapter that implements the [UserDataService] port on the table `users`. The business rules are in the
+ * domain services. [upsert] throws a `DuplicationException` for a login name or an email address that another user has
+ * (see [CrudDataServiceImpl]).
  */
 @Service
 class UserDataServiceImpl(

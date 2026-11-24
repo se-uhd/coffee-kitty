@@ -5,7 +5,7 @@ import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
 import java.util.UUID
 
 /**
- * Data port for the consumptions, with two lookups by user in addition to the operations of [CrudDataService].
+ * The data port for the consumptions, with two lookups by user in addition to the operations of [CrudDataService].
  * `CoffeeConsumptionDataServiceImpl` in the data module implements it. [getAll] returns the consumptions, ordered by
  * creation time.
  */

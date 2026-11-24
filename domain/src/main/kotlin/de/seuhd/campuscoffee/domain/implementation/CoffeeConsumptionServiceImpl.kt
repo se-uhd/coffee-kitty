@@ -17,16 +17,16 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 /**
- * Domain implementation of [CoffeeConsumptionService]. [applyDelta] adds a coffee in one transaction. It loads and
+ * The domain implementation of [CoffeeConsumptionService]. [applyDelta] adds a coffee in one transaction. It loads and
  * locks the consumption of the user and then stores a copy with the coffee count raised by one. A concurrent request
- * for the same user waits until the transaction ends and then reads the raised count. Without the lock, two
- * concurrent requests could both read a count of 2 and both store a count of 3.
- * [applyDelta] appends the time of the coffee from [clock], which a test can set to a fixed time. It drops the times of
- * the coffees outside their grace period, because the list of times would otherwise grow with every coffee. [undo]
- * takes the time of the most recent coffee that the user did not undo. It checks the grace period of this coffee with
- * [gracePeriod] and removes the time. As in the coffee app of SE@UHD, the user can then undo the coffee before if the
- * grace period of that coffee is open. [undoableUntil] applies the checks of [undo] without changing the consumption,
- * because it must return a time exactly when an undo at the current time succeeds.
+ * for the same user waits until the transaction ends and then reads the raised count. Without the lock, two concurrent
+ * requests could both read a count of 2 and both store a count of 3. [applyDelta] appends the time of the coffee from
+ * [clock], which a test can set to a fixed time. It drops the times of the coffees outside their grace period, because
+ * the list of times would otherwise grow with every coffee. [undo] takes the time of the most recent coffee that the
+ * user did not undo. It checks the grace period of this coffee with [gracePeriod] and removes the time. As in the
+ * coffee app of SE@UHD, the user can then undo the coffee before if the grace period of that coffee is open.
+ * [undoableUntil] applies the checks of [undo] without changing the consumption, because it must return a time exactly
+ * when an undo at the current time succeeds.
  *
  * [correctCount] locks the consumption like [applyDelta], stores the corrected count, and stores a [CountCorrection]
  * with the note in the same transaction. A correction to a lower count removes the times of the newest coffees. The
@@ -126,7 +126,7 @@ class CoffeeConsumptionServiceImpl(
         userId: UUID,
         actingUser: User
     ): List<CountCorrection> {
-        requireAdmin(actingUser, "read the corrections of a coffee count")
+        requireAdmin(actingUser, "list the corrections of a coffee count")
         // getAllByUserId returns an empty list for an unknown user. getByUserId throws a NotFoundException instead, and
         // the endpoint returns 404 like the other consumption endpoints.
         coffeeConsumptionDataService.getByUserId(userId)

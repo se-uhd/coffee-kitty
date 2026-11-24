@@ -6,10 +6,10 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 
 /**
- * JPA entity of a payment, which is a deposit of a [user] or, without a [user], a kitty adjustment. [amountCents] is
- * the amount in euro cents, and [note] is an optional text. The migration `V7__create_payments_table.sql` creates the
- * table `payments`. Its CHECK constraints reject an amount of zero, a deposit with an amount that is not positive, and
- * an empty note. The column `note` has the width `Payment.MAX_NOTE_LENGTH`.
+ * The JPA entity of a payment, which is a deposit of a [user] or, without a [user], a kitty adjustment. [amountCents]
+ * is the amount in euro cents, and [note] is an optional text. The migration `V7__create_payments_table.sql` creates
+ * the table `payments`. Its CHECK constraints reject an amount of zero, a deposit with an amount that is not positive,
+ * and an empty note. The column `note` has the width `Payment.MAX_NOTE_LENGTH`.
  *
  * The foreign key `user_id` has the default `NO ACTION`, because a deposit is money in the kitty and must not disappear
  * with its user. PostgreSQL therefore does not delete a user with a deposit. The index on `user_id` and `created_at` is

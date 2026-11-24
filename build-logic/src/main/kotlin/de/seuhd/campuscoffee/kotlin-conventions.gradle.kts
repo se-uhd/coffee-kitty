@@ -31,7 +31,7 @@ kotlin {
 }
 
 // ktlint checks the code against the code style `ktlint_official` (not the Kotlin coding conventions of IntelliJ) and
-// the line length, which the root .editorconfig sets. The ktlint plugin makes `check` depend on ktlintCheck, and a
+// the line length. The root .editorconfig sets both. The ktlint plugin makes `check` depend on ktlintCheck, and a
 // formatting violation fails the build.
 configure<KtlintExtension> {
     version.set(libs.findVersion("ktlint-tool").get().requiredVersion)

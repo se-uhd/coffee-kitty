@@ -41,8 +41,8 @@ class Response<T : Any>(
 
 /**
  * Reads the status code, the headers, and the body of this response into a [Response]. For a status of 2xx, the
- * function parses the body as [T], and for any other status as an [ErrorJson]. It parses with [STRICT_JSON_MAPPER], so a body
- * with other fields than the target class fails the test.
+ * function parses the body as [T], and for any other status as an [ErrorJson]. It parses with [STRICT_JSON_MAPPER], so
+ * a body with other fields than the target class fails the test.
  */
 inline fun <reified T : Any> RestTestClient.ResponseSpec.toResponse(): Response<T> {
     val result = returnResult<ByteArray>()

@@ -7,7 +7,7 @@ the deposit amount.
 
 ## Rationale
 
-Users settle what they owe by paying cash to the team assistant, who is an admin and puts the cash into the kitty.
+Users pay what they owe in cash to the team assistant, who is an admin and puts the cash into the kitty.
 Coffee Kitty does not record this cash yet.
 
 ## Success Criteria

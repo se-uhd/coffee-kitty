@@ -20,7 +20,7 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 /**
- * System tests for the [ErrorJson] body. For a domain exception, the error code is the class name of the exception.
+ * The system tests for the [ErrorJson] body. For a domain exception, the error code is the class name of the exception.
  * For an error that Spring MVC or the firewall reports, the error code is the reason phrase of the status without
  * spaces, such as `NotFound`.
  */

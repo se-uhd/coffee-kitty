@@ -15,11 +15,10 @@ import tools.jackson.databind.json.JsonMapper
  * Responds with 401 Unauthorized to a request without a known acting user. The body is a JSON `ErrorResponse`, as in
  * every other error response, with the error code `Unauthorized`. As RFC 9110 requires for a 401, the response has the
  * header `WWW-Authenticate` with the challenge [CurrentUserProvider.AUTHENTICATION_CHALLENGE].
- *
- * Spring Security calls the entry point when a request to a route that `SecurityConfig` protects has no acting user.
- * [ActingUserAuthenticationFilter] calls it for a login name that no user has. [AuthenticationExceptionHandler] calls
- * it when a controller needs an acting user on a route that `SecurityConfig` does not protect. The coffee app of SE@UHD
- * has an entry point with the same name.
+ * Spring Security calls the entry point when a request to an endpoint that `SecurityConfig` protects has no acting
+ * user. [ActingUserAuthenticationFilter] calls it for a login name that no user has. [AuthenticationExceptionHandler]
+ * calls it when a controller needs an acting user on an endpoint that `SecurityConfig` does not protect. The coffee app
+ * of SE@UHD has an entry point with the same name.
  *
  * @param jsonMapper the JSON mapper of Spring MVC, which writes the timestamp in the same format as for the other
  *   error responses

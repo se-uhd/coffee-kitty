@@ -8,8 +8,8 @@ import javax.sql.DataSource
 
 /**
  * Adds the [DevFixtureLoader] to the dev application. The component scan of a Spring Boot application leaves out a
- * `@TestConfiguration`, so no test context contains the fixture loader. Only `main` in `DevApplication.kt` registers this
- * class.
+ * `@TestConfiguration`, so no test context contains the fixture loader. Only `main` in `DevApplication.kt` registers
+ * this class.
  */
 @TestConfiguration(proxyBeanMethods = false)
 class DevDataConfiguration {

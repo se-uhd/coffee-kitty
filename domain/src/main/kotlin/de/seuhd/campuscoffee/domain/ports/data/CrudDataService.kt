@@ -6,10 +6,10 @@ import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
 import de.seuhd.campuscoffee.domain.model.DomainModel
 
 /**
- * Generic data port with the create, read, update, and delete (CRUD) operations for the domain objects of one entity.
- * The data port of an entity that the domain may change and delete extends this interface. The data port of an entity
- * that never changes after it is stored, such as [CountCorrectionDataService], declares only the operations that the
- * domain needs. Every data adapter in the data module extends `CrudDataServiceImpl`.
+ * The generic data port with the create, read, update, and delete (CRUD) operations for the domain objects of one
+ * entity. The data port of an entity that the domain may change and delete extends this interface. The data port of an
+ * entity that never changes after it is stored, such as [CountCorrectionDataService], declares only the operations that
+ * the domain needs. Every data adapter in the data module extends `CrudDataServiceImpl`.
  *
  * @param DOMAIN the domain model
  * @param ID     the type of the id, which is [java.util.UUID] for every domain model

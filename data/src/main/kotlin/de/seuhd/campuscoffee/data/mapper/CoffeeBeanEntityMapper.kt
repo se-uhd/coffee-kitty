@@ -7,9 +7,9 @@ import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
 
 /**
- * MapStruct mapper between [CoffeeBean] domain objects and [CoffeeBeanEntity] JPA entities. MapStruct maps each field
- * to the field with the same name. It maps [CoffeeBean.mergedIntoId] in the same way, because this field is a plain id.
- * [updateEntity] does not copy the id or the timestamps (see [EntityMapper.updateEntity]).
+ * The MapStruct mapper between [CoffeeBean] domain objects and [CoffeeBeanEntity] JPA entities. MapStruct maps each
+ * field to the field with the same name. It maps [CoffeeBean.mergedIntoId] in the same way, because this field is a
+ * plain id. [updateEntity] does not copy the id or the timestamps (see [EntityMapper.updateEntity]).
  */
 @Mapper(componentModel = "spring")
 interface CoffeeBeanEntityMapper : EntityMapper<CoffeeBean, CoffeeBeanEntity> {

@@ -13,9 +13,9 @@ import tools.jackson.databind.json.JsonMapper
 
 /**
  * The unit test for [RequestRejectedExceptionHandler]. The firewall rejects some requests only while Spring MVC reads
- * them, such as a request with a control character in a header. In the test, a route throws the
- * [RequestRejectedException] of the firewall. MockMvc runs the route with the handler and [GlobalExceptionHandler], so
- * that the test fails when the handler does not take precedence.
+ * them, such as a request with a control character in a header. In the test, an endpoint throws the
+ * [RequestRejectedException] of the firewall. MockMvc runs the endpoint with the handler and [GlobalExceptionHandler],
+ * so that the test fails when the handler does not take precedence.
  */
 class RequestRejectedExceptionHandlerTest {
     @RestController

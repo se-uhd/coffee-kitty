@@ -4,10 +4,10 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 /**
- * Domain model of a correction, in which an [admin] sets the coffee count of a [user] from [countBefore] to
- * [countAfter] and explains the correction in a [note] (FR-8 in `requirements/FR-8-correct-coffee-count.md`).
- * Instances are immutable, and Coffee Kitty never changes a stored correction. `CoffeeConsumptionService.correctCount`
- * stores a correction together with the corrected coffee count.
+ * The domain model of a correction, in which an [admin] sets the coffee count of a [user] from [countBefore] to
+ * [countAfter] and explains the correction in a [note] (FR-8 in `requirements/FR-8-correct-coffee-count.md`). Instances
+ * are immutable, and Coffee Kitty never changes a stored correction. `CoffeeConsumptionService.correctCount` stores a
+ * correction together with the corrected coffee count.
  *
  * The data module assigns [id], [createdAt], and [updatedAt]. They are null on a correction that is not stored yet.
  * [createdAt] is the time of the correction in UTC.

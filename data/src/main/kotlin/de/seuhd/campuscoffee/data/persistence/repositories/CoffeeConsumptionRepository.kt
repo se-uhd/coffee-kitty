@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Lock
 import java.util.UUID
 
 /**
- * Spring Data JPA repository for [CoffeeConsumptionEntity]. Spring Data implements this interface at runtime and
+ * The Spring Data JPA repository for [CoffeeConsumptionEntity]. Spring Data implements this interface at runtime and
  * derives the query of each method declared here from the method name.
  */
 interface CoffeeConsumptionRepository : JpaRepository<CoffeeConsumptionEntity, UUID> {

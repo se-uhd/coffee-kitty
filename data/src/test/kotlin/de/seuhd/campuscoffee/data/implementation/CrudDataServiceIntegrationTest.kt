@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 /**
- * Integration tests of the data adapters [UserDataServiceImpl], [CoffeeConsumptionDataServiceImpl], and
+ * The integration tests of the data adapters [UserDataServiceImpl], [CoffeeConsumptionDataServiceImpl], and
  * [CountCorrectionDataServiceImpl] and their base class [CrudDataServiceImpl] against PostgreSQL. The base class is
  * abstract, and the tests call its methods through the three data adapters.
  */
@@ -84,7 +84,7 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `upsert stores every field of an existing user and does not change createdAt`() {
+    fun `upsert stores every field of an existing user`() {
         val created = userDataService.upsert(user("frank"))
         val changed =
             created.copy(
@@ -141,7 +141,7 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `upsert stores a new count and changes neither createdAt nor the user`() {
+    fun `upsert stores a new count of a consumption`() {
         val user = userDataService.upsert(user("henry"))
         val userId = requireNotNull(user.id)
         val consumption = coffeeConsumptionDataService.upsert(CoffeeConsumption(user = user, count = 0))

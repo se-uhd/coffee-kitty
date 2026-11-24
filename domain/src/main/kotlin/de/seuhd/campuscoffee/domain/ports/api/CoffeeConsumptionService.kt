@@ -11,9 +11,9 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 /**
- * API port for the consumptions. The controllers call it to read and correct coffee counts, to add and undo coffees,
- * and to read the undo status and the corrections. `CoffeeConsumptionServiceImpl` in the domain module implements it.
- * [UserService.create] creates the consumption of a new user with a coffee count of zero.
+ * The API port for the consumptions. The controllers call it to read and correct coffee counts, to add and undo
+ * coffees, and to read the undo status and the corrections. `CoffeeConsumptionServiceImpl` in the domain module
+ * implements it. [UserService.create] creates the consumption of a new user with a coffee count of zero.
  */
 interface CoffeeConsumptionService {
     /**
@@ -28,7 +28,7 @@ interface CoffeeConsumptionService {
      * Adds [delta] to the coffee count of the user with [userId] and returns the updated consumption. The domain
      * accepts only a delta of `+1`, which adds one coffee. With the delta parameter, an extension can accept a delta
      * of `-1` to remove a coffee without changing the format of the request body. In the coffee app of SE@UHD, an admin
-     * removes a coffee with a delta of `-1`. At a coffee count of zero, this delta gets the status 409 Conflict.
+     * removes a coffee with a delta of `-1`. In that app, such a delta gets 409 Conflict at a coffee count of zero.
      *
      * @param userId the id of the user
      * @param delta  the change to the coffee count, which must be `+1`

@@ -16,8 +16,8 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 /**
- * Base class of the data adapters. Each data adapter reads and writes one table through a Spring Data
- * repository and converts between domain objects and JPA entities with a MapStruct [EntityMapper].
+ * The base class of the data adapters. Each data adapter reads and writes one table through a Spring Data repository
+ * and converts between domain objects and JPA entities with a MapStruct [EntityMapper].
  *
  * [upsert] and [delete] each run in a transaction and flush before they return. The database therefore reports a
  * constraint violation inside these methods and not at the commit. [upsert] throws a [DuplicationException] (409) for

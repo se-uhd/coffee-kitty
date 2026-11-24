@@ -4,7 +4,7 @@ import de.seuhd.campuscoffee.domain.model.CoffeeRating
 import java.util.UUID
 
 /**
- * Data port for the ratings, with lookups by user and by bean in addition to the operations of [CrudDataService].
+ * The data port for the ratings, with lookups by user and by bean in addition to the operations of [CrudDataService].
  * `CoffeeRatingDataServiceImpl` in the data module implements it. [getAll] returns the ratings, ordered by creation
  * time.
  */

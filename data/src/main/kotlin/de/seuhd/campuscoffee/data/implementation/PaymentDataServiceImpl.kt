@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 /**
- * Data adapter that implements the [PaymentDataService] port on the table `payments`. Business rules, such as the
+ * The data adapter that implements the [PaymentDataService] port on the table `payments`. Business rules, such as the
  * limits of an amount and the rule that the kitty never goes negative, belong in a domain service. Coffee Kitty has no
  * domain service for the payments yet. [upsert] throws a `NotFoundException` for a deposit of a user who does not exist
  * (see [CrudDataServiceImpl]).

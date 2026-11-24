@@ -16,7 +16,7 @@ import org.springframework.context.annotation.FilterType
 
 /**
  * A test of the startup with the configuration of `application.yaml` and without a bootstrap admin. The Spring context
- * contains the startup tasks and a Mockito mock of the port that they call.
+ * contains the startup task and a Mockito mock of the port that it calls.
  */
 class StartupTest {
     private val userInternalService = mock<UserInternalService>()
@@ -35,8 +35,8 @@ class StartupTest {
     }
 
     /**
-     * Registers the startup tasks in the root package and the `*Properties` classes. The scan leaves out the
-     * subpackages and [Application], which would start the whole app.
+     * Registers the classes of the startup task in the root package and the `*Properties` classes. The scan leaves out
+     * the subpackages and [Application], which would start the whole app.
      */
     @ComponentScan(
         basePackageClasses = [Application::class],

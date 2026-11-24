@@ -10,7 +10,7 @@ import org.mockito.kotlin.whenever
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 
 /**
- * System tests for a request during which a data adapter throws an exception. Mockito spies wrap two data adapters,
+ * The system tests for a request during which a data adapter throws an exception. Mockito spies wrap two data adapters,
  * and a test makes one of their functions throw. Because of the spies, the tests run in a Spring context of their own.
  */
 class FailureSystemTests : AbstractSystemTest() {

@@ -19,9 +19,9 @@ Each coffee costs the same price. Users want to see what they owe.
 
 ## Verification Method
 
-Test: unit tests of the lowered balance, complemented by integration tests of the stored balance, system tests of the
-status codes, and a Cucumber scenario of the first success criterion. All tests except the unit tests run against
-PostgreSQL in Testcontainers.
+Test: unit tests of the lowered balance. Further tests complement them: integration tests of the stored balance, system
+tests of the status codes, and a Cucumber scenario of the first success criterion. All tests except the unit tests run
+against PostgreSQL in Testcontainers.
 Who: developer of the change. When: before the merge. Where: GitHub Actions.
 
 ## Supporting Information

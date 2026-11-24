@@ -48,7 +48,8 @@ cannot delete its data, because the code is not on its classpath.
 * This decision removes `DataResetService`, `CrudDataService.clear`, `FixtureStartupLoader`, `FixturesProperties`, and
   the keys under `campus-coffee.fixtures`.
 * `DatabaseCleaner` truncates every table that the PostgreSQL catalog lists. A new table needs no change to it, and the
-  order of the foreign keys does not matter. The statement is specific to PostgreSQL.
+  order of the foreign keys does not matter. The `TRUNCATE` statement and the query on the catalog are specific to
+  PostgreSQL.
 * The coverage gate, PIT, and the architecture tests have no special case for fixtures. An architecture test fails if
   the production classes contain the test fixtures.
 * The dev application is test code. detekt does not check it, and the coverage gate does not count it.

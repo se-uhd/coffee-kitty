@@ -24,8 +24,8 @@ the decision and names the condition for a change.
 
 ## Considered Options
 
-* Read methods without a transaction and eager associations. A read method works for a caller with and without a
-  transaction. Hibernate loads the associations of every row, also when the caller does not need them, and runs one
+* Eager associations and read methods without a transaction. A read method works for a caller with and without a
+  transaction. Hibernate loads the associations of every row, even when the caller does not need them, and runs one
   query per referenced row for a list (N+1 queries).
 * Read methods with `@Transactional(readOnly = true)` and lazy associations. The data adapter maps the JPA entity inside
   the transaction, and a query can fetch only what its caller needs. Every read method needs the annotation, and a read
@@ -36,9 +36,9 @@ the decision and names the condition for a change.
 ## Decision(s)
 
 The read methods have no transaction, and the associations are eager (the first option). A coffee group has few users,
-and every list of the API is short: `GET /api/users` loads no association, and the corrections of one user share two
-referenced users. The rule for an exception is in `CLAUDE.md`: A data adapter for a JPA entity with a lazy association
-reads and maps the entity inside a `@Transactional` method.
+and the lists of the API need few queries: `GET /api/users` loads no association, and the corrections of one user refer
+to that user and to the few admins who corrected the coffee count. The rule for an exception is in `CLAUDE.md`: A data
+adapter for a JPA entity with a lazy association reads and maps the entity inside a `@Transactional` method.
 
 ## Consequences
 
