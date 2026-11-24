@@ -47,6 +47,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   letters, an admin whom another admin created, the URL in the `Location` header of a new user, and a text as the
   delta. `FailureSystemTests` checks that a request returns 500 and stores nothing when a data adapter throws an
   exception.
+- `gradle build` creates a coverage report of all modules with JaCoCo and fails below 90% of the lines or 80% of the
+  branches.
+- `gradle :domain:pitest` runs mutation tests of the domain module with PIT and fails when the tests detect fewer than
+  85% of the mutants that they execute. `gradle build` does not run it.
+- `gradle build` runs CPD, the copy-paste detector of PMD, on the production code and fails at a duplicate of 70 tokens.
 
 ### Changed
 

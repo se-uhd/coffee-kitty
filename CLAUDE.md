@@ -26,9 +26,10 @@ The project is a multi-module Gradle build with Kotlin build scripts and a hexag
 The included build `build-logic/` holds the convention plugins, and a subproject applies a convention plugin by its id
 `de.seuhd.campuscoffee.<name>`. The root build and `build-logic/` read the same version catalog,
 `gradle/libs.versions.toml`. `doc/adr/001-multi-module-gradle-build-with-convention-plugins.md` records why the build
-has this structure. The `detekt-rules` subproject holds the custom detekt rules. Every Maven repository of the build is
-declared in `settings.gradle.kts` or `build-logic/settings.gradle.kts`, and `FAIL_ON_PROJECT_REPOS` fails the build
-when a build script declares a repository.
+has this structure. The `detekt-rules` subproject holds the custom detekt rules, and the `coverage` subproject creates
+the coverage report of all modules. Every Maven repository of the build is declared in `settings.gradle.kts` or
+`build-logic/settings.gradle.kts`, and `FAIL_ON_PROJECT_REPOS` fails the build when a build script declares a
+repository.
 
 ### Module Dependencies
 
@@ -175,10 +176,13 @@ and the Kotlin `jvmTarget`, and `mise.toml` pins the same major version by hand.
 Testcontainers tests need Docker.
 
 ```shell
-gradle build                                                 # compile, ktlint, detekt, and every test
+gradle build                                                 # compile, ktlint, detekt, CPD, every test, coverage gate
 gradle ktlintFormat                                          # apply the formatting fixes before a commit
 gradle :domain:test --tests "CoffeeConsumptionServiceTest"   # one test class
 gradle :application:test --tests "ArchitectureTests"         # the layer rules only, which need no Docker
+gradle :coverage:testCodeCoverageReport                      # the coverage report of all modules
+gradle :domain:pitest                                        # mutation testing of the domain module
+gradle cpd                                                   # duplicates in the production code
 docker run -d --name campus-coffee-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p ${DB_PORT:-5433}:5432 postgres:18-alpine
 gradle :application:bootRun --args='--spring.profiles.active=dev'
 ```
@@ -190,7 +194,8 @@ filter with a class name or a package, as in `--tests "ArchitectureTests"` or
 tests run, but the task fails with `CucumberTests > initializationError`: Gradle then also passes the suite class
 `CucumberTests` to JUnit, the filter removes all its scenarios, and JUnit fails a suite without tests
 (`NoTestsDiscoveredException`). Without Docker, run the rest of the build with
-`gradle build -x :application:test -x :data:test`.
+`gradle build -x :application:test -x :data:test -x :coverage:coverageGate`. The coverage gate needs the execution
+data of every test.
 
 The root `gradle.properties` turns on the Gradle configuration cache. A task action must not reference a top-level value
 of its build script or a `Configuration`, or the build fails with a configuration cache problem. Copy such a value into
@@ -203,12 +208,13 @@ updates read. Pin every action in a workflow (`uses:`) to a full commit SHA with
 
 ### Format, Lint, and Static Analysis
 
-`gradle build` runs the `check` task, which runs ktlint and detekt and fails on any finding. ktlint applies the
-`ktlint_official` code style with the settings of the root `.editorconfig`, and detekt applies
-`config/detekt/detekt.yml` on top of the default configuration of detekt. Fix each finding, and do not add a detekt
-baseline. detekt and ktlint run on their own Kotlin compilers, which the catalog entries `detekt-kotlin` and
-`ktlint-kotlin` set independently of the `kotlin` entry. When you update detekt, set `detekt-kotlin` to the Kotlin
-version that the new detekt release names. On a mismatch, detekt reports "detekt was compiled with Kotlin X".
+`gradle build` runs the `check` task, which runs ktlint and detekt and fails on any finding. `check` also runs the
+coverage gate and CPD (see Code Coverage, Mutation Testing, and Duplicate Code). ktlint applies the `ktlint_official`
+code style with the settings of the root `.editorconfig`, and detekt applies `config/detekt/detekt.yml` on top of the
+default configuration of detekt. Fix each finding, and do not add a detekt baseline. detekt and ktlint run on their own
+Kotlin compilers, which the catalog entries `detekt-kotlin` and `ktlint-kotlin` set independently of the `kotlin` entry.
+When you update detekt, set `detekt-kotlin` to the Kotlin version with which the new detekt release was built. On a
+mismatch, detekt reports "detekt was compiled with Kotlin X".
 
 The custom rule set `campus-coffee-kdoc` is in `detekt-rules/src/main/kotlin/de/seuhd/campuscoffee/detekt/`, and
 `gradle :detekt-rules:test` runs its tests. The rule set requires KDoc on every non-local class, interface, object,
@@ -228,7 +234,8 @@ A substantial change goes through these steps:
    verify each finding in the source, and revise the plan with the confirmed findings.
 3. Implement the plan in coherent steps, keep `gradle build` green, and reuse existing patterns and helpers.
 4. Review the diff adversarially for bugs that pass `gradle build`, such as untested edge cases. Verify each finding
-   against the code, apply the confirmed fixes, and run the build again.
+   against the code, apply the confirmed fixes, and run the build again. After a change to the domain module, also run
+   `gradle :domain:pitest`.
 5. Release the change (see Versioning and Releases).
 
 Write each decision worth recording as a short architecture decision record (ADR) in `doc/adr/`, named
@@ -250,8 +257,9 @@ version is 0, a breaking change raises the minor version, which Semantic Version
 2. Move the bullets of `## [Unreleased]` under a new `## [x.y.z] - YYYY-MM-DD` header, add the link reference
    `[x.y.z]: https://github.com/se-uhd/coffee-kitty/releases/tag/vX.Y.Z` at the bottom of `CHANGELOG.md`, and set
    `version` in `gradle.properties` to the new version.
-3. Commit these changes as the release commit and push the commit to `main`.
-4. When CI passes on the release commit, tag the commit and push the tag with
+3. Run `gradle build` and `gradle :domain:pitest`. Continue only when both pass.
+4. Commit these changes as the release commit and push the commit to `main`.
+5. When CI passes on the release commit, tag the commit and push the tag with
    `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`.
 
 ## Commit Messages
@@ -361,6 +369,27 @@ such as the wording of a message, an annotation, a configuration setting, the ca
 number and order of calls. It does not check a framework either, such as the messages of Bean Validation or the rule of
 Spring that a lock needs a transaction. A test may check which values a message contains or leaves out, such as the name
 of an invalid field, a rejected value, or a login name in a log message.
+
+### Code Coverage, Mutation Testing, and Duplicate Code
+
+JaCoCo records the execution data of the tests of every module. The subproject `coverage` merges the data into one
+report at `coverage/build/reports/jacoco/testCodeCoverageReport/html/index.html`, because the system and acceptance
+tests of the application module cover most of the other modules. The task `coverageGate`, which `check` runs, fails
+the build below 90% of the lines or 80% of the branches (`coverage/build.gradle.kts`). The fixture classes in
+`domain/.../tests/`, the class `Application`, and the generated mappers do not count. Raise the minimums as the
+coverage grows, and never lower them to make a build pass.
+
+`gradle :domain:pitest` runs the mutation testing tool PIT on the domain module. PIT changes the code, e.g., it negates
+a condition, and runs the unit tests of the domain module against each changed version (mutant). A mutant that no test
+detects points to a missing check or to a check that passes although the behavior is wrong. The report is in
+`domain/build/reports/pitest/index.html`. The task fails when the tests detect fewer than 85% of the mutants that they
+execute (`pitest-conventions.gradle.kts`). `check` and CI do not run it. Run it before a release (see Versioning and
+Releases) and before you push a change to the domain module, and add a test or improve a check for each surviving mutant
+that changes the behavior.
+
+`check` runs CPD, the copy-paste detector of PMD, on the production code. It fails at a duplicate of 70 tokens, which
+is a copy of about 10 to 13 lines (`build.gradle.kts`). `gradle cpd` runs it alone. Extract the shared code instead of
+raising the threshold.
 
 ## Key Technologies
 

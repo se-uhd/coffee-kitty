@@ -149,9 +149,9 @@ with a line "Avoid:", which lists words not to use for the concept.
 
 ## Architecture
 
-- **module**: One of the four Gradle subprojects that hold the app code: `domain`, `api`, `data`, and `application`.
-  The architecture tests treat each of these subprojects as a layer. The fifth subproject, `detekt-rules`, holds build
-  tooling instead of app code.
+- **module**: One of the four Gradle subprojects that hold the app code: `domain`, `api`, `data`, and `application`. The
+  architecture tests treat each of these subprojects as a layer. The subprojects `coverage` and `detekt-rules` hold
+  build tooling instead of app code.
 - **convention plugin**: A Gradle plugin in the included build `build-logic/` that configures one part of the build,
   such as the Java toolchain or the Kotlin compiler options with ktlint and detekt. A subproject applies such a plugin
   by the id `de.seuhd.campuscoffee.<name>`. Only the `data` module, for example, applies `kotlin-jpa-conventions`,
