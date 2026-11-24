@@ -434,10 +434,11 @@ profile, springdoc is off.
   `ValidationException` (400). `JsonAuthenticationEntryPoint` responds to a request without a known acting user with 401
   and the header `WWW-Authenticate`, which RFC 9110 requires in every 401. `GlobalExceptionHandler` extends
   `ResponseEntityExceptionHandler`, which maps Spring's standard web exceptions to their status codes (e.g., 404 for an
-  unknown path). Any other exception becomes a 500. The body of every error response is an `ErrorResponse`. Its
-  `errorCode` is the class name of the domain exception or, for any other error, the reason phrase of the status without
-  spaces (e.g., `BadRequest`). To add a domain exception, make the changes that the KDoc of
-  `GlobalExceptionHandler.handleMappedException` lists.
+  unknown path). An `IllegalArgumentException` for a wildcard in the `Content-Type` header becomes a 415, and any other
+  exception becomes a 500. The body of every error response is an `ErrorResponse`. Its `errorCode` is the class name of
+  the domain exception or, for any other error, the reason phrase of the status without spaces (e.g., `BadRequest`). To
+  add a domain exception, create a subclass of the sealed class `DomainException` and add its status to
+  `GlobalExceptionHandler.statusOf`, which does not compile without it.
 - Request bodies: Jackson rejects a value of the wrong JSON type instead of converting it, and the request gets a 400
   with the error code `BadRequest`. The `spring.jackson` settings in `application.yaml` reject a number with a fraction
   for an integer field, a JSON string for a number or a boolean field, and a JSON number for an enum field. `JsonConfig`

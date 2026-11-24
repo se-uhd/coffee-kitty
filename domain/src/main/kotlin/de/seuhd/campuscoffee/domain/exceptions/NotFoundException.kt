@@ -1,15 +1,10 @@
 package de.seuhd.campuscoffee.domain.exceptions
 
 /**
- * Thrown when a lookup finds no stored domain object. The exception handler maps it to the status 404 Not Found.
+ * Thrown when a lookup finds no stored domain object. The exception handler maps it to the status 404 Not Found. The
+ * log message leaves out a looked-up field value, such as a login name.
  */
-class NotFoundException : RuntimeException {
-    /**
-     * The message for the server log. It leaves out a looked-up field value, such as a login name, because log lines
-     * identify users only by id.
-     */
-    val logMessage: String
-
+class NotFoundException : DomainException {
     /**
      * Creates an exception for a failed lookup by id.
      *
@@ -17,9 +12,7 @@ class NotFoundException : RuntimeException {
      * @param id          the id that no object has
      */
     constructor(domainClass: Class<*>, id: Any) :
-        super("${domainClass.simpleName} with ID $id does not exist.") {
-        logMessage = "${domainClass.simpleName} with ID $id does not exist."
-    }
+        super("${domainClass.simpleName} with ID $id does not exist.")
 
     /**
      * Creates an exception for a failed lookup by a field value.
@@ -29,7 +22,8 @@ class NotFoundException : RuntimeException {
      * @param fieldValue  the value that no object has
      */
     constructor(domainClass: Class<*>, fieldName: String, fieldValue: String) :
-        super("${domainClass.simpleName} with $fieldName '$fieldValue' does not exist.") {
-        logMessage = "${domainClass.simpleName} with this $fieldName does not exist."
-    }
+        super(
+            message = "${domainClass.simpleName} with $fieldName '$fieldValue' does not exist.",
+            logMessage = "${domainClass.simpleName} with this $fieldName does not exist."
+        )
 }

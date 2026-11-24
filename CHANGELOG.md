@@ -60,6 +60,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Tests that only repeated another test are removed.
 - The tests run in the time zone Asia/Tokyo, so that a test fails when the production code uses the time zone of the
   JVM for a time in UTC.
+- The domain exceptions extend the sealed class `DomainException`, and `GlobalExceptionHandler` no longer has code for
+  cases that cannot occur.
 
 ### Fixed
 
