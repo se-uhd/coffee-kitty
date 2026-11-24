@@ -13,7 +13,7 @@ interface CoffeePriceDataService : CrudDataService<CoffeePrice, UUID> {
     /**
      * Returns the stored price, or null if no price is stored. Null does not mean that a coffee is free. No migration
      * stores a price, and the tests start with an empty table. The startup and the test setup therefore have to store
-     * the start price, as `BootstrapAdminLoader` stores the first admin.
+     * the start price, as `BootstrapAdminLoader` stores the bootstrap admin.
      */
     fun findCurrent(): CoffeePrice?
 }

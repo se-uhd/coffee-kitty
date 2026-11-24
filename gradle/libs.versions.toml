@@ -15,7 +15,7 @@ cucumber = "8.0.4"
 archunit = "1.5.1"
 # jvmTarget 25 needs Kotlin 2.3.0 or newer. java-conventions sets kotlin-stdlib and kotlin-reflect to this `kotlin`
 # version in place of the older Kotlin that the Spring Boot BOM manages. The version can change independently of detekt
-# and ktlint, which run on their own compilers (`detekt-kotlin`, `ktlint-kotlin`).
+# and ktlint, which run on their own compilers (the entries `detekt-kotlin` and `ktlint-kotlin`).
 kotlin = "2.4.21"
 # Kotlin helpers for Mockito, such as `whenever` and reified versions of `any` and `mock`. The Spring Boot BOM does not
 # manage mockito-kotlin.
@@ -93,16 +93,17 @@ kotlin-allopen = { module = "org.jetbrains.kotlin:kotlin-allopen", version.ref =
 kotlin-noarg = { module = "org.jetbrains.kotlin:kotlin-noarg", version.ref = "kotlin" }
 ktlint-gradle-plugin = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlint-plugin" }
 pitest-gradle-plugin = { module = "info.solidsoft.gradle.pitest:gradle-pitest-plugin", version.ref = "pitest-plugin" }
-# Declared only so that Dependabot checks the `ktlint-tool` version, which no other entry references. No module depends
-# on ktlint-cli, because the convention plugins pass the `ktlint-tool` version to the ktlint Gradle plugin.
+# The catalog declares this library only so that Dependabot checks the `ktlint-tool` version, which no other entry
+# references. No module depends on ktlint-cli, because the convention plugins pass the `ktlint-tool` version to the
+# ktlint Gradle plugin.
 ktlint-cli = { module = "com.pinterest.ktlint:ktlint-cli", version.ref = "ktlint-tool" }
 detekt-gradle-plugin = { module = "dev.detekt:detekt-gradle-plugin", version.ref = "detekt" }
-# Declared only so that Dependabot checks the `jacoco`, `pitest-tool`, and `pitest-junit5` versions, which the build
-# passes to the JaCoCo and PIT plugins. No module depends on these libraries.
+# The catalog declares these libraries only so that Dependabot checks the `jacoco`, `pitest-tool`, and `pitest-junit5`
+# versions, which the build passes to the JaCoCo and PIT plugins. No module depends on these libraries.
 jacoco-agent = { module = "org.jacoco:org.jacoco.agent", version.ref = "jacoco" }
 pitest = { module = "org.pitest:pitest", version.ref = "pitest-tool" }
 pitest-junit5-plugin = { module = "org.pitest:pitest-junit5-plugin", version.ref = "pitest-junit5" }
-# The command line of PMD and its Kotlin support, which the `cpd` task of the root project runs
+# The command-line interface (CLI) of PMD and its Kotlin support, which the `cpd` task of the root project runs
 pmd-cli = { module = "net.sourceforge.pmd:pmd-cli", version.ref = "pmd" }
 pmd-kotlin = { module = "net.sourceforge.pmd:pmd-kotlin", version.ref = "pmd" }
 
@@ -115,7 +116,7 @@ detekt-test-utils = { module = "dev.detekt:detekt-test-utils", version.ref = "de
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
-# Only the root build.gradle.kts uses this entry. It declares the Kotlin Gradle plugin with `apply false` (see the
+# Only the root build.gradle.kts uses this entry, to declare the Kotlin Gradle plugin with `apply false` (see the
 # comment there). The version is the `kotlin` entry above.
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 # Only the coverage subproject uses this entry. The subproject imports the Spring Boot BOM to resolve the modules that

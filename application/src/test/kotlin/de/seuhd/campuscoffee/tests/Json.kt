@@ -8,9 +8,9 @@ import java.util.UUID
 
 /**
  * The JSON bodies of the REST API as the tests expect them. The system and acceptance tests read every response into
- * one of these classes and never into a DTO class of the api module. The field names here are therefore written down
- * a second time, independently of the production code. A response with a renamed, missing, or additional field fails
- * to parse, and the test fails (see [STRICT_JSON]).
+ * one of these classes and never into a DTO class of the api module. These classes therefore state the field names a
+ * second time, independently of the production code. A response with a renamed, missing, or additional field fails to
+ * parse, and the test fails (see [STRICT_JSON]).
  *
  * A timestamp is a `String`, so that a test also checks its format. [utc] parses it.
  */

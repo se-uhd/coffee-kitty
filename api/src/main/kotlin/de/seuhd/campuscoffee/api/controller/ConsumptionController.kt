@@ -27,7 +27,7 @@ import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as ApiRequestBody
 
 /**
- * Controller under `/api/users/{userId}/consumption` that reads and corrects the coffee count of a user, adds and
+ * The controller under `/api/users/{userId}/consumption` that reads and corrects the coffee count of a user, adds and
  * undoes coffees, reads the undo status, and lists the corrections. The undo status is an [UndoStatusDto], and the
  * corrections are a list of [CountCorrectionDto]. Every other endpoint returns the login name and the coffee count of
  * the user as a [ConsumptionDto]. Only an admin may correct a coffee count and list the corrections. The header

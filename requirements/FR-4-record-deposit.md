@@ -25,9 +25,9 @@ Coffee Kitty does not record this cash yet.
 
 ## Verification Method
 
-Test: unit tests of the limits for the amount and the note, the admin check, and the raised balance, complemented by
-integration tests of the stored balance, system tests of the status codes, and a Cucumber scenario of the first success
-criterion. All tests except the unit tests run against PostgreSQL in Testcontainers.
+Test: unit tests of the limits for the amount and the note, the role check, and the raised balance. Further tests
+complement them: integration tests of the stored balance, system tests of the status codes, and a Cucumber scenario of
+the first success criterion. All tests except the unit tests run against PostgreSQL in Testcontainers.
 Who: developer of the change. When: before the merge. Where: GitHub Actions.
 
 ## Supporting Information

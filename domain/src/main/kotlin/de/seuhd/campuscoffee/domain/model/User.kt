@@ -35,9 +35,9 @@ data class User(
         const val LOGIN_NAME_PATTERN = "\\w+"
 
         /**
-         * The regular expression that a whole email address must match. The address needs exactly one at sign, at
-         * least one character on each side of the at sign, and no whitespace. An address that matches has therefore at
-         * least three characters, which the check constraint on `users.email_address` requires as well.
+         * The regular expression that a whole email address must match. The address must have exactly one at sign with
+         * at least one character on each side, and it must not contain whitespace. An address that matches therefore
+         * has at least three characters, which the CHECK constraint on `users.email_address` requires as well.
          */
         const val EMAIL_ADDRESS_PATTERN = "[^@\\s]+@[^@\\s]+"
 

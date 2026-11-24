@@ -19,11 +19,10 @@ import org.springframework.web.servlet.HandlerExceptionResolver
  * [CurrentUserProvider.ACTING_USER_HEADER] contains a login name, the filter looks up the user and stores the user as
  * the principal of the request. Spring Security then treats the request as authenticated, although Coffee Kitty checks
  * no password or token and any client can act as any user. The principal has no authorities, because no rule of Spring
- * Security checks a role: The domain checks the role of the acting user with `requireAdmin`. A request
- * with a login name that no user has gets a 401 from [entryPoint] and does not reach a controller. A request without
- * the header continues without a principal, and `SecurityConfig` requires one for the routes with
- * [ActingUserRequired]. If the lookup
- * throws any other exception, for example without a database connection, the filter passes the exception to
+ * Security checks a role. The domain checks the role of the acting user with `requireAdmin`. A request with a login
+ * name that no user has gets a 401 from [entryPoint] and does not reach a controller. A request without the header
+ * continues without a principal, and `SecurityConfig` requires one for the routes with [ActingUserRequired]. If the
+ * lookup throws any other exception, for example without a database connection, the filter passes the exception to
  * [exceptionResolver]. The resolver passes it to `GlobalExceptionHandler`, like an exception of a controller.
  *
  * `SecurityConfig` creates the filter for its filter chain. The filter is not a Spring bean, because Spring Boot would

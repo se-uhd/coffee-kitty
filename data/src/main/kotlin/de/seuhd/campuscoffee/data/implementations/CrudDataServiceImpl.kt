@@ -123,7 +123,7 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
         DataConstraintException(domainClass, ConstraintMapping.constraintNameOf(exception), exception)
 
     private companion object {
-        /** Sort order of [getAll] by creation time and then by id. */
+        /** The sort order of [getAll] by creation time and then by id. */
         private val CREATION_ORDER = Sort.by("createdAt", "id")
     }
 }

@@ -27,9 +27,9 @@ import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as ApiRequestBody
 
 /**
- * Controller under `/api/users` that lists all users, reads a user by id, and creates a user. For each new user, the
- * domain creates a consumption with a coffee count of zero. The endpoints of [ConsumptionController] read and change
- * this consumption.
+ * The controller under `/api/users` that lists all users, reads a user by id, and creates a user. For each new user,
+ * the domain creates a consumption with a coffee count of zero. The endpoints of [ConsumptionController] read and
+ * change this consumption.
  */
 @Tag(name = "Users", description = "Listing, reading, and creating users.")
 @RestController

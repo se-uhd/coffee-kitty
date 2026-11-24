@@ -3,7 +3,7 @@ package de.seuhd.campuscoffee.api.dtos
 import io.swagger.v3.oas.annotations.media.Schema
 
 /**
- * Response body of the endpoints under `/api/users/{userId}/consumption` that read or change the coffee count, with
+ * The response body of the endpoints under `/api/users/{userId}/consumption` that read or change the coffee count, with
  * the [loginName] of the user and the coffee [count].
  */
 data class ConsumptionDto(

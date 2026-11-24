@@ -1,6 +1,7 @@
 # Submit the resolved Gradle dependencies to the dependency graph of GitHub, which Dependabot alerts and Dependabot
-# security updates read. GitHub cannot resolve a Gradle build by itself. Without this workflow, the graph lists only the
-# actions that the workflows use. Dependabot version updates read gradle/libs.versions.toml and do not need the graph.
+# security updates read. GitHub cannot resolve a Gradle build by itself, so without this workflow the graph lists only
+# the actions that the workflows use. Dependabot version updates read gradle/libs.versions.toml and do not need the
+# graph.
 #
 # This workflow replaces the automatic dependency submission of GitHub. The automatic submission runs `./gradlew help`
 # or `gradle help` and fails on this project. The project has no Gradle wrapper, because mise provides Gradle.

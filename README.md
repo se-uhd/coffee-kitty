@@ -23,19 +23,19 @@ and the corrections of their coffee counts.
 - A user has a login name, an email address, and a first and a last name. A login name consists of ASCII letters,
   digits, and underscores. Login names and email addresses are unique. The app stores every email address trimmed and
   in lowercase.
-- Every user has one consumption, which holds the user's coffee count. When the app creates a user, it also creates
-  the consumption with a coffee count of zero. Adding a coffee raises the coffee count by one. When two requests add a
-  coffee for the same user at the same time, both coffees count.
-- Within the grace period of 5 minutes after adding a coffee, a user can undo it, which lowers the coffee count by one.
-  After an undo, the coffee before is the most recent coffee, which the user can undo while it is within its own grace
-  period. The requirement is FR-3 in `requirements/FR-3-undo-coffee.md`.
+- Every user has one consumption, which holds the user's coffee count. When the app creates a user, it also creates the
+  consumption with a coffee count of zero. Adding a coffee raises the coffee count by one. When two requests add a
+  coffee for the same user at the same time, the coffee count rises by two.
+- A user can undo a coffee within the grace period of 5 minutes after adding it. The undo lowers the coffee count by
+  one. After an undo, the coffee before is the most recent coffee, which the user can undo while it is within its own
+  grace period. The requirement is FR-3 in `requirements/FR-3-undo-coffee.md`.
 - The undo status of a user states whether the user can undo their most recent coffee now and, if so, until when. A
   client reads the undo status and offers the undo only while Coffee Kitty accepts an undo. The requirement is FR-9 in
   `requirements/FR-9-undo-status.md`.
 - An admin can correct the coffee count of a user at any time, even after the grace period, and has to add a note with
-  the reason for the correction. A lower count removes the newest coffees of the user, and an undo then applies to the
-  newest coffee that remains. The app stores each correction with the count before and after, the note, and the admin,
-  and an admin can list the corrections of a user. The requirement is FR-8 in
+  the reason for the correction. A correction to a lower count removes the most recent coffees of the user, and an undo
+  then applies to the most recent coffee that remains. The app stores each correction with the count before and after,
+  the note, and the admin, and an admin can list the corrections of a user. The requirement is FR-8 in
   `requirements/FR-8-correct-coffee-count.md`.
 - Every user has a role, `USER` or `ADMIN`. Only an admin may create a user, correct a coffee count, or list the
   corrections of a user. Coffee Kitty has no authentication yet: The header `X-Acting-User` of a request contains the
@@ -43,14 +43,14 @@ and the corrections of their coffee counts.
 - The REST API accepts and returns only JSON.
 - A Spring Boot backend in Kotlin stores the users and their coffee counts in PostgreSQL through Jakarta Persistence
   (JPA). Flyway migrations define the database schema.
-- The migrations V6 to V11 add the tables of later features: the price per cup, the payments (deposits and kitty
-  adjustments), the beans, the ratings, the expenses, and the balances of the users and of the kitty. For the price, the
-  payments, the beans, and the ratings, the data module also implements the data ports. For the expenses and the
-  balances, it has only the JPA entities and the repositories. No endpoint uses these tables yet. The section "Tables
-  Without an Endpoint" in `CLAUDE.md` lists what each feature still needs. The migration V12 adds a column for the price
-  of each recent coffee. These features have requirements in `requirements/`: FR-4 and FR-10 for deposits, FR-5
-  and FR-11 for the price of a coffee and its undo, FR-6 for an expense that a user paid with their own money, and
-  FR-12 for ratings.
+- The migrations V6 to V11 add the tables of later features: the price per cup, the payments, the beans, the ratings,
+  the expenses, and the balances. A payment is a deposit or a kitty adjustment, and the users and the kitty each have a
+  balance. For the price, the payments, the beans, and the ratings, the data module also implements the data ports. For
+  the expenses and the balances, it has only the JPA entities and the repositories. No endpoint uses these tables yet.
+  The section "Tables Without an Endpoint" in `CLAUDE.md` lists what each feature still needs. The migration V12 adds a
+  column for the price of each recent coffee. These features have requirements in `requirements/`: FR-4 and FR-10 for
+  deposits, FR-5 for the price of a coffee, FR-11 for its undo, FR-6 for expenses, and FR-12 for ratings. FR-6 specifies
+  an expense that a user paid with their own money.
 
 ## Architecture
 
@@ -110,8 +110,8 @@ environment variable `DB_PORT` sets. The command prints the id of the new contai
 docker run -d --name campus-coffee-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p ${DB_PORT:-5433}:5432 postgres:18-alpine
 ```
 
-Docker does not delete a stopped container, and a second `docker run` fails because the container name is taken. The
-following command starts the existing container again, for example after a reboot, and prints its name:
+Docker does not delete a stopped container, and a second `docker run` fails because the stopped container keeps its
+name. The following command starts the existing container again, for example after a reboot, and prints its name:
 
 ```shell
 docker start campus-coffee-db
@@ -170,7 +170,8 @@ fixture users get random ids, which change with every restart. `GET /api/users` 
 time, and consumptions in three states, and the tests of every module use them. The system and acceptance tests create
 the same fixture users before each test. The production jar contains neither the fixture users nor code that deletes
 data. The `main` function of the dev application is therefore in the test sources of the application module
-(`DevApplication.kt`), and `bootTestRun` starts it. To keep the data of a run, start the app without the fixtures:
+(`DevApplication.kt`), and `bootTestRun` starts it. To keep the data of a run, start the app without the database
+cleaner and the fixture users:
 
 ```shell
 gradle :application:bootRun --args='--spring.profiles.active=dev'
@@ -192,17 +193,17 @@ curl http://localhost:8081/api/users
 `POST /users` with `{ "loginName", "emailAddress", "firstName", "lastName" }` and an optional `"role"` creates a user
 with a coffee count of zero and returns 201 Created with the new user and a `Location` header. Only an admin may create
 a user. The header `X-Acting-User` has to contain the login name of an admin. The endpoint returns 401 Unauthorized
-without the header or for an unknown login name, 403 Forbidden when the acting user is not an admin, 400 Bad Request for
-a missing or malformed field, such as a number for the login name or the role, for an unknown field, such as an `id`,
-and for a value that breaks a rule, such as a login name with a space, and 409 Conflict when the login name or the
-email address is taken. Because a filter checks the acting user before the controller reads
-the body, a request without a known acting user gets 401 even with an invalid body. Every 401 has the header
-`WWW-Authenticate: X-Acting-User realm="Coffee Kitty"`, as RFC 9110 requires. The dev application creates `jane_doe` as
-an admin. When no admin exists, the app stores a bootstrap admin on startup from the environment
+without the header or for an unknown login name, and 403 Forbidden when the acting user is not an admin. It returns 400
+Bad Request for a missing or malformed field, such as a number for the login name or the role. It returns the same
+status for an unknown field, such as an `id`, and for a value that breaks a rule, such as a login name with a space. It
+returns 409 Conflict when another user has the login name or the email address. A request without a known acting user
+gets 401 even with an invalid body, because a filter checks the acting user before the controller reads the body. Every
+401 has the header `WWW-Authenticate: X-Acting-User realm="Coffee Kitty"`, as RFC 9110 requires. The dev application
+creates `jane_doe` as an admin. When no admin exists, the app stores a bootstrap admin on startup from the environment
 variables `BOOTSTRAP_ADMIN_LOGIN_NAME` and `BOOTSTRAP_ADMIN_EMAIL_ADDRESS` (optional: `BOOTSTRAP_ADMIN_FIRST_NAME` and
 `BOOTSTRAP_ADMIN_LAST_NAME`). If a user has that login name, the app gives that user the role `ADMIN`. This case occurs
-after the migration V4, which gives every existing user, `jane_doe` included, the role `USER` in a database that the
-dev application has not cleaned. With `jane_doe` as the acting user, the command creates the user `ada_lovelace`:
+in a database that the dev application has not cleaned, because the migration V4 gives every existing user, `jane_doe`
+included, the role `USER`. With `jane_doe` as the acting user, the command creates the user `ada_lovelace`:
 
 ```shell
 curl --include --request POST --header "Content-Type: application/json" --header "X-Acting-User: jane_doe" \
@@ -229,8 +230,8 @@ curl http://localhost:8081/api/users/$USER_ID/consumption
 
 `POST /users/{userId}/consumption` with `{ "delta": 1 }` adds one coffee and returns the new coffee count as
 `{ "loginName", "count" }`. The request body contains a delta so that an extension can accept a delta of -1 to remove a
-coffee without changing the format of the request body. The endpoint returns 400 Bad Request for any other delta and for
-a body without a delta:
+coffee without changing the format of the request body. The endpoint returns 400 Bad Request for any delta other than 1
+and for a body without a delta:
 
 ```shell
 USER_ID=$(curl -s http://localhost:8081/api/users |
@@ -241,9 +242,9 @@ curl --request POST --header "Content-Type: application/json" --data '{"delta":1
 
 `POST /users/{userId}/consumption/undo` undoes the most recent coffee of the user and returns the new coffee count as
 `{ "loginName", "count" }`. The endpoint returns 409 Conflict when the user has no coffee to undo or when the grace
-period of the most recent coffee that is not undone has passed. The environment variable
-`CAMPUS_COFFEE_GRACE_PERIOD` sets the grace period, 5 minutes by default, as in
-`CAMPUS_COFFEE_GRACE_PERIOD=10m`. Run the command within the grace period after the command that adds a coffee:
+period of the most recent coffee that the user did not undo has passed. The environment variable
+`CAMPUS_COFFEE_GRACE_PERIOD` sets the grace period, 5 minutes by default, as in `CAMPUS_COFFEE_GRACE_PERIOD=10m`. Run
+the command within the grace period after the command that adds a coffee:
 
 ```shell
 USER_ID=$(curl -s http://localhost:8081/api/users |
@@ -264,10 +265,10 @@ curl http://localhost:8081/api/users/$USER_ID/consumption/undo
 `PUT /users/{userId}/consumption` with `{ "total", "note" }` corrects the coffee count of the user to the total, stores
 the correction with its note, and returns the corrected coffee count as `{ "loginName", "count" }`. Only an admin may
 correct a coffee count. The header `X-Acting-User` has to contain the login name of an admin. The endpoint returns 401
-Unauthorized without the header or for an unknown login name, 403 Forbidden when the acting user is not an admin, and
-400 Bad Request for a missing or negative total, for a total above 1,000,000, and for a missing or blank note. A note
-has at most 500 characters. These limits and the rule that only an admin may read the corrections hold until the group
-lead answers the TBDs of FR-8. The command sets the coffee count of `jane_doe` to 1:
+Unauthorized without the header or for an unknown login name, and 403 Forbidden when the acting user is not an admin. It
+returns 400 Bad Request for a missing or negative total, for a total above 1,000,000, and for a missing or blank note. A
+note has at most 500 characters. These limits and the rule that only an admin may read the corrections hold until the
+group lead answers the TBDs of FR-8. The command sets the coffee count of `jane_doe` to 1:
 
 ```shell
 USER_ID=$(curl -s http://localhost:8081/api/users |
@@ -290,12 +291,11 @@ curl --header "X-Acting-User: jane_doe" http://localhost:8081/api/users/$USER_ID
 
 The consumption endpoints return 404 Not Found for an unknown user. An error response has a JSON body with the fields
 `errorCode`, `message`, `statusCode`, `statusMessage`, `timestamp`, and `path`. For a domain exception, `errorCode` is
-the class name of the exception: `NotFoundException`, `DuplicationException`, `ConflictException`,
-`ForbiddenException`, or `ValidationException`. For any other error, `errorCode` is the reason phrase of the status
-without spaces, such as `BadRequest`. A 400 has the error code `BadRequest` when the server cannot read the request: A
-field is missing, has the wrong JSON type, or is unknown. It has the error code `ValidationException` when a value
-breaks a rule, such as a login name of 256 characters or a blank note. Every timestamp in a response is in UTC and has
-no offset.
+the class name of the exception: `NotFoundException`, `DuplicationException`, `ConflictException`, `ForbiddenException`,
+or `ValidationException`. For any other error, `errorCode` is the reason phrase of the status without spaces, such as
+`BadRequest`. A 400 has the error code `BadRequest` when the app cannot read the request: A field is missing, has the
+wrong JSON type, or is unknown. It has the error code `ValidationException` when a value breaks a rule, such as a login
+name of 256 characters or a blank note. Every timestamp in a response is in UTC and has no offset.
 
 ## Testing
 
@@ -312,7 +312,7 @@ Compile every module, run ktlint, detekt, CPD, and every test, and check the cod
 gradle build
 ```
 
-Run the tests without ktlint, detekt, CPD, and the coverage gate:
+Run the tests without ktlint, detekt, CPD, and the check of the code coverage:
 
 ```shell
 gradle test
@@ -325,17 +325,18 @@ gradle ktlintFormat
 ```
 
 Create the coverage report of all modules, `coverage/build/reports/jacoco/testCodeCoverageReport/html/index.html`.
-`gradle build` also creates it. The build fails below 95% of the lines or 85% of the branches, and when no test executes
-a function of a domain service or a controller:
+`gradle build` also creates it. The build fails when the tests cover less than 95% of the lines or 85% of the branches.
+It also fails when the tests do not execute every function of the domain services and the controllers:
 
 ```shell
 gradle :coverage:testCodeCoverageReport
 ```
 
-Run the mutation tests of the domain services. PIT changes the code, e.g., it negates a condition, and runs the unit
-tests of the domain module against each changed version (mutant). The report `domain/build/reports/pitest/index.html`
-lists the mutants that no test detects. The task needs no Docker and fails when the tests detect fewer than 90% of all
-mutants. `gradle build` does not run it, and the CI workflow runs it after the build:
+Run the mutation tests of the domain services. PIT changes the code, for example by negating a condition, and runs the
+unit tests of the domain module against each changed version (mutant). The report
+`domain/build/reports/pitest/index.html` lists the mutants that no test detects. The task needs no Docker and fails when
+the tests detect fewer than 90% of all mutants. `gradle build` does not run it, and the CI workflow runs it after the
+build:
 
 ```shell
 gradle :domain:pitest

@@ -30,13 +30,13 @@ needed a special case for the fixture package.
   that deletes data is still part of every deployed app.
 * Keep the five fixture users in the production code of the application module for the dev profile, and move the other
   test objects to the test sources. Two places then define users for tests.
-* Move every fixture and the code that deletes data to the Gradle test fixtures (`java-test-fixtures`), and start the
-  app with fixtures from a `main` function in the test sources with `bootTestRun`, which Spring Boot provides for
+* Move every fixture and the code that deletes data to the Gradle test fixtures (`java-test-fixtures`). Start the app
+  with fixtures from a `main` function in the test sources with `bootTestRun`, which Spring Boot provides for
   development-time setup.
 
 ## Decision(s)
 
-The fixtures and the code that deletes data are in the test fixtures (the third option). `TestFixtures` is in
+The fixtures and the code that deletes data are in the Gradle test fixtures (the third option). `TestFixtures` is in
 `domain/src/testFixtures`, and `DatabaseCleaner` in `data/src/testFixtures` replaces the data reset. The dev application
 in `application/src/test/.../dev/` cleans the database and creates the fixture users on every start. A deployed app
 cannot delete its data, because the code is not on its classpath.
@@ -45,10 +45,10 @@ cannot delete its data, because the code is not on its classpath.
 
 * `gradle :application:bootTestRun` starts the app with the fixture users. `bootRun` with the dev profile starts it on
   the data of the previous run.
-* `DataResetService`, `CrudDataService.clear`, `FixtureStartupLoader`, `FixturesProperties`, and the keys under
-  `campus-coffee.fixtures` are removed.
+* This decision removes `DataResetService`, `CrudDataService.clear`, `FixtureStartupLoader`, `FixturesProperties`, and
+  the keys under `campus-coffee.fixtures`.
 * `DatabaseCleaner` truncates every table that the PostgreSQL catalog lists. A new table needs no change to it, and the
   order of the foreign keys does not matter. The statement is specific to PostgreSQL.
 * The coverage gate, PIT, and the architecture tests have no special case for fixtures. An architecture test fails if
-  the test fixtures are imported as production classes.
+  the production classes contain the test fixtures.
 * The dev application is test code. detekt does not check it, and the coverage gate does not count it.

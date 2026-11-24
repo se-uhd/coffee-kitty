@@ -48,7 +48,7 @@ jobs:
             report_json='{}'
           fi
 
-          # A null `bump` means that the newest release is within the pin, which needs no change to mise.toml.
+          # A null `bump` means that the newest release is within the pin and that mise.toml needs no change.
           actionable="$(printf '%s' "$report_json" | jq -c '[to_entries[].value | select(.bump != null)]')"
           count="$(printf '%s' "$actionable" | jq 'length')"
           existing="$(gh issue list --label mise-outdated --state open --json number --jq '.[0].number // empty')"

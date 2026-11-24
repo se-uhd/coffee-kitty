@@ -31,7 +31,7 @@ class CoffeeBeanEntity : Entity() {
     var mergedIntoId: UUID? = null
 
     companion object {
-        /** Name of the partial unique index on `lower(name)` for the live beans. */
+        /** The name of the partial unique index on `lower(name)` for the live beans. */
         const val NAME_UNIQUE_CONSTRAINT = "uq_coffee_beans_active_name"
     }
 }

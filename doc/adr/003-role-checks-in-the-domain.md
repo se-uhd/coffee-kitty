@@ -18,9 +18,9 @@ Accepted
 ## Context
 
 Only an admin may create a user, correct a coffee count, or list the corrections. Coffee Kitty has no authentication
-yet: The header `X-Acting-User` contains the login name of the acting user. The check of the role can be a rule of
-Spring Security in the api module or a check in the domain. The domain has checked the role with `requireAdmin` since
-Coffee Kitty 0.2.0, and this ADR records the decision.
+yet: The header `X-Acting-User` contains the login name of the acting user. Either the domain or a rule of Spring
+Security in the api module can check the role. The domain has checked the role with `requireAdmin` since Coffee Kitty
+0.2.0, and this ADR records the decision.
 
 ## Considered Options
 
@@ -33,11 +33,11 @@ Coffee Kitty 0.2.0, and this ADR records the decision.
 
 ## Decision(s)
 
-The domain checks the role (the second option). Who may correct a coffee count is a business rule of FR-8, so it
-belongs to the domain and must not depend on how the api module identifies the acting user. The api module has two
-tasks: `ActingUserAuthenticationFilter` resolves the acting user, and `SecurityConfig` requires an acting user for the
-routes of the controller functions with `ActingUserRequired`, so that a request without one gets its 401 before Spring
-MVC validates the body.
+The domain checks the role (the second option). Who may correct a coffee count is a business rule of FR-8, so it belongs
+to the domain. The rule must not depend on how the api module identifies the acting user. The api module has two tasks:
+`ActingUserAuthenticationFilter` resolves the acting user, and `SecurityConfig` requires an acting user for the routes
+of the controller functions with the annotation `ActingUserRequired`. A request without an acting user then gets its 401
+before Spring MVC validates the body.
 
 ## Consequences
 

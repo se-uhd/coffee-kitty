@@ -121,8 +121,9 @@ class ArchitectureTests {
     fun `the data module uses only the models, the exceptions, and the data ports of the domain`() {
         // The data module implements the data ports. The layered rule lets it use every class of the domain module.
         // Without this rule, a data adapter could call an API port or an internal port, which are for the callers of
-        // the domain, or a class in domain/.../implementation/, such as GracePeriod. The rule lists the packages that
-        // the data module may use, so that a new package of the domain is forbidden until it is added here.
+        // the domain. It could also use a class in domain/.../implementation/, such as GracePeriod. The rule lists the
+        // packages that the data module may use. It therefore forbids a new package of the domain until a developer
+        // adds the package here.
         val allowedDomainPackages =
             resideInAnyPackage(
                 "de.seuhd.campuscoffee.domain.model..",
@@ -155,9 +156,9 @@ class ArchitectureTests {
     @Test
     fun `a controller function that reads the acting user has the annotation ActingUserRequired`() {
         // SecurityConfig requires authentication only for the routes of the functions with ActingUserRequired. Without
-        // the annotation, Spring MVC validates the request body before the controller asks for the acting user, and a
-        // request without an acting user and with an invalid body gets 400 instead of 401. The rule names the classes
-        // of the api module as text, because the tests must not depend on that module.
+        // the annotation, Spring MVC validates the request body before the controller asks for the acting user. A
+        // request without an acting user and with an invalid body then gets 400 instead of 401. The rule names the
+        // classes of the api module as text, because the tests must not depend on that module.
         val readsTheActingUser =
             object : DescribedPredicate<JavaMethod>("call CurrentUserProvider.currentUser") {
                 override fun test(method: JavaMethod): Boolean =
@@ -194,7 +195,7 @@ class ArchitectureTests {
     @Test
     fun `the production classes contain no test fixtures`() {
         // TestFixtures and DatabaseCleaner are in the test fixtures of the domain and data modules. If the import of
-        // PRODUCTION_CLASSES included them, the rules for production code would also judge the test fixtures, and this
+        // PRODUCTION_CLASSES included them, the rules for production code would also check the test fixtures, and this
         // test would fail.
         noClasses()
             .should()
@@ -232,8 +233,9 @@ class ArchitectureTests {
         // configuration are in the api layer.
         val APPLICATION_PRODUCTION_PACKAGES = arrayOf("de.seuhd.campuscoffee", "de.seuhd.campuscoffee.configuration..")
 
-        // The application layer, which no other layer may access, consists of these production packages, the test
-        // classes under `tests`, and the dev application under `dev`, which is in the test sources as well.
+        // The application layer consists of these production packages, the test classes under `tests`, and the dev
+        // application under `dev`, which is in the test sources as well. No other layer may access the application
+        // layer.
         val APPLICATION_PACKAGES =
             APPLICATION_PRODUCTION_PACKAGES + "de.seuhd.campuscoffee.tests.." + "de.seuhd.campuscoffee.dev.."
 

@@ -17,7 +17,7 @@ class CoffeePriceEntity : Entity() {
     var amountCents: Int? = null
 
     companion object {
-        /** Name of the unique constraint on the column `is_singleton`, which allows only one row. */
+        /** The name of the unique constraint on the column `is_singleton`, which allows only one row. */
         const val SINGLETON_UNIQUE_CONSTRAINT = "uq_coffee_prices_singleton"
     }
 }

@@ -10,8 +10,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import java.nio.charset.StandardCharsets
 
 /**
- * Spring MVC configuration of the REST API. It adds the prefix [API_BASE_PATH] to the path of every controller in the
- * package `api.controller`, and the controllers leave the prefix out of their `@RequestMapping`.
+ * The Spring MVC configuration of the REST API. It adds the prefix [API_BASE_PATH] to the path of every controller in
+ * the package `api.controller`, and the controllers leave the prefix out of their `@RequestMapping`.
  * [configureMessageConverters] restricts the request and response bodies to JSON, with responses in UTF-8.
  */
 @Configuration

@@ -50,9 +50,9 @@ class CucumberSpringConfiguration(
         fun settableClock(): SettableClock = SettableClock()
 
         /**
-         * Returns the requests for the server of this context. The bean is lazy, because Spring knows the port only
-         * after the embedded web server has started. Cucumber creates the step classes, which need the bean, for
-         * each scenario and therefore after the start.
+         * Returns the requests for the server of this context. The bean is lazy, because the port is available only
+         * after the embedded web server has started. Cucumber creates the step classes, which need the bean, for each
+         * scenario and therefore after the start.
          */
         @Bean
         @Lazy

@@ -6,8 +6,8 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 /**
- * Response body for a user. Every property is non-null, because the server returns only stored users, which have an id
- * and timestamps. springdoc does not derive from a non-null Kotlin type that a field is always present, so each
+ * The response body for a user. Every property is non-null, because the server returns only stored users, which have an
+ * id and timestamps. springdoc does not derive from a non-null Kotlin type that a field is always present, so each
  * property states it with `requiredMode`, and the OpenAPI definition marks every field as required. [CreateUserDto] is
  * the request body for a new user. The timestamps are in UTC without an offset.
  */

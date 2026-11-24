@@ -9,8 +9,9 @@ import org.springframework.web.bind.annotation.RestController
 import tools.jackson.databind.json.JsonMapper
 
 /**
- * Unit test for [AuthenticationExceptionHandler] on a route without a rule in `SecurityConfig`. MockMvc runs the route
- * with the handler and [GlobalExceptionHandler], so that the test fails when the handler does not take precedence.
+ * The unit test for [AuthenticationExceptionHandler] on a route without a rule in `SecurityConfig`. MockMvc runs the
+ * route with the handler and [GlobalExceptionHandler], so that the test fails when the handler does not take
+ * precedence.
  */
 class AuthenticationExceptionHandlerTest {
     @RestController

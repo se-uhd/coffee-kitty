@@ -6,8 +6,8 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
 /**
- * MapStruct mapper from a [CoffeeConsumption] to a [ConsumptionDto]. The mapper converts only in this direction. The
- * request bodies `ConsumptionDeltaDto` and `ConsumptionCorrectionDto` need no mapper, because the controller passes
+ * The MapStruct mapper from a [CoffeeConsumption] to a [ConsumptionDto]. The mapper converts only in this direction.
+ * The request bodies `ConsumptionDeltaDto` and `ConsumptionCorrectionDto` need no mapper, because the controller passes
  * their values to the domain.
  */
 @Mapper(componentModel = "spring")

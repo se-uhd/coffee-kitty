@@ -24,7 +24,7 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 /**
- * Exception handler for all controllers. The body of every error response is an [ErrorResponse].
+ * The exception handler for all controllers. The body of every error response is an [ErrorResponse].
  *
  * [handleDomainException] maps each domain exception to a status and uses the class name of the exception as the
  * error code. The base class [ResponseEntityExceptionHandler] maps each standard Spring MVC exception to its status
@@ -110,10 +110,10 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     /**
      * Builds the error response for an exception that [ResponseEntityExceptionHandler] maps to a status. Examples are
      * the exceptions for a body that Jackson cannot read, an unsupported method or media type, and an unknown path.
-     * [handleMethodArgumentNotValid] builds the error response for a failed Bean Validation. The error response has the
-     * reason phrase of the status as its message and the same phrase without spaces as its error code. It does not
-     * contain the message or the class name of the exception. For example, the message for a body that Jackson cannot
-     * read can quote a value from the body.
+     * [handleMethodArgumentNotValid] builds the error response for a request body that fails Bean Validation. The error
+     * response has the reason phrase of the status as its message and the same phrase without spaces as its error code.
+     * It does not contain the message or the class name of the exception. The message of such an exception can quote
+     * client input, for example a value from a body that Jackson cannot read.
      *
      * The handler logs a 4xx at INFO with the class name of the exception, the status, and the method and path of the
      * request. It logs the message of the exception at DEBUG. It logs a 5xx at ERROR with the stack trace.
@@ -151,7 +151,9 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             .contentType(JSON_UTF8)
             .body(body)
 
-    /** Builds the [ErrorResponse] for [status], [request], and [message], with the current UTC time as timestamp. */
+    /**
+     * Builds the [ErrorResponse] for [status], [request], and [message], with the current UTC time as the timestamp.
+     */
     private fun errorBody(
         status: HttpStatusCode,
         request: WebRequest,

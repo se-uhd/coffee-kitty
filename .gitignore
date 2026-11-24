@@ -46,3 +46,6 @@ gradle/wrapper/
 ########
 *.log
 *.log.*
+
+# The report of an /ai-slop review, a generated file
+ai-slop-report.md

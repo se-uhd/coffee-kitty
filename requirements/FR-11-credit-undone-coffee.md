@@ -8,7 +8,7 @@ When a user undoes a coffee, Coffee Kitty MUST raise the user's balance by the a
 
 An undo takes back a coffee that a user added by mistake (FR-3), so the balance after the undo has to equal the balance
 before the coffee. The price per cup can change between a coffee and its undo. If the undo raised the balance by the
-price at the time of the undo, a user would gain 0.10 € after a rise of the price from 0.50 € to 0.60 €.
+price at the time of the undo, a user would gain 0.10 € after the price rose from 0.50 € to 0.60 €.
 
 ## Success Criteria
 

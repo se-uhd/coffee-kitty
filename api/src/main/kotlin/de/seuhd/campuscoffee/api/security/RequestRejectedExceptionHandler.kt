@@ -15,10 +15,10 @@ import tools.jackson.databind.json.JsonMapper
  * Responds with 400 Bad Request and an `ErrorResponse` when Spring MVC throws a [RequestRejectedException]. The
  * firewall of Spring Security checks a header value, for example for a control character, only when code reads the
  * header. Spring MVC reads some headers after the filter chain has passed the request on. A path that the firewall
- * rejects never reaches Spring MVC, and `SecurityConfig.requestRejectedHandler` responds to it with the same 400. The
- * advice has the highest precedence, because `GlobalExceptionHandler` would turn the exception into a 500. As in the
- * coffee app of SE@UHD, the message does not quote the request. The log line contains only the HTTP method of the
- * request and the exception type.
+ * rejects never reaches Spring MVC, and `SecurityConfig.requestRejectedHandler` responds to it with the same 400. This
+ * handler has the highest precedence, because `GlobalExceptionHandler` would otherwise turn the exception into a 500.
+ * As in the coffee app of SE@UHD, the message does not quote the request. The log line contains only the HTTP method of
+ * the request and the exception type.
  *
  * @param jsonMapper the JSON mapper of Spring MVC
  */

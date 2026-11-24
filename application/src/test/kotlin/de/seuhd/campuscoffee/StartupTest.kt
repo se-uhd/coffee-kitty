@@ -15,7 +15,7 @@ import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.FilterType
 
 /**
- * Test of the startup with the configuration of `application.yaml` and without a bootstrap admin. The Spring context
+ * A test of the startup with the configuration of `application.yaml` and without a bootstrap admin. The Spring context
  * contains the startup tasks and a Mockito mock of the port that they call.
  */
 class StartupTest {

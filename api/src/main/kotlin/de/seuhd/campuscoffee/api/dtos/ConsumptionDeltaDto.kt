@@ -3,7 +3,7 @@ package de.seuhd.campuscoffee.api.dtos
 import jakarta.validation.constraints.NotNull
 
 /**
- * Request body of `POST /api/users/{userId}/consumption`, which adds a coffee with a [delta] of `+1`.
+ * The request body of `POST /api/users/{userId}/consumption`, which adds a coffee with a [delta] of `+1`.
  *
  * Jackson rejects a [delta] with a fraction, such as 1.9, because `application.yaml` sets
  * `spring.jackson.deserialization.accept-float-as-int` to false. It also rejects a [delta] that is a JSON string, such

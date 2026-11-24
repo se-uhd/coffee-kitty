@@ -9,7 +9,7 @@ campus-coffee-kdoc:
   # Every non-local, non-override function needs KDoc, regardless of visibility.
   UndocumentedFunction:
     active: true
-  # A public, non-override function with a KDoc must document every parameter with @param.
+  # The KDoc of a public, non-override function needs an @param for every parameter.
   UndocumentedFunctionParameter:
     active: true
   # Each non-private property in the primary constructor of an enum class needs an @property or @param tag.

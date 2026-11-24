@@ -7,9 +7,9 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
 /**
- * MapStruct mapper between a [User] and its DTOs. With separate DTOs, the domain models do not need API annotations,
- * such as `@NotNull` or `@Schema`. The kapt convention plugin sets `mapstruct.unmappedTargetPolicy` to `ERROR`.
- * MapStruct therefore stops the build when a target class gets a property that the source class does not have.
+ * The MapStruct mapper between a [User] and its DTOs. With separate DTOs, the domain models do not need API
+ * annotations, such as `@NotNull` or `@Schema`. The kapt convention plugin sets `mapstruct.unmappedTargetPolicy` to
+ * `ERROR`. MapStruct therefore stops the build when a target class gets a property that the source class does not have.
  */
 @Mapper(componentModel = "spring")
 interface UserDtoMapper {

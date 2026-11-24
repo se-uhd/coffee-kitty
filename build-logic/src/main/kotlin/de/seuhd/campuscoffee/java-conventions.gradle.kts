@@ -46,7 +46,7 @@ dependencies {
     // Test dependencies of every module. spring-boot-starter-test adds JUnit 6, Mockito, and AssertJ, and
     // mockito-kotlin adds Kotlin helpers for Mockito. Gradle needs the JUnit Platform launcher on the test runtime
     // classpath. The Spring Boot BOM manages the version of the launcher but does not add the dependency. Production
-    // dependencies, such as spring-boot-starter-webmvc, are in the build files of the modules that use them.
+    // dependencies, such as spring-boot-starter-webmvc, are in the build scripts of the modules that use them.
     testImplementation(libs.findLibrary("spring-boot-starter-test").get())
     testImplementation(libs.findLibrary("mockito-kotlin").get())
     testRuntimeOnly(libs.findLibrary("junit-platform-launcher").get())
