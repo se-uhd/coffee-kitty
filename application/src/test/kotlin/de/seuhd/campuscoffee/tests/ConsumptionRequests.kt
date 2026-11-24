@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import de.seuhd.campuscoffee.api.dtos.ConsumptionDeltaDto
 import de.seuhd.campuscoffee.api.dtos.ConsumptionDto
 import de.seuhd.campuscoffee.api.dtos.CountCorrectionDto
+import de.seuhd.campuscoffee.api.dtos.UndoStatusDto
 import de.seuhd.campuscoffee.api.dtos.UserDto
 import de.seuhd.campuscoffee.api.security.CurrentUserProvider
 import de.seuhd.campuscoffee.domain.model.persistedId
@@ -18,7 +19,7 @@ import java.util.UUID
  * HTTP request. The functions for the step definitions take the login names of fixture users. They return the status
  * code of the response or the values that a step checks.
  *
- * The functions for the system tests are [retrieveConsumption], [applyDelta], [undo],
+ * The functions for the system tests are [retrieveConsumption], [applyDelta], [undo], [retrieveUndoStatus],
  * [correctCount], and [retrieveCorrections]. They take the id of a user, so that a test can also send a request for an
  * unknown user. Each function returns the [Response] with the status code, the headers, and the body or the error
  * response.
@@ -218,6 +219,19 @@ object ConsumptionRequests {
         client()
             .post()
             .uri("/api/users/{userId}/consumption/undo", userId)
+            .exchange()
+            .toResponse()
+
+    /**
+     * Reads the undo status of the user with [userId] (FR-9).
+     *
+     * @param userId the id of the user
+     */
+    fun retrieveUndoStatus(userId: UUID): Response<UndoStatusDto> =
+        client()
+            .get()
+            .uri("/api/users/{userId}/consumption/undo", userId)
+            .accept(MediaType.APPLICATION_JSON)
             .exchange()
             .toResponse()
 }

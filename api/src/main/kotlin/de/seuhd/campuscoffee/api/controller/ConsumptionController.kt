@@ -4,6 +4,7 @@ import de.seuhd.campuscoffee.api.dtos.ConsumptionCorrectionDto
 import de.seuhd.campuscoffee.api.dtos.ConsumptionDeltaDto
 import de.seuhd.campuscoffee.api.dtos.ConsumptionDto
 import de.seuhd.campuscoffee.api.dtos.CountCorrectionDto
+import de.seuhd.campuscoffee.api.dtos.UndoStatusDto
 import de.seuhd.campuscoffee.api.mapper.ConsumptionDtoMapper
 import de.seuhd.campuscoffee.api.mapper.CountCorrectionDtoMapper
 import de.seuhd.campuscoffee.api.security.CurrentUserProvider
@@ -26,7 +27,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as ApiRequestBody
 
 /**
  * Controller under `/api/users/{userId}/consumption` that reads and corrects the coffee count of a user, adds and
- * undoes coffees, and lists the corrections. The
+ * undoes coffees, reads the undo status, and lists the corrections. The undo status is an [UndoStatusDto], and the
  * corrections are a list of [CountCorrectionDto]. Every other endpoint returns the login name and the coffee count of
  * the user as a [ConsumptionDto]. Only an admin may correct a coffee count and list the corrections. The header
  * `X-Acting-User` of these requests contains the login name of the acting user (see [CurrentUserProvider]).
@@ -34,7 +35,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as ApiRequestBody
 @Tag(
     name = "Consumption",
     description =
-        "Reading a user's coffee count, adding a coffee, undoing a coffee, correcting a " +
+        "Reading a user's coffee count, adding a coffee, undoing a coffee, reading the undo status, correcting a " +
             "coffee count (admin), and listing the corrections (admin)."
 )
 @RestController
@@ -93,6 +94,23 @@ class ConsumptionController(
         @PathVariable userId: UUID
     ): ResponseEntity<ConsumptionDto> =
         ResponseEntity.ok(consumptionDtoMapper.toDto(coffeeConsumptionService.undo(userId)))
+
+    /**
+     * Returns the undo status of the user with [userId] (FR-9). The undo status shows whether the user can undo their
+     * most recent coffee at the time of the request and, if so, until when. The response is also 200 OK when the user
+     * cannot undo a coffee.
+     *
+     * @param userId the id of the user
+     */
+    @Operation(summary = "Get whether the user can undo their most recent coffee, and until when.")
+    @GetMapping("/undo")
+    fun undoStatus(
+        @Parameter(description = "Unique identifier of the user.", required = true)
+        @PathVariable userId: UUID
+    ): ResponseEntity<UndoStatusDto> {
+        val undoableUntil = coffeeConsumptionService.undoableUntil(userId)
+        return ResponseEntity.ok(UndoStatusDto(undoable = undoableUntil != null, undoableUntil = undoableUntil))
+    }
 
     /**
      * Corrects the coffee count of the user with [userId] to the total in [dto], stores the correction with the note in

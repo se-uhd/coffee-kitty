@@ -80,7 +80,10 @@ raised count, and both coffees count. `applyDelta` also appends the time of the 
 times whose grace period has passed. The data module stores the list in the table `coffee_times`.
 `CoffeeConsumptionServiceImpl.undo` locks the consumption in the same way, lowers the count by one if
 `GracePeriod.isOpen` accepts the last of the `coffeeTimes`, and removes that time. Otherwise, it throws a
-`ConflictException`. After an undo, the coffee before can be undone while its own grace period is open. `applyDelta` and
+`ConflictException`. After an undo, the coffee before can be undone while its own grace period is open.
+`CoffeeConsumptionServiceImpl.undoableUntil` applies the checks of `undo` without a lock and without changing the
+consumption. It returns `GracePeriod.closesAt` for the last of the `coffeeTimes` when an undo would succeed, and null
+otherwise. `ConsumptionController` serves this result as the undo status (`UndoStatusDto`). `applyDelta` and
 `GracePeriod` read the time from the `Clock` bean of `ClockConfiguration`. `ConsumptionProperties` binds the grace
 period, `campus-coffee.consumption.grace-period`, with a default of 5 minutes.
 

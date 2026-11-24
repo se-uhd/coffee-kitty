@@ -26,7 +26,8 @@ import java.util.UUID
  * the coffees outside their grace period, because the list of times would otherwise grow with every coffee. [undo]
  * takes the time of the most recent coffee that the user did not undo. It checks the grace period of this coffee with
  * [gracePeriod] and removes the time. As in the coffee app of SE@UHD, the user can then undo the coffee before it if
- * its own grace period is open.
+ * its own grace period is open. [undoableUntil] applies the checks of [undo] without changing the consumption, so that
+ * the undo status agrees with the result of an undo.
  *
  * [correctCount] locks the consumption like [applyDelta], stores the corrected count, and stores a [CountCorrection]
  * with the note in the same transaction. A correction to a lower count removes the times of the newest coffees. The
@@ -75,6 +76,17 @@ class CoffeeConsumptionServiceImpl(
         return coffeeConsumptionDataService.upsert(
             current.copy(count = current.count - 1, coffeeTimes = current.coffeeTimes.dropLast(1))
         )
+    }
+
+    override fun undoableUntil(userId: UUID): LocalDateTime? {
+        val current = coffeeConsumptionDataService.getByUserId(userId)
+        val lastCoffeeAt = current.coffeeTimes.lastOrNull()
+        // These are the checks of undo. The schema allows a coffee count of zero with a stored coffee time, because no
+        // constraint links the coffee count to the stored times. The count check covers this case.
+        if (current.count <= 0 || lastCoffeeAt == null || !gracePeriod.isOpen(lastCoffeeAt)) {
+            return null
+        }
+        return gracePeriod.closesAt(lastCoffeeAt)
     }
 
     @Transactional

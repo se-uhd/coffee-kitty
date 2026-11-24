@@ -28,9 +28,17 @@ and the corrections of their coffee counts.
 - Within the grace period of 5 minutes after adding a coffee, a user can undo it, which lowers the coffee count by one.
   After an undo, the coffee before is the most recent coffee, which the user can undo while it is within its own grace
   period. The requirement is FR-3 in `requirements/FR-3-undo-coffee.md`.
-- Every user has a role, `USER` or `ADMIN`. Only an admin may create a user. Coffee Kitty has no authentication yet: The
-  header `X-Acting-User` of a request contains the login name of the acting user, and any client can act as any user.
-  The fixture user `jane_doe` is an admin.
+- The undo status of a user states whether the user can undo their most recent coffee now and, if so, until when. A
+  client reads the undo status and offers the undo only while Coffee Kitty accepts an undo. The requirement is FR-9 in
+  `requirements/FR-9-undo-status.md`.
+- An admin can correct the coffee count of a user at any time, even after the grace period, and has to add a note with
+  the reason for the correction. A lower count removes the newest coffees of the user, and an undo then applies to the
+  newest coffee that remains. The app stores each correction with the count before and after, the note, and the admin,
+  and an admin can list the corrections of a user. The requirement is FR-8 in
+  `requirements/FR-8-correct-coffee-count.md`.
+- Every user has a role, `USER` or `ADMIN`. Only an admin may create a user, correct a coffee count, or list the
+  corrections of a user. Coffee Kitty has no authentication yet: The header `X-Acting-User` of a request contains the
+  login name of the acting user, and any client can act as any user. The fixture user `jane_doe` is an admin.
 - The REST API accepts and returns only JSON.
 - A Spring Boot backend in Kotlin stores the users and their coffee counts in PostgreSQL through Jakarta Persistence
   (JPA). Flyway migrations define the database schema.
@@ -224,9 +232,46 @@ USER_ID=$(curl -s http://localhost:8081/api/users |
 curl --request POST http://localhost:8081/api/users/$USER_ID/consumption/undo
 ```
 
-The three consumption endpoints return 404 Not Found for an unknown user. An error response has a JSON body with the
-fields `errorCode`, `message`, `statusCode`, `statusMessage`, `timestamp`, and `path`. For a domain exception,
-`errorCode` is the class name of the exception: `NotFoundException`, `DuplicationException`, `ConflictException`,
+`GET /users/{userId}/consumption/undo` returns the undo status of the user as `{ "undoable", "undoableUntil" }`.
+`undoable` is true when the user can undo their most recent coffee now, that is, when a `POST` request to the same path
+would succeed. `undoableUntil` is then the end of the grace period of that coffee, and null when `undoable` is false:
+
+```shell
+USER_ID=$(curl -s http://localhost:8081/api/users |
+  python3 -c 'import json, sys; print(next(u["id"] for u in json.load(sys.stdin) if u["loginName"] == "jane_doe"))')
+curl http://localhost:8081/api/users/$USER_ID/consumption/undo
+```
+
+`PUT /users/{userId}/consumption` with `{ "total", "note" }` corrects the coffee count of the user to the total, stores
+the correction with its note, and returns the corrected coffee count as `{ "loginName", "count" }`. Only an admin may
+correct a coffee count. The header `X-Acting-User` has to contain the login name of an admin. The endpoint returns 401
+Unauthorized without the header or for an unknown login name, 403 Forbidden when the acting user is not an admin, and
+400 Bad Request for a missing or negative total, for a total above 1,000,000, and for a missing or blank note. A note
+has at most 500 characters. These limits and the rule that only an admin may read the corrections hold until the group
+lead answers the TBDs of FR-8. The command sets the coffee count of `jane_doe` to 1:
+
+```shell
+USER_ID=$(curl -s http://localhost:8081/api/users |
+  python3 -c 'import json, sys; print(next(u["id"] for u in json.load(sys.stdin) if u["loginName"] == "jane_doe"))')
+curl --request PUT --header "Content-Type: application/json" --header "X-Acting-User: jane_doe" \
+  --data '{"total":1,"note":"Forgot to add a coffee on 16.11."}' \
+  http://localhost:8081/api/users/$USER_ID/consumption
+```
+
+`GET /users/{userId}/consumption/corrections` returns the corrections of the coffee count of the user, newest first, as
+a JSON array of `{ "countBefore", "countAfter", "note", "adminLoginName", "createdAt" }`. Only an admin may read the
+corrections. The endpoint returns 401 Unauthorized without the header `X-Acting-User` or for an unknown login name and
+403 Forbidden when the acting user is not an admin:
+
+```shell
+USER_ID=$(curl -s http://localhost:8081/api/users |
+  python3 -c 'import json, sys; print(next(u["id"] for u in json.load(sys.stdin) if u["loginName"] == "jane_doe"))')
+curl --header "X-Acting-User: jane_doe" http://localhost:8081/api/users/$USER_ID/consumption/corrections
+```
+
+The consumption endpoints return 404 Not Found for an unknown user. An error response has a JSON body with the fields
+`errorCode`, `message`, `statusCode`, `statusMessage`, `timestamp`, and `path`. For a domain exception, `errorCode` is
+the class name of the exception: `NotFoundException`, `DuplicationException`, `ConflictException`,
 `ForbiddenException`, or `ValidationException`. For any other error, `errorCode` is the reason phrase of the status
 without spaces, such as `BadRequest`. Every timestamp in a response is in UTC and has no offset.
 

@@ -49,6 +49,12 @@ with a line "Avoid:", which lists words not to use for the concept.
   Code: `GracePeriod`, `campus-coffee.consumption.grace-period`, environment variable
   `CAMPUS_COFFEE_GRACE_PERIOD`.
   Avoid: grace window.
+- **undo status**: Whether a user can undo their most recent coffee now and, if so, the end of the grace period of that
+  coffee. The undo status states that the user can undo a coffee exactly when an undo at the same time succeeds (FR-9
+  in `requirements/FR-9-undo-status.md`).
+  API: `GET /api/users/{userId}/consumption/undo`, `undoable`, `undoableUntil`. Code:
+  `CoffeeConsumptionService.undoableUntil`, `GracePeriod.closesAt`, `UndoStatusDto`.
+  Avoid: undo offer, cancellable.
 - **correction**: An admin's change of a user's coffee count to a new count, which the admin explains in a note (FR-8 in
   `requirements/FR-8-correct-coffee-count.md`). An admin can correct a coffee count at any time, even after the grace
   period. Coffee Kitty stores each correction with the count before, the count after, the note, the admin, and the time
@@ -104,11 +110,13 @@ with a line "Avoid:", which lists words not to use for the concept.
   has no annotations or code for the web or the database. An instance of such a class is a domain object.
   Code: `DomainModel`, `User`, `CoffeeConsumption`, `CountCorrection`.
 - **DTO**: A data transfer object, that is, a class in `api/.../dtos/` that defines the JSON body of a request or a
-  response. Bean Validation checks a request body against the constraint annotations of the class, such as
-  `@NotBlank`, before the controller method runs. A MapStruct mapper in `api/.../mapper/` converts between a domain
-  object and the matching class. `UserDtoMapper` converts in both directions, and `ConsumptionDtoMapper` converts only
-  from `CoffeeConsumption` to `ConsumptionDto`. `ConsumptionDeltaDto` has no mapper, because the controller passes the
-  delta to the domain as a number.
+  response. Bean Validation checks a request body against the constraint annotations of the class, such as `@NotBlank`,
+  before the controller method runs. A MapStruct mapper in `api/.../mapper/` converts between a domain object and the
+  matching class. `UserDtoMapper` converts in both directions, `ConsumptionDtoMapper` converts only from
+  `CoffeeConsumption` to `ConsumptionDto`, and `CountCorrectionDtoMapper` only from `CountCorrection` to
+  `CountCorrectionDto`. `ConsumptionDeltaDto` and `ConsumptionCorrectionDto` have no mapper, because the controller
+  passes their values to the domain. `UndoStatusDto` has no mapper either, because the controller creates it from the
+  result of `CoffeeConsumptionService.undoableUntil`.
   Code: `UserDto`, `ConsumptionDto`, `ConsumptionDeltaDto`, `UserDtoMapper`.
 - **JPA entity**: A class in `data/.../persistence/entities/` that JPA maps to one table, such as `UserEntity` for the
   table `users`. Each such class extends the base class `Entity` and has a name that ends in `Entity`. An entity mapper
