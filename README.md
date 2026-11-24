@@ -14,7 +14,8 @@ Coffee Kitty is the running example of a software engineering course at Heidelbe
 app in the lectures on agentic software engineering and extend it over the semester, for example with a price per cup
 and a balance for each user. Coffee Kitty has the same architecture as the coffee app of [SE@UHD](https://se-uhd.de/),
 the Software Engineering Group at Heidelberg University. Both apps have four backend modules, ports and adapters, and
-layer rules that ArchUnit enforces, but Coffee Kitty has only two entities: users and their consumptions.
+layer rules that ArchUnit enforces, but the API of Coffee Kitty covers only three entities: users, their consumptions,
+and the corrections of their coffee counts.
 
 ## Users and coffee counts
 

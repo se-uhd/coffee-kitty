@@ -3,6 +3,7 @@ package de.seuhd.campuscoffee.tests
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import de.seuhd.campuscoffee.api.dtos.ConsumptionDeltaDto
 import de.seuhd.campuscoffee.api.dtos.ConsumptionDto
+import de.seuhd.campuscoffee.api.dtos.CountCorrectionDto
 import de.seuhd.campuscoffee.api.dtos.UserDto
 import de.seuhd.campuscoffee.api.security.CurrentUserProvider
 import de.seuhd.campuscoffee.domain.model.persistedId
@@ -14,14 +15,16 @@ import java.util.UUID
 
 /**
  * The requests for the coffee count of a user, so that a step definition or a system test does not have to build an
- * HTTP request. The functions for the step definitions take the login names of fixture users and return the status
- * code of the response or the values that a step checks. The functions for the system tests, [retrieveConsumption],
- * [applyDelta], and [undo], take the id of a user, so that a test can also send a request for an unknown user. They
- * return the [Response] with the status code, the headers, and the body or the error response.
+ * HTTP request. The functions for the step definitions take the login names of fixture users. They return the status
+ * code of the response or the values that a step checks.
  *
- * [correctCoffeeCount] and [corrections] send the requests of FR-8 (`requirements/FR-8-correct-coffee-count.md`),
- * which Coffee Kitty 0.2.0 does not implement yet. Until an implementation adds them, [correctCoffeeCount] returns
- * 405 Method Not Allowed and [corrections] fails with the status 404 Not Found.
+ * The functions for the system tests are [retrieveConsumption], [applyDelta], [undo],
+ * [correctCount], and [retrieveCorrections]. They take the id of a user, so that a test can also send a request for an
+ * unknown user. Each function returns the [Response] with the status code, the headers, and the body or the error
+ * response.
+ *
+ * [correctCoffeeCount] and [corrections] send the requests of FR-8 (`requirements/FR-8-correct-coffee-count.md`) for
+ * the step definitions, and [correctCount] and [retrieveCorrections] send them for the system tests.
  */
 object ConsumptionRequests {
     /** The login name of the fixture user who is an admin. */
@@ -83,8 +86,8 @@ object ConsumptionRequests {
             .statusCode()
 
     /**
-     * Sends the correction of FR-8: [actingUser] corrects the coffee count of the user with [loginName] to [count] with
-     * [note], or without a note if [note] is null. Returns the status code.
+     * Corrects the coffee count of the user with [loginName] to [count] with [note] and returns the status code (FR-8).
+     * [actingUser] is the acting user. If [note] is null, the request has no note.
      */
     fun correctCoffeeCount(
         actingUser: String,
@@ -117,6 +120,61 @@ object ConsumptionRequests {
             .returnResult<Array<Correction>>()
             .responseBody!!
             .toList()
+
+    /**
+     * Sends [body], which holds the new coffee count and the note, to correct the coffee count of the user with
+     * [userId] (FR-8). By default, the admin [ADMIN_LOGIN_NAME] is the acting user.
+     *
+     * @param userId     the id of the user
+     * @param body       the request body, such as `ConsumptionCorrectionDto(total = 1, note = "Double tap")`. A map
+     *   lets a test send a body that the server rejects, such as a body without a total.
+     * @param actingUser the login name of the acting user, or null to send the request without an acting user
+     */
+    fun correctCount(
+        userId: UUID,
+        body: Any,
+        actingUser: String? = ADMIN_LOGIN_NAME
+    ): Response<ConsumptionDto> =
+        client()
+            .put()
+            .uri("/api/users/{userId}/consumption", userId)
+            .contentType(MediaType.APPLICATION_JSON)
+            .headers { headers -> actingUser?.let { headers.set(CurrentUserProvider.ACTING_USER_HEADER, it) } }
+            .body(body)
+            .exchange()
+            .toResponse()
+
+    /**
+     * Lists the corrections of the coffee count of the user with [userId] (FR-8), newest first. By default, the admin
+     * [ADMIN_LOGIN_NAME] is the acting user.
+     *
+     * @param userId     the id of the user
+     * @param actingUser the login name of the acting user, or null to send the request without an acting user
+     */
+    fun retrieveCorrections(
+        userId: UUID,
+        actingUser: String? = ADMIN_LOGIN_NAME
+    ): Response<List<CountCorrectionDto>> = retrieveCorrections(userId.toString(), actingUser)
+
+    /**
+     * Lists the corrections of the coffee count of the user with [userId] (FR-8), newest first. A test can pass a text
+     * that is not a UUID, such as `not-a-uuid`, to check the response to an invalid id. By default, the admin
+     * [ADMIN_LOGIN_NAME] is the acting user.
+     *
+     * @param userId     the id of the user
+     * @param actingUser the login name of the acting user, or null to send the request without an acting user
+     */
+    fun retrieveCorrections(
+        userId: String,
+        actingUser: String? = ADMIN_LOGIN_NAME
+    ): Response<List<CountCorrectionDto>> =
+        client()
+            .get()
+            .uri("/api/users/{userId}/consumption/corrections", userId)
+            .accept(MediaType.APPLICATION_JSON)
+            .headers { headers -> actingUser?.let { headers.set(CurrentUserProvider.ACTING_USER_HEADER, it) } }
+            .exchange()
+            .toResponse()
 
     /**
      * Reads the consumption of the user with [userId], which holds the coffee count.

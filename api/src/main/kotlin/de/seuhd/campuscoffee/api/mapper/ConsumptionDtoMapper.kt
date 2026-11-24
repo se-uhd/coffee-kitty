@@ -6,9 +6,9 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
 /**
- * MapStruct mapper from a [CoffeeConsumption] to a [ConsumptionDto]. The mapper converts in one direction and does
- * not extend [DtoMapper]. The opposite direction is not needed, because the controller passes the delta from the
- * request body (`ConsumptionDeltaDto`) to the domain as a number.
+ * MapStruct mapper from a [CoffeeConsumption] to a [ConsumptionDto]. The mapper converts only in this direction and
+ * does not extend [DtoMapper]. The request bodies `ConsumptionDeltaDto` and `ConsumptionCorrectionDto` need no mapper,
+ * because the controller passes their values to the domain.
  */
 @Mapper(componentModel = "spring")
 interface ConsumptionDtoMapper {

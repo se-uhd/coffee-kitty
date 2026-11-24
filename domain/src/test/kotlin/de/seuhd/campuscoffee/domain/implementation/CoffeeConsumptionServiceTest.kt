@@ -1,15 +1,20 @@
 package de.seuhd.campuscoffee.domain.implementation
 
 import de.seuhd.campuscoffee.domain.exceptions.ConflictException
+import de.seuhd.campuscoffee.domain.exceptions.ForbiddenException
 import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
 import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
+import de.seuhd.campuscoffee.domain.model.CountCorrection
 import de.seuhd.campuscoffee.domain.model.User
 import de.seuhd.campuscoffee.domain.ports.data.CoffeeConsumptionDataService
+import de.seuhd.campuscoffee.domain.ports.data.CountCorrectionDataService
+import de.seuhd.campuscoffee.domain.tests.TestFixtures
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.NullAndEmptySource
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argThat
@@ -17,55 +22,61 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import org.springframework.transaction.annotation.Propagation
-import org.springframework.transaction.annotation.Transactional
-import java.time.Clock
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.util.UUID
-import kotlin.reflect.jvm.javaMethod
 
 /**
- * Unit tests for [CoffeeConsumptionServiceImpl] with a Mockito mock of [CoffeeConsumptionDataService] and a fixed
- * clock. [serviceAt] creates the service with a clock fixed at a given time.
+ * Unit tests for [CoffeeConsumptionServiceImpl] with Mockito mocks of [CoffeeConsumptionDataService] and
+ * [CountCorrectionDataService] and a fixed clock. [serviceAt] creates the service with a clock fixed at a given time.
+ * [TestFixtures] holds the users, the fixed time, the clock, and the consumptions without a coffee, with a recent
+ * coffee, and with an old coffee. [consumption] returns a consumption with any other count and times.
  */
 class CoffeeConsumptionServiceTest {
     private val dataService: CoffeeConsumptionDataService = mock()
+    private val correctionDataService: CountCorrectionDataService = mock()
 
-    private val coffeeAddedAt: LocalDateTime = LocalDateTime.of(2026, 11, 16, 10, 0, 0)
+    private val coffeeAddedAt: LocalDateTime = TestFixtures.FIXED_TIME
 
     private fun serviceAt(now: LocalDateTime): CoffeeConsumptionServiceImpl {
-        val clock = Clock.fixed(now.toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
-        return CoffeeConsumptionServiceImpl(dataService, GracePeriod(ConsumptionProperties(), clock), clock)
+        val clock = TestFixtures.fixedClock(now)
+        return CoffeeConsumptionServiceImpl(
+            dataService,
+            correctionDataService,
+            GracePeriod(ConsumptionProperties(), clock),
+            clock
+        )
     }
 
     private val service = serviceAt(coffeeAddedAt)
 
     private val userId: UUID = UUID(0L, 1L)
 
-    private val user =
-        User(
-            id = userId,
-            loginName = "max",
-            emailAddress = "max@se.de",
-            firstName = "Max",
-            lastName = "M"
-        )
+    private val user = TestFixtures.regularUser().copy(id = userId)
+
+    private val admin = TestFixtures.admin().copy(id = UUID(0L, 2L))
+
+    private val note = "Double tap on 16.11."
 
     private fun consumption(
         count: Int,
         vararg coffeeTimes: LocalDateTime
     ) = CoffeeConsumption(id = UUID(0L, 500L), user = user, count = count, coffeeTimes = coffeeTimes.toList())
 
-    @Test
-    fun `getByUserId returns the consumption from the data port`() {
-        whenever(dataService.getByUserId(userId)).thenReturn(consumption(2))
+    /** Stubs `getByUserIdForUpdate` to return [current] and `upsert` on both mocks to return its argument. */
+    private fun stubCorrection(current: CoffeeConsumption) {
+        whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(current)
+        whenever(dataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
+        whenever(correctionDataService.upsert(any())).thenAnswer { it.arguments[0] as CountCorrection }
+    }
 
-        assertThat(service.getByUserId(userId)).isEqualTo(consumption(2))
+    /** Asserts that the service stored neither a consumption nor a correction. */
+    private fun verifyNothingStored() {
+        verify(dataService, never()).upsert(any())
+        verify(correctionDataService, never()).upsert(any())
     }
 
     @Test
-    fun `applyDelta of +1 increments the count of the locked consumption by one and stores the time`() {
+    fun `applyDelta raises the count by one and stores the time of the coffee`() {
         whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(consumption(2))
         whenever(dataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
 
@@ -76,7 +87,17 @@ class CoffeeConsumptionServiceTest {
     }
 
     @Test
-    fun `applyDelta drops the times whose grace period has passed and keeps the times within it`() {
+    fun `applyDelta stores a count of 1 and the time of the first coffee`() {
+        whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(TestFixtures.consumptionWithoutCoffee(user))
+        whenever(dataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
+
+        service.applyDelta(userId, 1)
+
+        verify(dataService).upsert(TestFixtures.consumptionWithRecentCoffee(user))
+    }
+
+    @Test
+    fun `applyDelta removes the times of the coffees outside their grace period`() {
         val expired = coffeeAddedAt.minusMinutes(5).minusSeconds(1)
         val open = coffeeAddedAt.minusMinutes(5)
         whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(consumption(2, expired, open))
@@ -88,34 +109,35 @@ class CoffeeConsumptionServiceTest {
     }
 
     @Test
-    fun `applyDelta is transactional with REQUIRED propagation`() {
-        val applyDelta = requireNotNull(CoffeeConsumptionServiceImpl::applyDelta.javaMethod)
+    fun `applyDelta truncates the time of the coffee to microseconds`() {
+        whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(consumption(2))
+        whenever(dataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
 
-        // applyDelta must read the count and store the raised count in one transaction, because the row lock lasts
-        // only until the transaction ends
-        assertThat(applyDelta.getAnnotation(Transactional::class.java)?.propagation).isEqualTo(Propagation.REQUIRED)
+        serviceAt(coffeeAddedAt.plusNanos(123_456_789)).applyDelta(userId, 1)
+
+        verify(dataService).upsert(consumption(3, coffeeAddedAt.plusNanos(123_456_000)))
     }
 
     @ParameterizedTest
     @ValueSource(ints = [-1, 0, 2])
-    fun `applyDelta with a delta other than +1 throws ValidationException and writes nothing`(delta: Int) {
+    fun `applyDelta throws ValidationException for a delta other than +1`(delta: Int) {
         assertThrows<ValidationException> { service.applyDelta(userId, delta) }
         verify(dataService, never()).upsert(any())
     }
 
     @Test
-    fun `undo exactly 5 minutes after the coffee lowers the count from 3 to 2`() {
+    fun `undo lowers the count from 3 to 2 exactly 5 minutes after the coffee`() {
         whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(consumption(3, coffeeAddedAt))
         whenever(dataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
 
         val result = serviceAt(coffeeAddedAt.plusMinutes(5)).undo(userId)
 
         assertThat(result.count).isEqualTo(2)
-        verify(dataService).upsert(argThat { count == 2 })
+        verify(dataService).upsert(consumption(2))
     }
 
     @Test
-    fun `undo 5 minutes and 1 second after the coffee throws ConflictException and writes nothing`() {
+    fun `undo throws ConflictException 5 minutes and 1 second after the coffee`() {
         whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(consumption(3, coffeeAddedAt))
 
         assertThrows<ConflictException> { serviceAt(coffeeAddedAt.plusMinutes(5).plusSeconds(1)).undo(userId) }
@@ -123,40 +145,47 @@ class CoffeeConsumptionServiceTest {
     }
 
     @Test
-    fun `undo without a coffee to undo throws ConflictException and writes nothing`() {
-        whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(consumption(0))
+    fun `undo lowers the count to 0 and removes the time of the only coffee`() {
+        whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(TestFixtures.consumptionWithRecentCoffee(user))
+        whenever(dataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
 
-        val exception = assertThrows<ConflictException> { service.undo(userId) }
+        service.undo(userId)
 
-        assertThat(exception.message).isEqualTo("There is no coffee to undo.")
+        verify(dataService).upsert(TestFixtures.consumptionWithoutCoffee(user))
+    }
+
+    @Test
+    fun `undo throws ConflictException for a coffee added one hour ago`() {
+        whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(TestFixtures.consumptionWithOldCoffee(user))
+
+        assertThrows<ConflictException> { service.undo(userId) }
+
         verify(dataService, never()).upsert(any())
     }
 
     @Test
-    fun `undo of a coffee without a stored time throws ConflictException about the grace period`() {
+    fun `undo throws ConflictException for a coffee without a stored time`() {
         whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(consumption(2))
 
-        val exception = assertThrows<ConflictException> { service.undo(userId) }
+        assertThrows<ConflictException> { service.undo(userId) }
 
-        assertThat(exception.message).isEqualTo("The grace period to undo this coffee has passed.")
         verify(dataService, never()).upsert(any())
     }
 
     @Test
-    fun `undo stores the lowered count without the time of the undone coffee`() {
-        val earlierCoffeeAt = coffeeAddedAt.minusMinutes(1)
+    fun `undo removes only the time of the most recent coffee`() {
+        val earlierCoffeeAt = coffeeAddedAt.minusMinutes(5)
         whenever(dataService.getByUserIdForUpdate(userId))
             .thenReturn(consumption(3, earlierCoffeeAt, coffeeAddedAt))
         whenever(dataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
 
         serviceAt(coffeeAddedAt.plusMinutes(1)).undo(userId)
 
-        // the coffee before is now the most recent coffee, which a second undo checks against its own time
         verify(dataService).upsert(consumption(2, earlierCoffeeAt))
     }
 
     @Test
-    fun `undo with a coffee inside the grace period but a count already at zero throws ConflictException`() {
+    fun `undo throws ConflictException at a count of zero with a stored time`() {
         whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(consumption(0, coffeeAddedAt))
 
         assertThrows<ConflictException> { service.undo(userId) }
@@ -164,20 +193,134 @@ class CoffeeConsumptionServiceTest {
     }
 
     @Test
-    fun `undo is transactional with REQUIRED propagation`() {
-        val undo = requireNotNull(CoffeeConsumptionServiceImpl::undo.javaMethod)
+    fun `correctCount stores the corrected count and the correction`() {
+        stubCorrection(consumption(3))
 
-        // undo must check the times and store the lowered count in one transaction, because the row lock lasts only
-        // until the transaction ends
-        assertThat(undo.getAnnotation(Transactional::class.java)?.propagation).isEqualTo(Propagation.REQUIRED)
+        val result = service.correctCount(userId, 1, note, admin)
+
+        assertThat(result.count).isEqualTo(1)
+        verify(dataService).upsert(consumption(1))
+        verify(correctionDataService).upsert(
+            CountCorrection(user = user, admin = admin, countBefore = 3, countAfter = 1, note = note)
+        )
     }
 
     @Test
-    fun `applyDelta for an unknown user throws NotFoundException and writes nothing`() {
-        whenever(dataService.getByUserIdForUpdate(userId))
-            .thenThrow(NotFoundException(User::class.java, userId))
+    fun `correctCount removes the times of the newest coffees for a lower count`() {
+        val firstAt = coffeeAddedAt.minusMinutes(2)
+        val secondAt = coffeeAddedAt.minusMinutes(1)
+        stubCorrection(consumption(3, firstAt, secondAt, coffeeAddedAt))
 
-        assertThrows<NotFoundException> { service.applyDelta(userId, 1) }
-        verify(dataService, never()).upsert(any())
+        service.correctCount(userId, 1, note, admin)
+
+        // an undo after the correction checks the time of the oldest coffee, which is the only one left
+        verify(dataService).upsert(consumption(1, firstAt))
+    }
+
+    @Test
+    fun `correctCount removes all times when it removes more coffees than there are times`() {
+        // a consumption with a count of 5 can have only two times, because applyDelta drops the times of the coffees
+        // outside their grace period
+        stubCorrection(consumption(5, coffeeAddedAt.minusMinutes(1), coffeeAddedAt))
+
+        service.correctCount(userId, 2, note, admin)
+
+        verify(dataService).upsert(consumption(2))
+    }
+
+    @Test
+    fun `correctCount does not change the times for a higher count`() {
+        stubCorrection(consumption(1, coffeeAddedAt))
+
+        service.correctCount(userId, 4, note, admin)
+
+        verify(dataService).upsert(consumption(4, coffeeAddedAt))
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [0, CountCorrection.MAX_TOTAL])
+    fun `correctCount stores a count of 0 or the maximum total`(total: Int) {
+        stubCorrection(consumption(3))
+
+        service.correctCount(userId, total, note, admin)
+
+        verify(dataService).upsert(consumption(total))
+    }
+
+    @Test
+    fun `correctCount stores a correction for the current count`() {
+        stubCorrection(consumption(3, coffeeAddedAt))
+
+        val result = service.correctCount(userId, 3, note, admin)
+
+        assertThat(result).isEqualTo(consumption(3, coffeeAddedAt))
+        verify(correctionDataService).upsert(
+            CountCorrection(user = user, admin = admin, countBefore = 3, countAfter = 3, note = note)
+        )
+    }
+
+    @Test
+    fun `correctCount throws ForbiddenException for a user who is not an admin`() {
+        assertThrows<ForbiddenException> { service.correctCount(userId, 1, note, user) }
+
+        verifyNothingStored()
+    }
+
+    @Test
+    fun `correctCount throws ValidationException for a negative count`() {
+        assertThrows<ValidationException> { service.correctCount(userId, -1, note, admin) }
+
+        verifyNothingStored()
+    }
+
+    @Test
+    fun `correctCount throws ValidationException for a count above the maximum total`() {
+        assertThrows<ValidationException> { service.correctCount(userId, CountCorrection.MAX_TOTAL + 1, note, admin) }
+
+        verifyNothingStored()
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = ["   ", "\t\n"])
+    fun `correctCount throws ValidationException for a missing or blank note`(blankNote: String?) {
+        assertThrows<ValidationException> { service.correctCount(userId, 1, blankNote, admin) }
+
+        verifyNothingStored()
+    }
+
+    @Test
+    fun `correctCount throws ValidationException for a note of 501 characters`() {
+        assertThrows<ValidationException> { service.correctCount(userId, 1, "a".repeat(501), admin) }
+        verifyNothingStored()
+    }
+
+    @Test
+    fun `correctCount throws ValidationException for a note with a NUL character`() {
+        // PostgreSQL cannot store NUL in a varchar column. Without the check, the request would get a 500.
+        assertThrows<ValidationException> { service.correctCount(userId, 1, "Double\u0000tap", admin) }
+        verifyNothingStored()
+    }
+
+    @Test
+    fun `correctCount stores a note of 500 characters with a line break`() {
+        stubCorrection(consumption(3))
+        val longNote = "Double tap\n" + "a".repeat(489)
+
+        service.correctCount(userId, 1, longNote, admin)
+
+        verify(correctionDataService).upsert(argThat { note == longNote })
+    }
+
+    @Test
+    fun `getCorrections throws ForbiddenException for a user who is not an admin`() {
+        assertThrows<ForbiddenException> { service.getCorrections(userId, user) }
+    }
+
+    @Test
+    fun `getCorrections throws NotFoundException for an unknown user`() {
+        whenever(dataService.getByUserId(userId)).thenThrow(NotFoundException(User::class.java, userId))
+
+        assertThrows<NotFoundException> { service.getCorrections(userId, admin) }
     }
 }
