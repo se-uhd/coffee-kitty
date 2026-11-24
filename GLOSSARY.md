@@ -24,11 +24,12 @@ with a line "Avoid:", which lists words not to use for the concept.
   API: `POST /api/users/{userId}/consumption` with `delta` 1. Code: `CoffeeConsumptionService.applyDelta`.
   Avoid: bump (a count).
 - **coffee count**: A user's total number of coffees. The number starts at zero when the user is created. Adding a
-  coffee raises it by one, and an undo lowers it by one.
+  coffee raises it by one, an undo lowers it by one, and a correction sets it to the count that an admin chooses.
   API: `ConsumptionDto.count`. Code: `CoffeeConsumption.count`, `coffee_consumptions.count`.
 - **consumption**: The stored record that holds the coffee count of one user and the time of each recent coffee that the
-  user did not undo. Adding a coffee drops the times whose grace period has passed. Every user has exactly one such
-  record, which `UserService.create` or `UserInternalService.create` creates together with the user.
+  user did not undo and that no correction removed. Adding a coffee drops the times of the coffees outside their grace
+  period. Every user has exactly one such record, which `UserService.create` or `UserInternalService.create` creates
+  together with the user.
   API: `/api/users/{userId}/consumption`, `ConsumptionDto`. Code: `CoffeeConsumption`, `coffee_consumptions`,
   `coffeeTimes`, `coffee_times`.
 - **delta**: The field in the request body of `POST /api/users/{userId}/consumption` that states the change to the
@@ -49,8 +50,13 @@ with a line "Avoid:", which lists words not to use for the concept.
   `CAMPUS_COFFEE_GRACE_PERIOD`.
   Avoid: grace window.
 - **correction**: An admin's change of a user's coffee count to a new count, which the admin explains in a note (FR-8 in
-  `requirements/FR-8-correct-coffee-count.md`, not implemented yet). An admin can correct a coffee count at any time,
-  even after the grace period.
+  `requirements/FR-8-correct-coffee-count.md`). An admin can correct a coffee count at any time, even after the grace
+  period. Coffee Kitty stores each correction with the count before, the count after, the note, the admin, and the time
+  of the correction. A correction to a lower count removes the newest coffees, and an undo then applies to the newest
+  coffee that remains. A correction to a higher count adds coffees that cannot be undone.
+  API: `PUT /api/users/{userId}/consumption`, `ConsumptionCorrectionDto` (`total`, `note`),
+  `GET /api/users/{userId}/consumption/corrections`, `CountCorrectionDto`. Code:
+  `CoffeeConsumptionService.correctCount`, `CountCorrection`, `count_corrections`.
   Avoid: adjustment, override, reset (for a coffee count).
 - **note**: The text with which an admin explains a correction, such as "Double tap on 16.11." A correction needs a
   note that is not blank.
@@ -96,7 +102,7 @@ with a line "Avoid:", which lists words not to use for the concept.
   (CLAUDE.md, Adding a New Entity).
 - **domain model**: A class in `domain/.../model/` that represents a concept of the business logic, such as a user, and
   has no annotations or code for the web or the database. An instance of such a class is a domain object.
-  Code: `DomainModel`, `User`, `CoffeeConsumption`.
+  Code: `DomainModel`, `User`, `CoffeeConsumption`, `CountCorrection`.
 - **DTO**: A data transfer object, that is, a class in `api/.../dtos/` that defines the JSON body of a request or a
   response. Bean Validation checks a request body against the constraint annotations of the class, such as
   `@NotBlank`, before the controller method runs. A MapStruct mapper in `api/.../mapper/` converts between a domain

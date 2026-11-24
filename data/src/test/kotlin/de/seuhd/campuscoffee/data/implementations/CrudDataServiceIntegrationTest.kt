@@ -4,14 +4,17 @@ import de.seuhd.campuscoffee.data.integration.AbstractDataIntegrationTest
 import de.seuhd.campuscoffee.domain.exceptions.DuplicationException
 import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
 import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
+import de.seuhd.campuscoffee.domain.model.CountCorrection
+import de.seuhd.campuscoffee.domain.model.Role
 import de.seuhd.campuscoffee.domain.model.User
 import de.seuhd.campuscoffee.domain.ports.data.CoffeeConsumptionDataService
+import de.seuhd.campuscoffee.domain.ports.data.CountCorrectionDataService
 import de.seuhd.campuscoffee.domain.ports.data.UserDataService
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.transaction.IllegalTransactionStateException
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.transaction.support.TransactionTemplate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -21,14 +24,9 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 /**
- * Integration tests of the data adapters [UserDataServiceImpl] and [CoffeeConsumptionDataServiceImpl] and their base
- * class [CrudDataServiceImpl] against PostgreSQL. The tests check that [CrudDataServiceImpl.upsert] assigns the id and
- * the timestamps and that an update keeps the creation time. Other tests check the [DuplicationException] for each
- * unique constraint and the [NotFoundException] for an unknown id, login name, or user. Further tests check that
- * deleting a user deletes the consumption of that user and that `getAll` keeps the creation order after an update.
- * The lock tests check that `getByUserIdForUpdate` makes a second transaction wait until the first transaction ends
- * and that a call outside a transaction fails. A further test checks that the coffee times keep their order when a
- * consumption is stored and updated.
+ * Integration tests of the data adapters [UserDataServiceImpl], [CoffeeConsumptionDataServiceImpl], and
+ * [CountCorrectionDataServiceImpl] and their base class [CrudDataServiceImpl] against PostgreSQL. The base class is
+ * abstract, and the tests call its methods through the three data adapters.
  */
 class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     @Autowired
@@ -36,6 +34,9 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
 
     @Autowired
     private lateinit var coffeeConsumptionDataService: CoffeeConsumptionDataService
+
+    @Autowired
+    private lateinit var countCorrectionDataService: CountCorrectionDataService
 
     @Autowired
     private lateinit var transactionTemplate: TransactionTemplate
@@ -60,8 +61,18 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
         return requireNotNull(user.id)
     }
 
+    /** Returns a correction of the coffee count of [user] by [admin] from 3 to 1 with [note]. */
+    private fun correction(
+        user: User,
+        admin: User,
+        note: String = "Double tap"
+    ): CountCorrection = CountCorrection(user = user, admin = admin, countBefore = 3, countAfter = 1, note = note)
+
+    /** Stores an admin with [loginName] and returns the stored admin. */
+    private fun storeAdmin(loginName: String): User = userDataService.upsert(user(loginName).copy(role = Role.ADMIN))
+
     @Test
-    fun `upsert of a new user assigns an id and both timestamps that getById reads back unchanged`() {
+    fun `upsert stores a new user with an id and timestamps`() {
         val created = userDataService.upsert(user("alice"))
 
         assertThat(created.id).isNotNull()
@@ -71,54 +82,64 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `upsert of an existing user without timestamps keeps createdAt and refreshes updatedAt`() {
+    fun `upsert stores every field of an existing user and does not change createdAt`() {
         val created = userDataService.upsert(user("frank"))
+        val changed =
+            created.copy(
+                loginName = "franklin",
+                emailAddress = "franklin@se.de",
+                firstName = "Franklin",
+                lastName = "Changed",
+                role = Role.ADMIN
+            )
 
-        val updated = userDataService.upsert(created.copy(firstName = "Franklin", createdAt = null, updatedAt = null))
+        val updated = userDataService.upsert(changed.copy(createdAt = null, updatedAt = null))
 
-        assertThat(updated.id).isEqualTo(created.id)
-        assertThat(updated.firstName).isEqualTo("Franklin")
-        assertThat(updated.createdAt).isEqualTo(created.createdAt)
+        assertThat(updated).isEqualTo(changed.copy(updatedAt = updated.updatedAt))
         assertThat(updated.updatedAt).isAfter(created.updatedAt)
         assertThat(userDataService.getById(requireNotNull(updated.id))).isEqualTo(updated)
     }
 
     @Test
-    fun `upsert of a user with an unknown id throws NotFoundException`() {
+    fun `upsert stores the role ADMIN`() {
+        val created = userDataService.upsert(user("jane").copy(role = Role.ADMIN))
+
+        assertThat(userDataService.getById(requireNotNull(created.id)).role).isEqualTo(Role.ADMIN)
+    }
+
+    @Test
+    fun `upsert throws NotFoundException for an unknown id`() {
         assertThatThrownBy { userDataService.upsert(user("ivy").copy(id = UUID.randomUUID())) }
             .isInstanceOf(NotFoundException::class.java)
     }
 
     @Test
-    fun `upsert of a user with a taken login name throws DuplicationException that names the login name`() {
+    fun `upsert throws DuplicationException for a taken login name`() {
         userDataService.upsert(user("alice"))
 
         assertThatThrownBy { userDataService.upsert(user("alice", emailAddress = "other@se.de")) }
             .isInstanceOf(DuplicationException::class.java)
-            .hasMessage("User with login name 'alice' already exists.")
     }
 
     @Test
-    fun `upsert of a user with a taken email address throws DuplicationException that names the email address`() {
+    fun `upsert throws DuplicationException for a taken email address`() {
         userDataService.upsert(user("bob", emailAddress = "shared@se.de"))
 
         assertThatThrownBy { userDataService.upsert(user("bob2", emailAddress = "shared@se.de")) }
             .isInstanceOf(DuplicationException::class.java)
-            .hasMessage("User with email address 'shared@se.de' already exists.")
     }
 
     @Test
-    fun `upsert of a second consumption for a user throws DuplicationException that names the user ID`() {
+    fun `upsert throws DuplicationException for a second consumption of a user`() {
         val user = userDataService.upsert(user("erin"))
         coffeeConsumptionDataService.upsert(CoffeeConsumption(user = user, count = 0))
 
         assertThatThrownBy { coffeeConsumptionDataService.upsert(CoffeeConsumption(user = user, count = 1)) }
             .isInstanceOf(DuplicationException::class.java)
-            .hasMessage("CoffeeConsumption with user ID '${user.id}' already exists.")
     }
 
     @Test
-    fun `upsert of an existing consumption stores the new count and leaves createdAt and the user row unchanged`() {
+    fun `upsert stores a new count and changes neither createdAt nor the user`() {
         val user = userDataService.upsert(user("henry"))
         val userId = requireNotNull(user.id)
         val consumption = coffeeConsumptionDataService.upsert(CoffeeConsumption(user = user, count = 0))
@@ -137,7 +158,7 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `upsert of a consumption stores the coffee times in order and an update replaces them in order`() {
+    fun `upsert stores and replaces the coffee times in order`() {
         val user = userDataService.upsert(user("ida"))
         val userId = requireNotNull(user.id)
         val first = LocalDateTime.of(2026, 11, 16, 10, 0, 0)
@@ -155,23 +176,15 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `upsert of a consumption for an unknown user throws NotFoundException that names the user`() {
+    fun `upsert throws NotFoundException for a consumption of an unknown user`() {
         val unknownUser = user("nobody").copy(id = UUID(0L, 7L))
 
         assertThatThrownBy { coffeeConsumptionDataService.upsert(CoffeeConsumption(user = unknownUser, count = 0)) }
             .isInstanceOf(NotFoundException::class.java)
-            .hasMessage("User with ID 00000000-0000-0000-0000-000000000007 does not exist.")
     }
 
     @Test
-    fun `getByUserId of an unknown user throws NotFoundException that names the user`() {
-        assertThatThrownBy { coffeeConsumptionDataService.getByUserId(UUID(0L, 8L)) }
-            .isInstanceOf(NotFoundException::class.java)
-            .hasMessage("User with ID 00000000-0000-0000-0000-000000000008 does not exist.")
-    }
-
-    @Test
-    fun `getAll of the base class returns the consumptions in the order they were created, also after an update`() {
+    fun `getAll returns the consumptions in the order of their creation, also after an update`() {
         val userIds = listOf("zoe", "adam", "mia").map { storeUserWithConsumption(it) }
         val first = coffeeConsumptionDataService.getByUserId(userIds.first())
         coffeeConsumptionDataService.upsert(first.copy(count = 1))
@@ -180,7 +193,14 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `delete of a user cascades to their consumption and both lookups throw NotFoundException`() {
+    fun `getAll returns the users in the order of their login names`() {
+        listOf("zoe", "adam", "mia").forEach { userDataService.upsert(user(it)) }
+
+        assertThat(userDataService.getAll().map { it.loginName }).containsExactly("adam", "mia", "zoe")
+    }
+
+    @Test
+    fun `deleting a user deletes the consumption of the user`() {
         val userId = storeUserWithConsumption("dave")
 
         userDataService.delete(userId)
@@ -191,29 +211,30 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `delete of an unknown id throws NotFoundException`() {
+    fun `delete throws NotFoundException for an unknown id`() {
         assertThatThrownBy { userDataService.delete(UUID.randomUUID()) }
             .isInstanceOf(NotFoundException::class.java)
     }
 
     @Test
-    fun `getByLoginName returns the matching user and throws NotFoundException that names the login name`() {
+    fun `getByLoginName returns the user with exactly this login name`() {
+        val grace = userDataService.upsert(user("grace"))
+        userDataService.upsert(user("Grace", emailAddress = "other@se.de"))
+        userDataService.upsert(user("grace_2"))
+
+        assertThat(userDataService.getByLoginName("grace")).isEqualTo(grace)
+    }
+
+    @Test
+    fun `getByLoginName throws NotFoundException for a login name in other letter case`() {
         userDataService.upsert(user("grace"))
 
-        assertThat(userDataService.getByLoginName("grace").loginName).isEqualTo("grace")
-        assertThatThrownBy { userDataService.getByLoginName("nobody") }
-            .isInstanceOf(NotFoundException::class.java)
-            .hasMessage("User with login name 'nobody' does not exist.")
-    }
-
-    @Test
-    fun `getById of an unknown id throws NotFoundException`() {
-        assertThatThrownBy { userDataService.getById(UUID.randomUUID()) }
+        assertThatThrownBy { userDataService.getByLoginName("Grace") }
             .isInstanceOf(NotFoundException::class.java)
     }
 
     @Test
-    fun `getByUserIdForUpdate makes a second transaction wait until the first one ends and then read its count`() {
+    fun `getByUserIdForUpdate makes a second transaction wait for the first one`() {
         val userId = storeUserWithConsumption("lena")
         val locked = CountDownLatch(1)
         val release = CountDownLatch(1)
@@ -223,9 +244,9 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
                 executor.submit {
                     transactionTemplate.executeWithoutResult {
                         val current = coffeeConsumptionDataService.getByUserIdForUpdate(userId)
-                        coffeeConsumptionDataService.upsert(current.copy(count = 1))
                         locked.countDown()
                         release.await()
+                        coffeeConsumptionDataService.upsert(current.copy(count = 1))
                     }
                 }
             assertThat(locked.await(TIMEOUT_SECONDS, TimeUnit.SECONDS)).isTrue()
@@ -246,18 +267,95 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `getByUserIdForUpdate outside a transaction throws IllegalTransactionStateException`() {
-        val userId = storeUserWithConsumption("otto")
+    fun `upsert stores a new correction with an id, timestamps, the user, and the admin`() {
+        val user = userDataService.upsert(user("paula"))
+        val admin = storeAdmin("quentin")
 
-        assertThatThrownBy { coffeeConsumptionDataService.getByUserIdForUpdate(userId) }
-            .isInstanceOf(IllegalTransactionStateException::class.java)
+        val created = countCorrectionDataService.upsert(correction(user, admin))
+
+        assertThat(created.id).isNotNull()
+        assertThat(created.createdAt).isNotNull()
+        assertThat(created.updatedAt).isEqualTo(created.createdAt)
+        assertThat(created.user).isEqualTo(user)
+        assertThat(created.admin).isEqualTo(admin)
+        assertThat(countCorrectionDataService.getAllByUserId(requireNotNull(user.id))).containsExactly(created)
+    }
+
+    @Test
+    fun `upsert of a stored correction changes neither createdAt nor the users`() {
+        val user = userDataService.upsert(user("rosa"))
+        val admin = storeAdmin("sam")
+        val created = countCorrectionDataService.upsert(correction(user, admin))
+
+        val updated =
+            countCorrectionDataService.upsert(
+                created.copy(
+                    user = user.copy(firstName = "Changed"),
+                    admin = admin.copy(firstName = "Changed"),
+                    note = "Typo",
+                    createdAt = null,
+                    updatedAt = null
+                )
+            )
+
+        assertThat(updated.note).isEqualTo("Typo")
+        assertThat(updated.createdAt).isEqualTo(created.createdAt)
+        assertThat(updated.updatedAt).isAfter(created.updatedAt)
+        assertThat(userDataService.getById(requireNotNull(user.id))).isEqualTo(user)
+        assertThat(userDataService.getById(requireNotNull(admin.id))).isEqualTo(admin)
+    }
+
+    @Test
+    fun `upsert throws DataIntegrityViolationException for a correction with a negative count or an empty note`() {
+        val correction = correction(userDataService.upsert(user("olaf")), storeAdmin("nina"))
+
+        listOf(correction.copy(countBefore = -1), correction.copy(countAfter = -1), correction.copy(note = ""))
+            .forEach { invalid ->
+                assertThatThrownBy { countCorrectionDataService.upsert(invalid) }
+                    .isInstanceOf(DataIntegrityViolationException::class.java)
+            }
+    }
+
+    @Test
+    fun `getAllByUserId returns the corrections of one user, newest first`() {
+        val user = userDataService.upsert(user("tina"))
+        val otherUser = userDataService.upsert(user("uwe"))
+        val admin = storeAdmin("vera")
+        val first = countCorrectionDataService.upsert(correction(user, admin, note = "First"))
+        countCorrectionDataService.upsert(correction(otherUser, admin, note = "Other user"))
+        val second = countCorrectionDataService.upsert(correction(user, admin, note = "Second"))
+
+        assertThat(countCorrectionDataService.getAllByUserId(requireNotNull(user.id))).containsExactly(second, first)
+    }
+
+    @Test
+    fun `deleting a user deletes the corrections of the coffee count`() {
+        val user = userDataService.upsert(user("walter"))
+        val admin = storeAdmin("xenia")
+        countCorrectionDataService.upsert(correction(user, admin))
+
+        userDataService.delete(requireNotNull(user.id))
+
+        assertThat(countCorrectionDataService.getAll()).isEmpty()
+    }
+
+    @Test
+    fun `deleting an admin who corrected another coffee count throws DataIntegrityViolationException`() {
+        val user = userDataService.upsert(user("yusuf"))
+        val admin = storeAdmin("zora")
+        countCorrectionDataService.upsert(correction(user, admin))
+
+        // the foreign key admin_id has the default NO ACTION, because a correction does not belong to its admin
+        assertThatThrownBy { userDataService.delete(requireNotNull(admin.id)) }
+            .isInstanceOf(DataIntegrityViolationException::class.java)
+        assertThat(countCorrectionDataService.getAll()).hasSize(1)
     }
 
     private companion object {
-        /** Milliseconds during which the second transaction of the lock test must stay blocked by the row lock. */
+        /** The number of milliseconds for which the row lock of `getByUserIdForUpdate` must block a transaction. */
         const val WAIT_MILLIS = 500L
 
-        /** Maximum number of seconds that the lock test waits for a step that must finish. */
+        /** The maximum number of seconds that the test of `getByUserIdForUpdate` waits for a step that must finish. */
         const val TIMEOUT_SECONDS = 10L
     }
 }

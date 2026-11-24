@@ -41,3 +41,6 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
 - TBD (open): Is an admin allowed to correct a coffee count to its current value? Contact person: group lead.
 - TBD (open): Is there an upper limit for a corrected coffee count? Contact person: group lead.
 - TBD (open): What is the maximum length of a note? Contact person: group lead.
+- Until the group lead answers these TBDs, Coffee Kitty lets only admins read the corrections, stores a correction to
+  the current value, refuses a corrected coffee count above 1,000,000, and refuses a note with more than 500
+  characters.

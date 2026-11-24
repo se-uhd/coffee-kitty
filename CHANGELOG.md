@@ -7,6 +7,17 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- An admin can correct the coffee count of a user at any time and has to add a note with the reason for the correction
+  (FR-8 in `requirements/FR-8-correct-coffee-count.md`). `PUT /api/users/{userId}/consumption` with
+  `{ "total", "note" }` sets the coffee count and returns 403 Forbidden when the acting user is not an admin and 400 Bad
+  Request for a negative total, a total above 1,000,000, or a note that is missing, blank, or longer than 500
+  characters. A lower count removes the newest coffees, and an undo then applies to the newest coffee that remains. The
+  migration V5 creates the table `count_corrections`, which stores each correction with the count before and after, the
+  note, and the admin. `GET /api/users/{userId}/consumption/corrections` lists the corrections of a user, newest first,
+  and returns 403 Forbidden when the acting user is not an admin.
+
 ## [0.2.3] - 2026-11-22
 
 ### Fixed

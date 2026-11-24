@@ -84,6 +84,16 @@ times whose grace period has passed. The data module stores the list in the tabl
 `GracePeriod` read the time from the `Clock` bean of `ClockConfiguration`. `ConsumptionProperties` binds the grace
 period, `campus-coffee.consumption.grace-period`, with a default of 5 minutes.
 
+`CoffeeConsumptionServiceImpl.correctCount` lets an admin set the coffee count to a new total with a note (FR-8). It
+checks the role with `requireAdmin`, refuses a total outside 0 to `CountCorrection.MAX_TOTAL` and a note that is
+missing, blank, or longer than `CountCorrection.MAX_NOTE_LENGTH`, and locks the consumption like `applyDelta`. A total
+below the count drops the times of the newest coffees from `coffeeTimes`, as the coffee app of SE@UHD removes the newest
+coffees of the user from its undo stack. A higher total adds coffees without a time. In the same transaction, the method
+stores a `CountCorrection` with the count before and after, the note, and the admin through the data port
+`CountCorrectionDataService`. The data module stores the corrections in the table `count_corrections`, which references
+the corrected user with `ON DELETE CASCADE` and the admin with the default `NO ACTION`. `getCorrections` also checks the
+role with `requireAdmin` and returns the corrections of a user, newest first.
+
 ### Generic Base Classes
 
 `CrudDataServiceImpl` is the base class of the data adapters. `CrudDataServiceImpl.upsert` inserts a domain object

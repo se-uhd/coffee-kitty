@@ -3,8 +3,11 @@ package de.seuhd.campuscoffee.domain.implementation
 import de.seuhd.campuscoffee.domain.exceptions.ConflictException
 import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
+import de.seuhd.campuscoffee.domain.model.CountCorrection
+import de.seuhd.campuscoffee.domain.model.User
 import de.seuhd.campuscoffee.domain.ports.api.CoffeeConsumptionService
 import de.seuhd.campuscoffee.domain.ports.data.CoffeeConsumptionDataService
+import de.seuhd.campuscoffee.domain.ports.data.CountCorrectionDataService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
@@ -19,14 +22,21 @@ import java.util.UUID
  * for the same user waits until the transaction ends and then reads the raised count. Without the lock, two
  * concurrent requests could both read a count of 2 and both store a count of 3.
  *
- * [applyDelta] appends the time of the coffee from [clock], which a test can set to a fixed time, and drops the times
- * whose grace period has passed, so that the list of times does not grow with every coffee. [undo] takes the time of
- * the most recent coffee that is not undone, checks its grace period with [gracePeriod], and removes the time.
- * As in the coffee app of SE@UHD, the coffee before can then be undone while its own grace period is open.
+ * [applyDelta] appends the time of the coffee from [clock], which a test can set to a fixed time. It drops the times of
+ * the coffees outside their grace period, because the list of times would otherwise grow with every coffee. [undo]
+ * takes the time of the most recent coffee that the user did not undo. It checks the grace period of this coffee with
+ * [gracePeriod] and removes the time. As in the coffee app of SE@UHD, the user can then undo the coffee before it if
+ * its own grace period is open.
+ *
+ * [correctCount] locks the consumption like [applyDelta], stores the corrected count, and stores a [CountCorrection]
+ * with the note in the same transaction. A correction to a lower count removes the times of the newest coffees. The
+ * coffee app of SE@UHD removes the newest coffees of the user from its undo stack in the same way. An undo after the
+ * correction then checks the newest coffee that remains.
  */
 @Service
 class CoffeeConsumptionServiceImpl(
     private val coffeeConsumptionDataService: CoffeeConsumptionDataService,
+    private val countCorrectionDataService: CountCorrectionDataService,
     private val gracePeriod: GracePeriod,
     private val clock: Clock
 ) : CoffeeConsumptionService {
@@ -44,7 +54,7 @@ class CoffeeConsumptionServiceImpl(
         return coffeeConsumptionDataService.upsert(
             current.copy(
                 count = current.count + delta,
-                // keep only the times within their grace period, because the other coffees can no longer be undone
+                // keep only the times within their grace period, because the user can no longer undo the other coffees
                 coffeeTimes = current.coffeeTimes.filter { gracePeriod.isOpen(it) } + now()
             )
         )
@@ -56,8 +66,8 @@ class CoffeeConsumptionServiceImpl(
         if (current.count <= 0) {
             throw ConflictException("There is no coffee to undo.")
         }
-        // a coffee without a time cannot be undone: it was added before Coffee Kitty 0.2.0, or applyDelta dropped its
-        // time after the grace period
+        // The user cannot undo a coffee without a time. The user added such a coffee before Coffee Kitty 0.2.0, a
+        // correction added it, or applyDelta dropped its time after the grace period.
         val lastCoffeeAt = current.coffeeTimes.lastOrNull()
         if (lastCoffeeAt == null || !gracePeriod.isOpen(lastCoffeeAt)) {
             throw ConflictException("The grace period to undo this coffee has passed.")
@@ -65,6 +75,70 @@ class CoffeeConsumptionServiceImpl(
         return coffeeConsumptionDataService.upsert(
             current.copy(count = current.count - 1, coffeeTimes = current.coffeeTimes.dropLast(1))
         )
+    }
+
+    @Transactional
+    override fun correctCount(
+        userId: UUID,
+        total: Int,
+        note: String?,
+        actingUser: User
+    ): CoffeeConsumption {
+        requireAdmin(actingUser, "correct a coffee count")
+        if (total < 0) {
+            throw ValidationException("The coffee count cannot be negative.")
+        }
+        if (total > CountCorrection.MAX_TOTAL) {
+            throw ValidationException("The coffee count cannot exceed ${CountCorrection.MAX_TOTAL}.")
+        }
+        val validNote = requireValidNote(note)
+        val current = coffeeConsumptionDataService.getByUserIdForUpdate(userId)
+        // keep every time for a higher total, because the added coffees have no time and the user cannot undo them
+        val removedCoffees = (current.count - total).coerceAtLeast(0)
+        val corrected =
+            coffeeConsumptionDataService.upsert(
+                current.copy(count = total, coffeeTimes = current.coffeeTimes.dropLast(removedCoffees))
+            )
+        countCorrectionDataService.upsert(
+            CountCorrection(
+                user = current.user,
+                admin = actingUser,
+                countBefore = current.count,
+                countAfter = total,
+                note = validNote
+            )
+        )
+        return corrected
+    }
+
+    override fun getCorrections(
+        userId: UUID,
+        actingUser: User
+    ): List<CountCorrection> {
+        requireAdmin(actingUser, "read the corrections of a coffee count")
+        // getAllByUserId returns an empty list for an unknown user. getByUserId throws a NotFoundException instead, and
+        // the endpoint returns 404 like the other consumption endpoints.
+        coffeeConsumptionDataService.getByUserId(userId)
+        return countCorrectionDataService.getAllByUserId(userId)
+    }
+
+    /**
+     * Returns [note] if it is not blank, has at most [CountCorrection.MAX_NOTE_LENGTH] characters, and does not
+     * contain the NUL character, which PostgreSQL cannot store in a `varchar` column. A note can contain line breaks.
+     *
+     * @param note the note of a correction, or null if the request has no note
+     * @throws ValidationException if [note] is null or fails the check
+     */
+    private fun requireValidNote(note: String?): String {
+        if (note.isNullOrBlank()) {
+            throw ValidationException("The note of a correction must not be blank.")
+        }
+        if (note.length > CountCorrection.MAX_NOTE_LENGTH || note.contains('\u0000')) {
+            throw ValidationException(
+                "A note must have at most ${CountCorrection.MAX_NOTE_LENGTH} characters and no NUL character."
+            )
+        }
+        return note
     }
 
     /** Returns the current UTC time of [clock], truncated to microseconds like the timestamps in the database. */

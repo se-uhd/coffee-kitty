@@ -8,9 +8,9 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 
 /**
- * A [Clock] in UTC that the step definitions set to a time of day, such as 10:05:00 on [DATE]. The steps of the
- * acceptance scenarios contain the time of each coffee and each undo. With this clock in the Spring context, the
- * scenarios do not depend on the time at which they run and do not have to wait 5 minutes for the end of the grace
+ * A [Clock] in UTC that the step definitions set to a time of day, such as 10:05:00 on [DATE]. A step of an acceptance
+ * scenario can contain the time of a coffee, an undo, or a correction. With this clock in the Spring context, the
+ * scenarios do not depend on the time at which they run. No scenario has to wait 5 minutes for the end of the grace
  * period.
  */
 class SettableClock : Clock() {

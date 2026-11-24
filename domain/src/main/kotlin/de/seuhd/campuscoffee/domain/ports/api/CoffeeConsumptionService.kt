@@ -1,15 +1,18 @@
 package de.seuhd.campuscoffee.domain.ports.api
 
 import de.seuhd.campuscoffee.domain.exceptions.ConflictException
+import de.seuhd.campuscoffee.domain.exceptions.ForbiddenException
 import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
 import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
+import de.seuhd.campuscoffee.domain.model.CountCorrection
+import de.seuhd.campuscoffee.domain.model.User
 import java.util.UUID
 
 /**
- * API port for the consumptions. The controllers call it to read a user's coffee count, to add a coffee, and to undo
- * the most recent coffee. `CoffeeConsumptionServiceImpl` in the domain module implements it. [UserService.create]
- * creates the consumption of a new user with a coffee count of zero.
+ * API port for the consumptions. The controllers call it to read and correct coffee counts, to add and undo coffees,
+ * and to read the corrections. `CoffeeConsumptionServiceImpl` in the domain module implements it.
+ * [UserService.create] creates the consumption of a new user with a coffee count of zero.
  */
 interface CoffeeConsumptionService {
     /**
@@ -23,8 +26,8 @@ interface CoffeeConsumptionService {
     /**
      * Adds [delta] to the coffee count of the user with [userId] and returns the updated consumption. The domain
      * accepts only a delta of `+1`, which adds one coffee. With the delta parameter, an extension can accept a delta
-     * of `-1` to remove a coffee without changing the request body. In the coffee app of SE@UHD, an admin removes a
-     * coffee with a delta of `-1`, and a delta of `-1` at a coffee count of zero gets the status 409 Conflict.
+     * of `-1` to remove a coffee without changing the format of the request body. In the coffee app of SE@UHD, an admin
+     * removes a coffee with a delta of `-1`. At a coffee count of zero, this delta gets the status 409 Conflict.
      *
      * @param userId the id of the user
      * @param delta  the change to the coffee count, which must be `+1`
@@ -37,9 +40,9 @@ interface CoffeeConsumptionService {
     ): CoffeeConsumption
 
     /**
-     * Undoes the most recent coffee of the user with [userId] that is not undone yet and returns the consumption with
-     * the lowered coffee count. The undo succeeds until the grace period ends, including that instant. After an
-     * undo, the coffee before is the most recent coffee.
+     * Undoes the most recent coffee of the user with [userId] and returns the consumption with the lowered coffee
+     * count. The undo succeeds until the grace period of the coffee ends, including that instant. After an undo, the
+     * coffee before is the most recent coffee.
      *
      * @param userId the id of the user
      * @throws ConflictException if the user has no coffee to undo or the grace period of the most recent coffee has
@@ -47,4 +50,42 @@ interface CoffeeConsumptionService {
      * @throws NotFoundException if no user has [userId]
      */
     fun undo(userId: UUID): CoffeeConsumption
+
+    /**
+     * Corrects the coffee count of the user with [userId] to [total] and stores the correction with [note] (FR-8).
+     * [actingUser] has to be an admin and can correct a coffee count at any time, even after the grace period. A
+     * [total] below the coffee count removes the newest coffees of the user, and an undo then applies to the newest
+     * coffee that remains. A [total] above the coffee count adds coffees that the user cannot undo. The coffee app of
+     * SE@UHD has a function with the same name.
+     *
+     * @param userId     the id of the user whose coffee count the admin corrects
+     * @param total      the corrected coffee count, from 0 to [CountCorrection.MAX_TOTAL]
+     * @param note       the note with the reason for the correction, which must not be null or blank
+     * @param actingUser the user who sends the request
+     * @return the consumption with the corrected coffee count
+     * @throws ForbiddenException if [actingUser] is not an admin
+     * @throws ValidationException if [total] is negative or above [CountCorrection.MAX_TOTAL], if [note] is null or
+     *   blank, or if [note] has more than [CountCorrection.MAX_NOTE_LENGTH] characters or the NUL character
+     * @throws NotFoundException if no user has [userId]
+     */
+    fun correctCount(
+        userId: UUID,
+        total: Int,
+        note: String?,
+        actingUser: User
+    ): CoffeeConsumption
+
+    /**
+     * Returns the corrections of the coffee count of the user with [userId], newest first. [actingUser] has to be an
+     * admin.
+     *
+     * @param userId     the id of the user whose corrections to return
+     * @param actingUser the user who sends the request
+     * @throws ForbiddenException if [actingUser] is not an admin
+     * @throws NotFoundException if no user has [userId]
+     */
+    fun getCorrections(
+        userId: UUID,
+        actingUser: User
+    ): List<CountCorrection>
 }

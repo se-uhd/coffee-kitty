@@ -11,14 +11,14 @@ import java.time.LocalTime
 /**
  * Step definitions for the acceptance scenarios in `consumption.feature`.
  *
- * The scenarios rely on the test data. Before each scenario, [CucumberSpringConfiguration.beforeEach] deletes all data
- * and creates the fixture users of `TestFixtures`, such as `maxmustermann`, each with a coffee count of 0. A login name
- * in a step must be the login name of a fixture user.
+ * Before each scenario, [CucumberSpringConfiguration.beforeEach] runs a data reset and creates the fixture users of
+ * `TestFixtures`, such as `maxmustermann`, each with a coffee count of 0. A login name in a step must be the login name
+ * of a fixture user.
  *
- * The steps send their requests through [ConsumptionRequests]. The Given steps remember the user of the scenario and
- * add coffees. The When steps add a coffee or undo the most recent coffee and keep the status code. The Then steps
- * check that status code and the stored coffee count. A step with a time sets the [SettableClock] to that time before
- * its request.
+ * The steps send their requests through [ConsumptionRequests]. The first Given step stores the login name of the user
+ * of the scenario. Each When step stores the status code for the Then steps. A step with a time sets the
+ * [SettableClock] to that time before its request. The step with a coffee count and the time of the last coffee adds
+ * the other coffees one hour before that time.
  */
 class CucumberConsumptionSteps(
     private val clock: SettableClock
