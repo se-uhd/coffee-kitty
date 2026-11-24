@@ -32,9 +32,9 @@ class CoffeeConsumptionDataServiceImpl(
 
     /**
      * Returns the consumption of the user with [userId] and locks the consumption row until the transaction ends.
-     * With propagation `MANDATORY`, a call outside a transaction throws an `IllegalTransactionStateException`. Without
-     * a transaction, the lock would already end with the query, and the caller would store the new count without the
-     * lock.
+     * With propagation `MANDATORY`, a call outside a transaction throws an `IllegalTransactionStateException`. With the
+     * default propagation `REQUIRED`, such a call would run in a transaction of its own. The lock would then end when
+     * this method returns, and the caller would store the new count without the lock.
      *
      * @throws NotFoundException if no user has [userId]
      */

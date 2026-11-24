@@ -4,14 +4,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import java.time.Duration
 
 /**
- * Domain configuration of the rule for undoing a coffee. The class is in the domain module, because the domain
- * enforces the rule and cannot depend on the api or application modules. The typed binding lets the IDE resolve the
- * key in `application.yaml`. The coffee app of SE@UHD has the same class.
+ * The configuration of the grace period, in which a user can undo a coffee. The class is in the domain module, because
+ * the domain checks the grace period and cannot depend on the api module or the application module. With this class,
+ * the IDE can resolve the key in `application.yaml`. The coffee app of SE@UHD has the same class.
  *
- * @property gracePeriod how long after adding a coffee a user can still undo it with
- *   `POST /api/users/{userId}/consumption/undo`. A later undo gets the status 409 Conflict. Spring binds the value
- *   from `campus-coffee.consumption.grace-period`, and the default is 5 minutes, as in `application.yaml`. The
- *   value must not be negative.
+ * @property gracePeriod the time after a user adds a coffee in which the user can undo it with
+ *   `POST /api/users/{userId}/consumption/undo`. A later undo gets the status 409 Conflict. Spring reads the value from
+ *   `campus-coffee.consumption.grace-period`. The default is 5 minutes, as in `application.yaml`. The value must not be
+ *   negative.
  */
 @ConfigurationProperties("campus-coffee.consumption")
 data class ConsumptionProperties(

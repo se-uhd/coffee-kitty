@@ -26,10 +26,10 @@ interface UserService {
     fun getById(id: UUID): User
 
     /**
-     * Creates [user] and the user's consumption with a coffee count of zero, on behalf of [actingUser], who has to be
-     * an admin. The service ignores any id and timestamps on [user] and stores the email address trimmed and in
-     * lowercase. It checks the login name, the email address, and the first and the last name against the limits in
-     * the companion object of [User]. It also refuses a blank name and a name with a control character.
+     * Creates [user] and the user's consumption with a coffee count of zero. [actingUser] has to be an admin. The
+     * service ignores any id and timestamps on [user] and stores the email address trimmed and in lowercase. It checks
+     * the login name, the email address, and the first and the last name against the limits in the companion object of
+     * [User]. It also refuses a blank name and a name with a control character.
      *
      * @param user the user to create
      * @param actingUser the user who sends the request

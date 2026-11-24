@@ -83,9 +83,9 @@ with a line "Avoid:", which lists words not to use for the concept.
   raise it. The table `user_balance` holds the balance of each user, but no code writes it yet.
   Code: `UserBalanceEntity`, `user_balance`.
   Avoid: member balance, account.
-- **kitty**: The group's shared cash in euro cents, whose current amount is the kitty balance. Deposits raise the kitty,
-  the kitty shares of expenses lower it, and kitty adjustments change it in either direction. The kitty never goes
-  negative. The table `kitty_balance` holds the kitty balance in one row, but no code writes it yet.
+- **kitty**: The shared cash of the group in euro cents. The current amount is the kitty balance. Deposits raise the
+  kitty, the kitty shares of expenses lower it, and kitty adjustments change it in either direction. The kitty never
+  goes negative. The table `kitty_balance` holds the kitty balance in one row, but no code writes it yet.
   Code: `KittyBalanceEntity`, `kitty_balance`.
   Avoid: fund, coffee fund.
 - **payment**: A deposit or a kitty adjustment, which an admin records. A coffee is not a payment, because it lowers the
@@ -126,9 +126,10 @@ with a line "Avoid:", which lists words not to use for the concept.
   counts, and list the corrections of a user.
   API: `UserDto.role`. Code: `Role`, `User.role`, `users.role`, `requireAdmin`.
 - **acting user**: The user who sends a request, identified by the login name in the header `X-Acting-User`. Because
-  Coffee Kitty has no authentication yet, any client can act as any user. API: `X-Acting-User`, `WWW-Authenticate:
-  X-Acting-User realm="Coffee Kitty"` in a 401. Code: `CurrentUserProvider`, `ActingUserAuthenticationFilter`,
-  `SecurityConfig`. Avoid: current user (except in the class name), caller.
+  Coffee Kitty has no authentication yet, any client can act as any user.
+  API: `X-Acting-User`, `WWW-Authenticate: X-Acting-User realm="Coffee Kitty"` in a 401. Code: `CurrentUserProvider`,
+  `ActingUserAuthenticationFilter`, `SecurityConfig`.
+  Avoid: current user (except in the class name), caller.
 - **bootstrap admin**: The admin that the app stores on startup from the keys under `campus-coffee.bootstrap-admin` when
   no admin exists after the fixture loader has run. If a user has the configured login name, the app gives that user the
   role `ADMIN`. Otherwise, it creates the configured user.
@@ -157,8 +158,8 @@ with a line "Avoid:", which lists words not to use for the concept.
   which adds the Kotlin JPA plugin.
   Code: `java-conventions.gradle.kts`, `kotlin-conventions.gradle.kts`.
 - **port**: An interface in `domain/.../ports/` that connects the domain to the other modules. The controllers call the
-  API ports in `ports/api/`, and the data module implements the data ports in `ports/data/`. The internal ports in
-  `ports/internal/` are for the fixture loader and the tests.
+  API ports in `ports/api/`, and the data module implements the data ports in `ports/data/`. The fixture loader, the
+  bootstrap admin loader, and the tests call the internal ports in `ports/internal/`.
   Code: `UserService`, `UserDataService`, `DataResetService`.
 - **adapter**: A class outside the domain that connects a port to a technology. Examples are a controller, which
   handles HTTP requests and calls an API port, and a data adapter such as `UserDataServiceImpl`, which implements a
@@ -182,8 +183,9 @@ with a line "Avoid:", which lists words not to use for the concept.
   result of `CoffeeConsumptionService.undoableUntil`.
   Code: `UserDto`, `ConsumptionDto`, `ConsumptionDeltaDto`, `UserDtoMapper`.
 - **JPA entity**: A class in `data/.../persistence/entities/` that JPA maps to one table, such as `UserEntity` for the
-  table `users`. Each such class extends the base class `Entity` and has a name that ends in `Entity`. An entity mapper
-  converts between an instance of the class and the matching domain object.
+  table `users`. Each such class has a name that ends in `Entity`, and each one except `UserBalanceEntity` and
+  `KittyBalanceEntity` extends the base class `Entity`. The tables of these two classes have neither a random id nor
+  timestamps. An entity mapper converts between an instance of a JPA entity and the matching domain object.
   Code: `UserEntity`, `CoffeeConsumptionEntity`, `UserEntityMapper`.
 - **upsert**: The operation of a data port that inserts or updates a domain object. A domain object without an id is
   inserted as a new row under a new random `UUID`. For a domain object with an id, the operation updates the stored row
@@ -227,5 +229,6 @@ with a line "Avoid:", which lists words not to use for the concept.
   cannot be read, such as a body with a delta of 1.9, gets a 400 with the error code `BadRequest` instead.
 - **firewall**: The `StrictHttpFirewall` of Spring Security, which rejects a request with `;`, `//`, `..`, or an encoded
   slash in the path or with a control character in a header value. Security rules and Spring MVC can read such a
-  request differently. A rejected request gets 400 Bad Request with the message "The request could not be read."
+  request differently. A rejected request gets 400 Bad Request with the error code `BadRequest`, and the message of
+  the error response does not quote the request.
   Code: `SecurityConfig.requestRejectedHandler`, `RequestRejectedExceptionHandler`.

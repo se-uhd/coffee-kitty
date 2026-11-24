@@ -14,8 +14,8 @@ import java.util.UUID
 
 /**
  * Domain implementation of [UserService] and [UserInternalService]. [create] checks every new user, including the
- * fixture users, which do not pass through a DTO or Bean Validation. [create] stores the user and the user's
- * consumption in one transaction. If storing the consumption fails, the rollback removes the user too.
+ * fixture users, which Bean Validation does not check. [create] stores the user and the user's consumption in one
+ * transaction. If [create] cannot store the consumption, the rollback removes the user too.
  */
 @Service
 class UserServiceImpl(
@@ -54,15 +54,15 @@ class UserServiceImpl(
 
     @Transactional
     override fun create(user: User): User {
-        // store the email address trimmed and in lowercase, because the UNIQUE constraint is case-sensitive and
-        // would otherwise allow a user with Jane@x next to a user with jane@x
+        // store the email address trimmed and in lowercase, because the UNIQUE constraint is case-sensitive and would
+        // otherwise accept both Jane@x and jane@x
         val emailAddress = user.emailAddress.trim().lowercase()
         requireValidLoginName(user.loginName)
         requireValidEmailAddress(emailAddress)
         requireValidName("first name", user.firstName)
         requireValidName("last name", user.lastName)
-        // drop any id from the client, because upsert would update the stored user with that id, and drop the
-        // timestamps, which the data module sets
+        // drop any id, because upsert would update the stored user with that id, and drop the timestamps, which the
+        // data module sets
         val created =
             userDataService.upsert(
                 user.copy(id = null, createdAt = null, updatedAt = null, emailAddress = emailAddress)
@@ -77,7 +77,7 @@ class UserServiceImpl(
      * [User.LOGIN_NAME_PATTERN].
      *
      * @param loginName the login name of the new user
-     * @throws ValidationException if the login name fails the check
+     * @throws ValidationException if the login name is too long or does not match the pattern
      */
     private fun requireValidLoginName(loginName: String) {
         if (loginName.length > User.MAX_LOGIN_NAME_LENGTH || !LOGIN_NAME_REGEX.matches(loginName)) {
@@ -93,7 +93,7 @@ class UserServiceImpl(
      * [User.EMAIL_ADDRESS_PATTERN]. The pattern requires at least [User.MIN_EMAIL_LENGTH] characters.
      *
      * @param emailAddress the email address of the new user, trimmed and in lowercase
-     * @throws ValidationException if the email address fails the check
+     * @throws ValidationException if the email address is too long or does not match the pattern
      */
     private fun requireValidEmailAddress(emailAddress: String) {
         if (emailAddress.length > User.MAX_EMAIL_LENGTH || !EMAIL_ADDRESS_REGEX.matches(emailAddress)) {
@@ -110,7 +110,7 @@ class UserServiceImpl(
      *
      * @param field the name of the field in words for the error message, such as "first name"
      * @param name the first or the last name of the new user
-     * @throws ValidationException if the name fails the check
+     * @throws ValidationException if the name is blank or too long or contains a control character
      */
     private fun requireValidName(
         field: String,

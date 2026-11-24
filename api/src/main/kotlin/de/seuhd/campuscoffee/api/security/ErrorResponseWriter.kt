@@ -12,7 +12,7 @@ import java.time.ZoneOffset
 
 /**
  * The message of a 400 for a request that the firewall of Spring Security rejects. It does not quote the request,
- * because the rejected part can be anything that a client sends. The coffee app of SE@UHD uses the same message.
+ * because a client can send any text in the rejected part. The coffee app of SE@UHD uses the same message.
  */
 internal const val UNREADABLE_REQUEST_MESSAGE = "The request could not be read."
 

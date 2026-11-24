@@ -5,13 +5,13 @@ import org.springframework.beans.factory.SmartInitializingSingleton
 import org.springframework.stereotype.Component
 
 /**
- * Runs the startup tasks in a fixed order before the embedded web server accepts requests: first the fixture loader,
- * which Spring creates only when `campus-coffee.fixtures.load-on-startup` is true, and then the bootstrap admin loader,
- * which then sees the fixture admin `jane_doe` and creates no second admin. The coffee app of SE@UHD has a class with
- * the same name.
+ * Runs the startup tasks in a fixed order, first the fixture loader and then the bootstrap admin loader. Spring creates
+ * the fixture loader only when `campus-coffee.fixtures.load-on-startup` is true. When the fixture loader has created
+ * the fixture users, `jane_doe` is an admin, and the bootstrap admin loader creates no second admin. The coffee app of
+ * SE@UHD has a class with the same name.
  *
  * Spring calls [afterSingletonsInstantiated] after Flyway has migrated the schema and before the embedded web server
- * accepts requests. No request reaches the app before the startup tasks have finished.
+ * accepts requests.
  *
  * @param fixtureStartupLoader the fixture loader, if Spring created it
  * @param bootstrapAdminLoader the bootstrap admin loader

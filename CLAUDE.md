@@ -82,7 +82,7 @@ fixture users like any other new user. `CoffeeConsumptionServiceImpl.applyDelta`
 the consumption with `getByUserIdForUpdate`, which locks the row until the transaction ends. A second request that adds
 a coffee for the same user at the same time waits until the first transaction ends. The second request then reads the
 raised count, and both coffees count. `applyDelta` also appends the time of the coffee to `coffeeTimes` and drops the
-times whose grace period has passed. The data module stores the list in the table `coffee_times`.
+times of the coffees outside their grace period. The data module stores the list in the table `coffee_times`.
 `CoffeeConsumptionServiceImpl.undo` locks the consumption in the same way, lowers the count by one if
 `GracePeriod.isOpen` accepts the last of the `coffeeTimes`, and removes that time. Otherwise, it throws a
 `ConflictException`. After an undo, the coffee before can be undone while its own grace period is open.
@@ -237,8 +237,8 @@ changed decision in a new ADR that refers to the old one, and set the status of 
 
 ## Versioning and Releases
 
-The project follows [Semantic Versioning](https://semver.org/) and keeps a [Keep a
-Changelog](https://keepachangelog.com/)-style `CHANGELOG.md`. For every notable change, add a bullet to its group under
+The project follows [Semantic Versioning](https://semver.org/), and `CHANGELOG.md` has the format of [Keep a
+Changelog](https://keepachangelog.com/). For every notable change, add a bullet to its group under
 `## [Unreleased]`, such as `Added`, `Changed`, or `Fixed`. A release raises the patch version for bug fixes, tooling,
 and internal cleanups, the minor version for features, and the major version for breaking changes. As long as the major
 version is 0, a breaking change raises the minor version, which Semantic Versioning allows for initial development. The
@@ -395,8 +395,8 @@ profile, springdoc is off.
   for its method and path, such as `requestMatchers(HttpMethod.POST, "/api/users").authenticated()`. Without the rule, a
   request without an acting user and with an invalid body gets 400 instead of 401, because Spring MVC validates the body
   before the controller calls `CurrentUserProvider.currentUser`.
-- Firewall: Spring Security keeps its default firewall, which rejects, among others, a path with `;`, `//`, `..`, or an
-  encoded slash and a header value with a control character. `SecurityConfig.requestRejectedHandler` and
+- Firewall: The default firewall of Spring Security rejects, among others, a path with `;`, `//`, `..`, or an encoded
+  slash and a header value with a control character. `SecurityConfig.requestRejectedHandler` and
   `RequestRejectedExceptionHandler` respond to such a request with 400 and an `ErrorResponse` (`writeErrorResponse` in
   `api/.../security/`).
 - Error handling: The data adapters throw the domain exceptions `NotFoundException` (404) and `DuplicationException`
@@ -444,8 +444,8 @@ step is the API port (step 2).
 
 1. Create the domain model in `domain/.../model/`. The domain model implements `DomainModel<UUID>` and has a nullable
    `id`, `createdAt`, and `updatedAt` (see `User`).
-2. Create the API port in `domain/.../ports/api/`. An operation that only the fixture loader or the test setup calls
-   goes on an internal port in `domain/.../ports/internal/`.
+2. Create the API port in `domain/.../ports/api/`. An operation that only the startup tasks or the test setup calls
+   belongs to an internal port in `domain/.../ports/internal/`.
 3. Create the data port in `domain/.../ports/data/` (extend `CrudDataService<DOMAIN, UUID>`).
 4. In one step, create the Flyway migration in `data/src/main/resources/db/migration/`, the JPA entity in
    `data/.../persistence/entities/` (extend `Entity`), and a `ConstraintMapping.REGISTRY` entry for each unique

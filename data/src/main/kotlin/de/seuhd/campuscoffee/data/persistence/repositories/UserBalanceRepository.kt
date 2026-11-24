@@ -7,8 +7,8 @@ import org.springframework.data.jpa.repository.Lock
 import java.util.UUID
 
 /**
- * Spring Data JPA repository for [UserBalanceEntity], whose id is the id of the user. The inherited `findById` reads
- * the balance of a user without a lock. No data adapter uses the repository yet.
+ * Spring Data JPA repository for [UserBalanceEntity]. The id of a balance is the id of the user. The inherited
+ * `findById` reads the balance of a user without a lock. No data adapter uses the repository yet.
  */
 interface UserBalanceRepository : JpaRepository<UserBalanceEntity, UUID> {
     /**

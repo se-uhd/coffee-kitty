@@ -159,8 +159,7 @@ object ConsumptionRequests {
 
     /**
      * Lists the corrections of the coffee count of the user with [userId] (FR-8), newest first. A test can pass a text
-     * that is not a UUID, such as `not-a-uuid`, to check the response to an invalid id. By default, the admin
-     * [ADMIN_LOGIN_NAME] is the acting user.
+     * that is not a UUID, such as `not-a-uuid`. By default, the admin [ADMIN_LOGIN_NAME] is the acting user.
      *
      * @param userId     the id of the user
      * @param actingUser the login name of the acting user, or null to send the request without an acting user

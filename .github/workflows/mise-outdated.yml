@@ -1,9 +1,9 @@
 # Dependabot does not read mise.toml, so this workflow checks the tools that mise.toml pins (the JDK and Gradle). Every
-# Monday, it runs `mise outdated --bump` and opens or updates an issue when a pin no longer covers the newest release,
-# e.g., the pin `gradle = '9.8'` after Gradle 9.9 is released. A newer release within a pin, e.g., Gradle 9.9.1 under
-# `gradle = '9.9'`, needs no change to mise.toml and is not reported: CI installs it, and `mise upgrade` installs it on
-# a developer machine. The workflow only reports; a developer bumps the pin in mise.toml by hand. The same workflow runs
-# in the coffee app of SE@UHD.
+# Monday, the workflow runs `mise outdated --bump`. It opens or updates an issue when a pin no longer covers the newest
+# release, e.g., the pin `gradle = '9.8'` after the release of Gradle 9.9. The workflow does not report a newer release
+# within a pin, e.g., Gradle 9.9.1 under `gradle = '9.9'`. CI installs such a release without a change to mise.toml, and
+# `mise upgrade` installs it on a developer machine. The workflow only reports, and a developer bumps the pin in
+# mise.toml by hand. The same workflow runs in the coffee app of SE@UHD.
 name: mise outdated
 
 on:
@@ -32,9 +32,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           # A nonzero exit code with valid JSON only means that a tool is behind. Invalid JSON with a nonzero exit code
-          # is an error, e.g., a network error, and fails the workflow. --bump fills in `bump`, the version that the pin
-          # in mise.toml has to move to; without it, `bump` is always null. --local skips the global mise config of the
-          # runner.
+          # is an error, e.g., a network error, and fails the workflow.
+          #
+          # --bump fills in `bump`, the version that the pin in mise.toml needs. Without --bump, `bump` is always null.
+          # --local skips the global mise config of the runner.
           set +e
           report_json="$(mise outdated --bump --local --json 2>/dev/null)"
           status=$?

@@ -3,9 +3,9 @@ plugins {
 }
 
 dependencies {
-    // detekt-api brings the base classes of the rules. The `api` dependencies of detekt-api add the PSI classes of the
-    // Kotlin compiler that the rules visit. compileOnly is enough for the main code, because detekt provides detekt-api
-    // at runtime.
+    // detekt-api contains the base classes of the rules. The `api` dependencies of detekt-api add the PSI classes of
+    // the Kotlin compiler that the rules visit. compileOnly is enough for the main code, because detekt provides
+    // detekt-api at runtime.
     compileOnly(libs.detekt.api)
 
     // The tests run each rule on a Kotlin snippet. They need detekt-api for the rule types and detekt-test-utils to

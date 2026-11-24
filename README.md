@@ -107,7 +107,7 @@ environment variable `DB_PORT` sets. The command prints the id of the new contai
 docker run -d --name campus-coffee-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p ${DB_PORT:-5433}:5432 postgres:18-alpine
 ```
 
-Docker keeps the container when it stops, and a second `docker run` fails because the container name is taken. The
+Docker does not delete a stopped container, and a second `docker run` fails because the container name is taken. The
 following command starts the existing container again, for example after a reboot, and prints its name:
 
 ```shell
@@ -184,15 +184,14 @@ with a coffee count of zero and returns 201 Created with the new user and a `Loc
 a user. The header `X-Acting-User` has to contain the login name of an admin. The endpoint returns 401 Unauthorized
 without the header or for an unknown login name, 403 Forbidden when the acting user is not an admin, 400 Bad Request for
 a missing or malformed field, such as a number for the login name or the role, or an `id` in the body, and 409 Conflict
-when the login name or the email address is taken.
-Because a filter checks the acting user before the controller reads the body, a request without a known acting user gets
-401 even with an invalid body. Every 401 has the header `WWW-Authenticate: X-Acting-User realm="Coffee Kitty"`, as RFC
-9110 requires. In the `dev` profile, the fixture loader creates `jane_doe` as an admin. When no admin exists, the app
-stores a bootstrap admin on startup from the environment variables `BOOTSTRAP_ADMIN_LOGIN_NAME` and
-`BOOTSTRAP_ADMIN_EMAIL_ADDRESS` (optional: `BOOTSTRAP_ADMIN_FIRST_NAME` and `BOOTSTRAP_ADMIN_LAST_NAME`). If a user has
-that login name, the app gives that user the role `ADMIN`. This case occurs after the migration V4, which gives every
-existing user, `jane_doe` included, the role `USER` in a database that the `dev` profile does not reset. The command
-creates the user `ada_lovelace` as the admin `jane_doe`:
+when the login name or the email address is taken. Because a filter checks the acting user before the controller reads
+the body, a request without a known acting user gets 401 even with an invalid body. Every 401 has the header
+`WWW-Authenticate: X-Acting-User realm="Coffee Kitty"`, as RFC 9110 requires. In the `dev` profile, the fixture loader
+creates `jane_doe` as an admin. When no admin exists, the app stores a bootstrap admin on startup from the environment
+variables `BOOTSTRAP_ADMIN_LOGIN_NAME` and `BOOTSTRAP_ADMIN_EMAIL_ADDRESS` (optional: `BOOTSTRAP_ADMIN_FIRST_NAME` and
+`BOOTSTRAP_ADMIN_LAST_NAME`). If a user has that login name, the app gives that user the role `ADMIN`. This case occurs
+after the migration V4, which gives every existing user, `jane_doe` included, the role `USER` in a database that the
+`dev` profile does not reset. With `jane_doe` as the acting user, the command creates the user `ada_lovelace`:
 
 ```shell
 curl --include --request POST --header "Content-Type: application/json" --header "X-Acting-User: jane_doe" \
@@ -219,8 +218,8 @@ curl http://localhost:8081/api/users/$USER_ID/consumption
 
 `POST /users/{userId}/consumption` with `{ "delta": 1 }` adds one coffee and returns the new coffee count as
 `{ "loginName", "count" }`. The request body contains a delta so that an extension can accept a delta of -1 to remove a
-coffee without changing the request body. The endpoint returns 400 Bad Request for any other delta and for a body
-without a delta:
+coffee without changing the format of the request body. The endpoint returns 400 Bad Request for any other delta and for
+a body without a delta:
 
 ```shell
 USER_ID=$(curl -s http://localhost:8081/api/users |
@@ -310,8 +309,8 @@ gradle ktlintFormat
 ```
 
 On every push to `main` and on every pull request, the GitHub Actions workflow `.github/workflows/build.yml` runs
-`gradle build`. Before the build, `scripts/check-version-sync.sh` checks that `gradle.properties` and the latest release
-in `CHANGELOG.md` name the same version. After each push to `main`, the workflow
+`gradle build`. Before the build, `scripts/check-version-sync.sh` checks that the version in `gradle.properties` equals
+the version of the latest release in `CHANGELOG.md`. After each push to `main`, the workflow
 `.github/workflows/dependency-submission.yml` submits the runtime dependencies of the `application` module to GitHub so
 that Dependabot can report a vulnerable dependency.
 

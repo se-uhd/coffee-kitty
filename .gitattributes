@@ -1,2 +1,2 @@
-# Normalize line endings to LF in the repository and on checkout, regardless of platform.
+# Normalize line endings to LF in the repository and on checkout, regardless of the platform.
 * text=auto eol=lf

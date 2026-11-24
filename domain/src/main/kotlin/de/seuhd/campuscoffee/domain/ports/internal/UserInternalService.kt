@@ -23,13 +23,14 @@ interface UserInternalService {
 
     /**
      * Stores [admin] with the role `ADMIN` when no user has this role yet. If a user has the login name of [admin], the
-     * function gives that user the role `ADMIN` and keeps the other fields. Otherwise, it creates [admin] with the
+     * function gives that user the role `ADMIN` and changes no other field. Otherwise, it creates [admin] with the
      * checks of `UserService.create`. The bootstrap admin loader calls this function on startup.
      *
      * @param admin the admin to create
      * @return the stored admin, or null if an admin already exists
      * @throws ValidationException if the login name, the email address, or a name breaks a rule of `UserService.create`
-     * @throws DuplicationException if another user has the login name or the email address
+     * @throws DuplicationException if another user has the email address, or if a concurrent transaction stores a user
+     *   with the login name
      */
     fun createInitialAdmin(admin: User): User?
 }
