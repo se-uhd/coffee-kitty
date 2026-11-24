@@ -6,7 +6,7 @@ import de.seuhd.campuscoffee.domain.model.User
 
 /**
  * The internal port for creating a user without an acting user. The test setup and the dev application create the
- * fixture users through it. The controllers create users through `UserService.create`, which also checks that the
+ * user fixtures through it. The controllers create users through `UserService.create`, which also checks that the
  * acting user is an admin. An architecture test fails if a class in the api module uses this port. The coffee app of
  * SE@UHD has a port with the same name.
  */

@@ -11,9 +11,9 @@ import java.time.ZoneOffset
 /**
  * The test fixtures, that is, the test objects with fixed values that the tests share. They are the five user fixtures,
  * the fixed time [FIXED_TIME] with a clock that shows it, and consumptions in three states. Only the user fixture
- * `jane_doe` is an admin. The tests of every module use these objects, and the dev application creates the fixture
- * users on every start. `TestFixtures` is in the source set `src/testFixtures` of the domain module. The other modules
- * add it to their test classpath, and the production jar does not contain it.
+ * `jane_doe` is an admin. The tests of every module use these objects, and the dev application creates the user
+ * fixtures on every start. `TestFixtures` is in the source set `src/testFixtures` of the domain module. The other
+ * modules add it to their test classpath, and the production jar does not contain it.
  */
 object TestFixtures {
     /**
