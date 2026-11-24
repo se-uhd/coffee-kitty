@@ -4,7 +4,7 @@
 
 ### Status
 
-Proposed
+Accepted
 
 ### Date
 
@@ -12,15 +12,15 @@ Proposed
 
 ### Involved
 
-* Sebastian Baltes (decision pending)
+* Sebastian Baltes (decision)
 * Claude Code (analysis)
 
 ## Context
 
 Only an admin may create a user, correct a coffee count, or list the corrections. Coffee Kitty has no authentication
 yet: The header `X-Acting-User` contains the login name of the acting user. The check of the role can be a rule of
-Spring Security in the api module or a check in the domain. Today, the domain checks the role with `requireAdmin`. No
-ADR records this decision. This ADR proposes to keep it.
+Spring Security in the api module or a check in the domain. The domain has checked the role with `requireAdmin` since
+Coffee Kitty 0.2.0, and this ADR records the decision.
 
 ## Considered Options
 

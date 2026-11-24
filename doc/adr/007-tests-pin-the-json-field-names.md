@@ -4,7 +4,7 @@
 
 ### Status
 
-Proposed
+Accepted
 
 ### Date
 
@@ -12,7 +12,7 @@ Proposed
 
 ### Involved
 
-* Sebastian Baltes (decision pending)
+* Sebastian Baltes (decision)
 * Claude Code (analysis)
 
 ## Context

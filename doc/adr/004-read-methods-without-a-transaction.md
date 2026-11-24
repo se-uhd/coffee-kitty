@@ -4,7 +4,7 @@
 
 ### Status
 
-Proposed
+Accepted
 
 ### Date
 
@@ -12,15 +12,15 @@ Proposed
 
 ### Involved
 
-* Sebastian Baltes (decision pending)
+* Sebastian Baltes (decision)
 * Claude Code (analysis)
 
 ## Context
 
 `application.yaml` turns off Open Session in View, so a lazy association of a JPA entity loads only inside a
 transaction. A data adapter reads a JPA entity and maps it to a domain object. Today, the read methods of the data
-adapters, except `getByUserIdForUpdate`, have no `@Transactional`, and every association is eager. No ADR records this
-decision. This ADR proposes to keep it for now and names the condition for a change.
+adapters, except `getByUserIdForUpdate`, have no `@Transactional`, and every association is eager. This ADR records
+the decision and names the condition for a change.
 
 ## Considered Options
 

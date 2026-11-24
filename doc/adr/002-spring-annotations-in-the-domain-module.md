@@ -4,7 +4,7 @@
 
 ### Status
 
-Proposed
+Accepted
 
 ### Date
 
@@ -12,7 +12,7 @@ Proposed
 
 ### Involved
 
-* Sebastian Baltes (decision pending)
+* Sebastian Baltes (decision)
 * Claude Code (analysis)
 
 ## Context
@@ -21,8 +21,8 @@ In a hexagonal architecture, the domain should not depend on a framework. The do
 need three services of a framework. They need dependency injection for the ports. They need transactions:
 `CoffeeConsumptionServiceImpl.applyDelta` locks a row until its transaction ends, and `UserServiceImpl.create` stores a
 user and a consumption together. And `GracePeriod` needs the configured grace period. Today, the domain module uses
-`@Service`, `@Component`, `@Transactional`, and `@ConfigurationProperties`. No ADR records this decision. This ADR
-proposes to keep it and states the reasons, which the decision maker has to confirm.
+`@Service`, `@Component`, `@Transactional`, and `@ConfigurationProperties`. The code has followed this decision since
+the first version, and this ADR records it.
 
 ## Considered Options
 
