@@ -18,9 +18,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 /**
- * Unit tests for [FixtureStartupLoader] with mocked ports. Without `reset-on-startup`, the fixture loader creates the
- * fixture users only in a database without users. With `reset-on-startup`, the fixture loader runs a data reset and
- * then creates the fixture users, even in a database with users.
+ * Unit tests for [FixtureStartupLoader] with Mockito mocks of the ports that it calls.
  */
 class FixtureStartupLoaderTest {
     private val userService = mock<UserService>()
@@ -38,7 +36,7 @@ class FixtureStartupLoaderTest {
         )
 
     @Test
-    fun `loadOnStartup creates the fixture users when the database is empty`() {
+    fun `loadOnStartup creates the fixture users in an empty database`() {
         whenever(userService.getAll()).thenReturn(emptyList())
         whenever(userInternalService.create(any())).thenAnswer { it.arguments[0] as User }
 
@@ -51,7 +49,7 @@ class FixtureStartupLoaderTest {
     }
 
     @Test
-    fun `loadOnStartup creates no user when the database already has users`() {
+    fun `loadOnStartup creates no user in a database with users`() {
         whenever(userService.getAll()).thenReturn(listOf(TestFixtures.getUserFixtures().first()))
 
         loader().loadOnStartup()
@@ -61,7 +59,7 @@ class FixtureStartupLoaderTest {
     }
 
     @Test
-    fun `loadOnStartup clears the data and then creates the fixture users when reset-on-startup is set`() {
+    fun `loadOnStartup clears the data before it creates the fixture users when reset-on-startup is true`() {
         whenever(userService.getAll()).thenReturn(listOf(TestFixtures.getUserFixtures().first()))
         whenever(userInternalService.create(any())).thenAnswer { it.arguments[0] as User }
 

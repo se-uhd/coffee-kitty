@@ -1,5 +1,6 @@
 Feature: User coffee consumption
-  A user adds coffees to their own coffee count, one at a time.
+  A user adds coffees to their own coffee count, one at a time, and undoes the most recent coffee within its grace
+  period.
 
   Scenario: A user adds a coffee
     Given the user "maxmustermann" has 0 coffees
@@ -29,7 +30,7 @@ Feature: User coffee consumption
     Then the response status is 409
     And the coffee count is 0
 
-  Scenario: Undo twice in a row after a coffee whose grace period has passed
+  Scenario: Undo twice in a row when only the most recent coffee is within its grace period
     Given the user "maxmustermann" has 3 coffees, the last one added at 10:00:00
     When the user undoes the coffee at 10:01:00
     And the user undoes the coffee at 10:02:00

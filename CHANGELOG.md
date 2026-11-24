@@ -32,6 +32,29 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   most recent coffee or null. `undoable` is true exactly when `POST` to the same path would undo a coffee at that time.
   `GracePeriod.closesAt` returns the end of a grace period, and `ConsumptionRequests.retrieveUndoStatus` sends the
   request for the system tests. GLOSSARY.md defines the term undo status.
+- `TestFixtures` has test fixtures beyond the fixture users: `admin()` and `regularUser()` return one fixture user each,
+  `FIXED_TIME` and `fixedClock()` set the time of a test, and `consumptionWithoutCoffee`, `consumptionWithRecentCoffee`,
+  and `consumptionWithOldCoffee` return consumptions in three states. GLOSSARY.md defines the term test fixture.
+- Unit tests of the domain: `ConsumptionPropertiesTest`, `IdentifiableTest`, and `DomainExceptionsTest`.
+  `GracePeriodTest`, `CoffeeConsumptionServiceTest`, and `UserServiceTest` have further tests, such as an undo of the
+  only coffee and a login name of one character.
+- `StartupTest` checks that the app without the `dev` profile deletes no data and creates no user on startup.
+- Integration tests: `CoffeeConsumptionDataServiceIntegrationTest` checks that the database stores and deletes the
+  times of the coffees and rejects a negative coffee count. `CrudDataServiceIntegrationTest` checks that
+  `UserDataServiceImpl` returns the users ordered by login name and stores the role of a user.
+- System tests for an undo at a coffee count of zero, an undo with a grace period of zero
+  (`UndoWithoutGracePeriodSystemTests`), login names of 1, 255, and 256 characters, an email address with capital
+  letters, an admin whom another admin created, the URL in the `Location` header of a new user, and a text as the
+  delta. `FailureSystemTests` checks that a request returns 500 and stores nothing when a data adapter throws an
+  exception.
+
+### Changed
+
+- The tests check observable behavior, such as a status, an error code, an exception type, or the stored state, and no
+  longer implementation details, such as the wording of a message, an annotation, or a call between domain classes.
+  Tests that only repeated another test are removed.
+- The tests run in the time zone Asia/Tokyo, so that a test fails when the production code uses the time zone of the
+  JVM for a time in UTC.
 
 ### Fixed
 

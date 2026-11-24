@@ -27,7 +27,7 @@ class CoffeeBeanDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `upsert stores a new bean with an id as a live bean`() {
+    fun `upsert stores a new bean as a live bean with an id`() {
         val created = coffeeBeanDataService.upsert(CoffeeBean(name = "Ethiopia Sidamo"))
 
         assertThat(created.id).isNotNull()
@@ -50,7 +50,7 @@ class CoffeeBeanDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `upsert throws DataIntegrityViolationException for an active merged bean or an inactive live bean`() {
+    fun `upsert throws DataIntegrityViolationException for an active merged bean or an inactive unmerged bean`() {
         val target = coffeeBeanDataService.upsert(CoffeeBean(name = "Kenya AA"))
         val other = coffeeBeanDataService.upsert(CoffeeBean(name = "Kenia AA"))
 

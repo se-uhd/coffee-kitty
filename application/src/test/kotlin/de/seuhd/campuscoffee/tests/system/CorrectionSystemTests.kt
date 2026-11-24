@@ -211,8 +211,8 @@ class CorrectionSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `listing the corrections for a malformed user id without the acting user header returns 401 Unauthorized`() {
-        // Spring Security responds with 401 before Spring MVC can reject the malformed path variable with 400
+    fun `listing the corrections for a non-UUID user id without the acting user header returns 401 Unauthorized`() {
+        // Spring Security responds with 401 before Spring MVC can respond to the text not-a-uuid with 400
         val response = ConsumptionRequests.retrieveCorrections("not-a-uuid", actingUser = null)
 
         assertThat(response.status).isEqualTo(401)

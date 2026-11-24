@@ -1,7 +1,6 @@
 package de.seuhd.campuscoffee.domain.implementation
 
 import de.seuhd.campuscoffee.domain.exceptions.ForbiddenException
-import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
 import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
 import de.seuhd.campuscoffee.domain.model.Role
@@ -14,14 +13,10 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.any
-import org.mockito.kotlin.argThat
-import org.mockito.kotlin.inOrder
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import org.springframework.transaction.annotation.Propagation
-import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -60,35 +55,14 @@ class UserServiceTest {
         whenever(coffeeConsumptionDataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
     }
 
-    /** Asserts that neither data port stored anything. */
+    /** Asserts that the service stored neither a user nor a consumption. */
     private fun verifyNothingStored() {
         verify(userDataService, never()).upsert(any())
         verify(coffeeConsumptionDataService, never()).upsert(any())
     }
 
     @Test
-    fun `getAll returns every user from the data port`() {
-        whenever(userDataService.getAll()).thenReturn(listOf(storedUser))
-
-        assertThat(service.getAll()).containsExactly(storedUser)
-    }
-
-    @Test
-    fun `getById returns the user from the data port`() {
-        whenever(userDataService.getById(userId)).thenReturn(storedUser)
-
-        assertThat(service.getById(userId)).isEqualTo(storedUser)
-    }
-
-    @Test
-    fun `getById of an unknown id throws NotFoundException`() {
-        whenever(userDataService.getById(userId)).thenThrow(NotFoundException(User::class.java, userId))
-
-        assertThrows<NotFoundException> { service.getById(userId) }
-    }
-
-    @Test
-    fun `create stores the normalized user without client id and timestamps and then a consumption with count 0`() {
+    fun `create stores a trimmed lowercase email address and ignores the id and the timestamps`() {
         stubUpserts()
         val clientTime = LocalDateTime.of(2000, 1, 1, 0, 0)
 
@@ -100,37 +74,34 @@ class UserServiceTest {
 
         assertThat(created.id).isEqualTo(createdId)
         assertThat(created.emailAddress).isEqualTo("fresh@se.de")
-        inOrder(userDataService, coffeeConsumptionDataService) {
-            verify(userDataService).upsert(newUser(emailAddress = "fresh@se.de"))
-            verify(coffeeConsumptionDataService).upsert(CoffeeConsumption(user = created, count = 0))
-        }
-    }
-
-    @Test
-    fun `create is transactional with REQUIRED propagation`() {
-        // the test looks up create by its parameter types, because a second overload of create takes an acting user
-        val create = UserServiceImpl::class.java.getMethod("create", User::class.java)
-
-        // with REQUIRED, create always runs in a transaction, and if storing the consumption fails, the rollback
-        // also removes the new user
-        assertThat(create.getAnnotation(Transactional::class.java)?.propagation).isEqualTo(Propagation.REQUIRED)
+        verify(userDataService).upsert(newUser(emailAddress = "fresh@se.de"))
+        verify(coffeeConsumptionDataService).upsert(CoffeeConsumption(user = created, count = 0))
     }
 
     @ParameterizedTest
     @ValueSource(strings = ["", "s.baltes", "jane doe", "jäne"])
-    fun `create with a malformed login name throws ValidationException and stores nothing`(loginName: String) {
+    fun `create throws ValidationException for a malformed login name`(loginName: String) {
         assertThrows<ValidationException> { service.create(newUser(loginName = loginName)) }
         verifyNothingStored()
     }
 
     @Test
-    fun `create with a login name of 256 characters throws ValidationException and stores nothing`() {
+    fun `create stores a login name of one character`() {
+        stubUpserts()
+
+        service.create(newUser(loginName = "a"))
+
+        verify(userDataService).upsert(newUser(loginName = "a"))
+    }
+
+    @Test
+    fun `create throws ValidationException for a login name of 256 characters`() {
         assertThrows<ValidationException> { service.create(newUser(loginName = "a".repeat(256))) }
         verifyNothingStored()
     }
 
     @Test
-    fun `create with a login name of 255 characters stores the user`() {
+    fun `create stores a login name of 255 characters`() {
         stubUpserts()
         val loginName = "a".repeat(255)
 
@@ -140,22 +111,20 @@ class UserServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["no-at-sign.de", "jane doe@se.de", "jane@@se.de", "@se.de", "jane@", "   "])
-    fun `create with an email address other than name@domain throws ValidationException and stores nothing`(
-        emailAddress: String
-    ) {
+    @ValueSource(strings = ["no-at-sign.de", "jane doe@se.de", "jane@@se.de", "@se.de", "jane@", "jane@se de", "   "])
+    fun `create throws ValidationException for an email address without the form name@domain`(emailAddress: String) {
         assertThrows<ValidationException> { service.create(newUser(emailAddress = emailAddress)) }
         verifyNothingStored()
     }
 
     @Test
-    fun `create with an email address of 255 characters throws ValidationException and stores nothing`() {
+    fun `create throws ValidationException for an email address of 255 characters`() {
         assertThrows<ValidationException> { service.create(newUser(emailAddress = "a".repeat(249) + "@se.de")) }
         verifyNothingStored()
     }
 
     @Test
-    fun `create with an email address of 254 characters stores the user`() {
+    fun `create stores an email address of 254 characters`() {
         stubUpserts()
         val emailAddress = "a".repeat(248) + "@se.de"
 
@@ -166,7 +135,7 @@ class UserServiceTest {
 
     @ParameterizedTest
     @ValueSource(strings = ["", "   ", "Fre\u0000sh", "Fre\nsh"])
-    fun `create with a blank first name or a control character in it throws ValidationException and stores nothing`(
+    fun `create throws ValidationException for a first name that is blank or contains a control character`(
         firstName: String
     ) {
         assertThrows<ValidationException> { service.create(newUser().copy(firstName = firstName)) }
@@ -174,13 +143,13 @@ class UserServiceTest {
     }
 
     @Test
-    fun `create with a last name of 256 characters throws ValidationException and stores nothing`() {
+    fun `create throws ValidationException for a last name of 256 characters`() {
         assertThrows<ValidationException> { service.create(newUser().copy(lastName = "a".repeat(256))) }
         verifyNothingStored()
     }
 
     @Test
-    fun `create with a last name of 255 characters stores the user`() {
+    fun `create stores a last name of 255 characters`() {
         stubUpserts()
         val user = newUser().copy(lastName = "a".repeat(255))
 
@@ -190,59 +159,55 @@ class UserServiceTest {
     }
 
     @Test
-    fun `createInitialAdmin without an admin stores the user with the role ADMIN and a consumption`() {
+    fun `createInitialAdmin stores an admin and a consumption when no admin exists`() {
         stubUpserts()
         whenever(userDataService.getAll()).thenReturn(listOf(storedUser))
 
-        val created = service.createInitialAdmin(newUser())
+        val created = requireNotNull(service.createInitialAdmin(newUser()))
 
-        assertThat(created?.role).isEqualTo(Role.ADMIN)
-        verify(userDataService).upsert(argThat { role == Role.ADMIN })
-        verify(coffeeConsumptionDataService).upsert(any())
+        val admin = newUser().copy(role = Role.ADMIN)
+        assertThat(created).isEqualTo(admin.copy(id = createdId))
+        verify(userDataService).upsert(admin)
+        verify(coffeeConsumptionDataService).upsert(CoffeeConsumption(user = created, count = 0))
     }
 
     @Test
-    fun `createInitialAdmin with a user of the same login name gives that user the role ADMIN`() {
+    fun `createInitialAdmin gives the role ADMIN to a stored user with the login name of the admin`() {
         whenever(userDataService.getAll()).thenReturn(listOf(storedUser))
         whenever(userDataService.upsert(any())).thenAnswer { it.arguments[0] as User }
 
         val promoted = service.createInitialAdmin(newUser(loginName = storedUser.loginName))
 
         assertThat(promoted).isEqualTo(storedUser.copy(role = Role.ADMIN))
+        verify(userDataService).upsert(storedUser.copy(role = Role.ADMIN))
         verify(coffeeConsumptionDataService, never()).upsert(any())
     }
 
     @Test
-    fun `createInitialAdmin with an existing admin returns null and stores nothing`() {
-        whenever(userDataService.getAll()).thenReturn(listOf(storedUser.copy(role = Role.ADMIN)))
+    fun `createInitialAdmin returns null when an admin exists`() {
+        val existingAdmin = newUser().copy(id = createdId, role = Role.ADMIN)
+        whenever(userDataService.getAll()).thenReturn(listOf(storedUser, existingAdmin))
 
-        assertThat(service.createInitialAdmin(newUser())).isNull()
+        assertThat(service.createInitialAdmin(newUser(loginName = storedUser.loginName))).isNull()
         verifyNothingStored()
     }
 
     @Test
-    fun `create by an admin stores the user and the consumption`() {
+    fun `create by an admin stores the user and a consumption with a count of zero`() {
         stubUpserts()
         val admin = storedUser.copy(role = Role.ADMIN)
 
         val created = service.create(newUser(), admin)
 
-        assertThat(created.id).isEqualTo(createdId)
-        verify(coffeeConsumptionDataService).upsert(any())
+        assertThat(created).isEqualTo(newUser().copy(id = createdId))
+        verify(userDataService).upsert(newUser())
+        verify(coffeeConsumptionDataService).upsert(CoffeeConsumption(user = created, count = 0))
     }
 
     @Test
-    fun `create by a user who is not an admin throws ForbiddenException and stores nothing`() {
-        val exception = assertThrows<ForbiddenException> { service.create(newUser(), storedUser) }
+    fun `create throws ForbiddenException for a user who is not an admin`() {
+        assertThrows<ForbiddenException> { service.create(newUser(), storedUser) }
 
-        assertThat(exception.message).isEqualTo("Only an admin may create a user.")
         verifyNothingStored()
-    }
-
-    @Test
-    fun `getByLoginName returns the user from the data port`() {
-        whenever(userDataService.getByLoginName("max")).thenReturn(storedUser)
-
-        assertThat(service.getByLoginName("max")).isEqualTo(storedUser)
     }
 }

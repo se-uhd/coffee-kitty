@@ -96,7 +96,7 @@ class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest()
         }
 
     @Test
-    fun `findAllByBuyerIdOrderByCreatedAtDesc returns the stored expenses, newest first`() {
+    fun `findAllByBuyerIdOrderByCreatedAtDesc returns the expenses of the buyer, newest first`() {
         val purchase = expenseRepository.saveAndFlush(beanPurchase(kittyAmountCents = 299).apply { id = randomId() })
         val other = expenseRepository.saveAndFlush(otherExpense().apply { id = randomId() })
 
@@ -125,7 +125,7 @@ class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest()
     }
 
     @Test
-    fun `saving a bean purchase without a bean or a weight above 0 throws DataIntegrityViolationException`() {
+    fun `saving a bean purchase without a bean or without a weight above 0 throws DataIntegrityViolationException`() {
         assertRefused(
             beanPurchase().apply { bean = null },
             beanPurchase().apply { weightGrams = null },
@@ -245,7 +245,7 @@ class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest()
     }
 
     @Test
-    fun `saving a negative kitty balance or one with an id other than 1 throws DataIntegrityViolationException`() {
+    fun `saving a kitty balance below 0 or with an id other than 1 throws DataIntegrityViolationException`() {
         assertThatThrownBy { kittyBalanceRepository.saveAndFlush(KittyBalanceEntity().apply { balanceCents = -1 }) }
             .isInstanceOf(DataIntegrityViolationException::class.java)
         assertThatThrownBy { kittyBalanceRepository.saveAndFlush(KittyBalanceEntity().apply { id = 2 }) }
