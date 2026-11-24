@@ -75,11 +75,10 @@ with a line "Avoid:", which lists words not to use for the concept.
   Code: `amountCents`, `balanceCents`, `amount_cents`, `balance_cents`.
 - **price per cup**: The one price of a coffee in euro cents, which applies to every user and which an admin sets. Each
   coffee lowers the balance of its user by the price per cup at the time of the coffee, so a new price applies only to
-  the coffees added after the change (FR-5 in `requirements/FR-5-charge-price-per-cup.md`). An undo credits the price
-  that the coffee was charged (FR-5b in `requirements/FR-5b-credit-undone-coffee.md`). Coffee Kitty stores at most one
-  price, and no endpoint reads or sets it yet. No price is stored after the migrations, so the startup has to store the
-  start price.
-  Code: `CoffeePrice`, `CoffeePriceDataService`, `coffee_prices`, `coffee_times.price_cents`.
+  the coffees added after the change (FR-5 in `requirements/FR-5-pay-for-coffee.md`). An undo raises the balance by the
+  amount by which the coffee lowered it (FR-11 in `requirements/FR-11-credit-undone-coffee.md`). Coffee Kitty stores at
+  most one price, and no endpoint reads or sets it yet. No price is stored after the migrations, so the startup has to
+  store the start price. Code: `CoffeePrice`, `CoffeePriceDataService`, `coffee_prices`, `coffee_times.price_cents`.
 - **balance**: A user's amount of money in euro cents, negative when the user owes the kitty money and positive when the
   kitty owes the user money. Coffees lower the balance, and deposits and the private shares of the user's expenses
   raise it. The table `user_balance` holds the balance of each user, but no code writes it yet.
@@ -94,8 +93,8 @@ with a line "Avoid:", which lists words not to use for the concept.
   balance of the user without moving cash.
   Code: `Payment`, `PaymentDataService`, `payments`.
 - **deposit**: Cash that a user pays into the kitty and that an admin records. A deposit raises the balance of the user
-  and the kitty by the same amount, which is positive (FR-4 in `requirements/FR-4-record-deposit.md` and FR-4b in
-  `requirements/FR-4b-raise-kitty-balance.md`). No endpoint records a deposit yet.
+  and the kitty by the same amount, which is positive (FR-4 in `requirements/FR-4-record-deposit.md` and FR-10 in
+  `requirements/FR-10-raise-kitty-balance.md`). No endpoint records a deposit yet.
   Code: `Payment` with a `user`.
   Avoid: settlement, top-up.
 - **kitty adjustment**: A change of the kitty that an admin makes and that belongs to no user, such as the initial cash
@@ -119,7 +118,8 @@ with a line "Avoid:", which lists words not to use for the concept.
   inactive record that refers to the bean that it was merged into.
   Code: `CoffeeBean`, `CoffeeBean.mergedIntoId`, `CoffeeBeanDataService`, `coffee_beans`.
 - **rating**: A user's score for a bean. The ratings of a user for the same bean accumulate, and a rating moves no
-  money.
+  money. FR-12 in `requirements/FR-12-rate-a-bean.md` specifies how a user rates a bean. No endpoint records a rating
+  yet.
   Code: `CoffeeRating`, `CoffeeRatingDataService`, `coffee_ratings`.
 - **score**: The number from 1 to 5 of a rating.
   Code: `CoffeeRating.value`, `coffee_ratings.value`.
