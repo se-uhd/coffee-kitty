@@ -31,4 +31,36 @@ class UndocumentedFunctionParameterTest {
             """.trimIndent()
         assertEquals(listOf("a"), rule.reportedNames(code))
     }
+
+    @Test
+    fun `UndocumentedFunctionParameter reports no parameter of a private, override, local, or undocumented function`() {
+        val code =
+            """
+            /** A calculator. */
+            interface Calculator {
+                /**
+                 * Adds.
+                 *
+                 * @param a the first number
+                 * @param b the second number
+                 */
+                fun add(a: Int, b: Int): Int
+            }
+
+            /** A simple calculator. */
+            class Simple : Calculator {
+                override fun add(a: Int, b: Int): Int {
+                    /** Doubles. */
+                    fun twice(x: Int) = 2 * x
+                    return twice(a) / 2 + negate(-b)
+                }
+
+                /** Negates. */
+                private fun negate(x: Int) = -x
+
+                fun undocumented(x: Int) = x
+            }
+            """.trimIndent()
+        assertEquals(emptyList<String?>(), rule.reportedNames(code))
+    }
 }
