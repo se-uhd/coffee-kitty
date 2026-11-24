@@ -1,6 +1,7 @@
 package de.seuhd.campuscoffee.data.implementations
 
 import de.seuhd.campuscoffee.data.integration.AbstractDataIntegrationTest
+import de.seuhd.campuscoffee.domain.exceptions.DataConstraintException
 import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
 import de.seuhd.campuscoffee.domain.model.Payment
 import de.seuhd.campuscoffee.domain.model.User
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.dao.DataIntegrityViolationException
 import java.util.UUID
 
 /**
@@ -82,24 +82,24 @@ class PaymentDataServiceIntegrationTest : AbstractDataIntegrationTest() {
 
     @ParameterizedTest
     @ValueSource(ints = [0, -1])
-    fun `upsert throws DataIntegrityViolationException for a deposit of 0 or -1`(amountCents: Int) {
+    fun `upsert throws DataConstraintException for a deposit of 0 or -1`(amountCents: Int) {
         val user = storeUser("emil")
 
         assertThatThrownBy { paymentDataService.upsert(Payment(user = user, amountCents = amountCents)) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
+            .isInstanceOf(DataConstraintException::class.java)
         assertThat(paymentDataService.getAll()).isEmpty()
     }
 
     @Test
-    fun `upsert throws DataIntegrityViolationException for a kitty adjustment of zero`() {
+    fun `upsert throws DataConstraintException for a kitty adjustment of zero`() {
         assertThatThrownBy { paymentDataService.upsert(Payment(amountCents = 0)) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
+            .isInstanceOf(DataConstraintException::class.java)
     }
 
     @Test
-    fun `upsert throws DataIntegrityViolationException for a payment with an empty note`() {
+    fun `upsert throws DataConstraintException for a payment with an empty note`() {
         assertThatThrownBy { paymentDataService.upsert(Payment(amountCents = 100, note = "")) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
+            .isInstanceOf(DataConstraintException::class.java)
     }
 
     @Test
@@ -119,13 +119,13 @@ class PaymentDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `deleting a user with a deposit throws DataIntegrityViolationException`() {
+    fun `deleting a user with a deposit throws DataConstraintException`() {
         val user = storeUser("frida")
         paymentDataService.upsert(Payment(user = user, amountCents = 500))
 
         // the foreign key user_id has the default NO ACTION, because a deposit is money in the kitty
         assertThatThrownBy { userDataService.delete(requireNotNull(user.id)) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
+            .isInstanceOf(DataConstraintException::class.java)
         assertThat(paymentDataService.getAll()).hasSize(1)
     }
 }

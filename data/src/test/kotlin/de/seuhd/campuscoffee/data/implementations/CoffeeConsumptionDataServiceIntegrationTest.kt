@@ -1,6 +1,7 @@
 package de.seuhd.campuscoffee.data.implementations
 
 import de.seuhd.campuscoffee.data.integration.AbstractDataIntegrationTest
+import de.seuhd.campuscoffee.domain.exceptions.DataConstraintException
 import de.seuhd.campuscoffee.domain.model.User
 import de.seuhd.campuscoffee.domain.model.persistedId
 import de.seuhd.campuscoffee.domain.ports.data.CoffeeConsumptionDataService
@@ -11,7 +12,6 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.jdbc.core.JdbcTemplate
 
 /**
@@ -72,11 +72,11 @@ class CoffeeConsumptionDataServiceIntegrationTest : AbstractDataIntegrationTest(
     }
 
     @Test
-    fun `upsert throws DataIntegrityViolationException for a negative count`() {
+    fun `upsert throws DataConstraintException for a negative count`() {
         val consumption = TestFixtures.consumptionWithoutCoffee(user).copy(count = -1)
 
         assertThatThrownBy { coffeeConsumptionDataService.upsert(consumption) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
+            .isInstanceOf(DataConstraintException::class.java)
     }
 
     @Test

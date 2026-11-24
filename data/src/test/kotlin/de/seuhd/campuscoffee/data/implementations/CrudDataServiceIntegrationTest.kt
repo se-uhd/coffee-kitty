@@ -1,6 +1,7 @@
 package de.seuhd.campuscoffee.data.implementations
 
 import de.seuhd.campuscoffee.data.integration.AbstractDataIntegrationTest
+import de.seuhd.campuscoffee.domain.exceptions.DataConstraintException
 import de.seuhd.campuscoffee.domain.exceptions.DuplicationException
 import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
 import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
@@ -14,7 +15,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.transaction.support.TransactionTemplate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -267,11 +267,11 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `upsert stores a new correction with an id, timestamps, the user, and the admin`() {
+    fun `insert stores a new correction with an id, timestamps, the user, and the admin`() {
         val user = userDataService.upsert(user("paula"))
         val admin = storeAdmin("quentin")
 
-        val created = countCorrectionDataService.upsert(correction(user, admin))
+        val created = countCorrectionDataService.insert(correction(user, admin))
 
         assertThat(created.id).isNotNull()
         assertThat(created.createdAt).isNotNull()
@@ -282,37 +282,23 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `upsert of a stored correction changes neither createdAt nor the user nor the admin`() {
+    fun `insert throws IllegalArgumentException for a stored correction`() {
         val user = userDataService.upsert(user("rosa"))
-        val admin = storeAdmin("sam")
-        val created = countCorrectionDataService.upsert(correction(user, admin))
+        val created = countCorrectionDataService.insert(correction(user, storeAdmin("sam")))
 
-        val updated =
-            countCorrectionDataService.upsert(
-                created.copy(
-                    user = user.copy(firstName = "Changed"),
-                    admin = admin.copy(firstName = "Changed"),
-                    note = "Typo",
-                    createdAt = null,
-                    updatedAt = null
-                )
-            )
-
-        assertThat(updated.note).isEqualTo("Typo")
-        assertThat(updated.createdAt).isEqualTo(created.createdAt)
-        assertThat(updated.updatedAt).isAfter(created.updatedAt)
-        assertThat(userDataService.getById(requireNotNull(user.id))).isEqualTo(user)
-        assertThat(userDataService.getById(requireNotNull(admin.id))).isEqualTo(admin)
+        assertThatThrownBy { countCorrectionDataService.insert(created.copy(note = "Typo")) }
+            .isInstanceOf(IllegalArgumentException::class.java)
+        assertThat(countCorrectionDataService.getAllByUserId(requireNotNull(user.id))).containsExactly(created)
     }
 
     @Test
-    fun `upsert throws DataIntegrityViolationException for a correction with a negative count or an empty note`() {
+    fun `insert throws DataConstraintException for a correction with a negative count or an empty note`() {
         val correction = correction(userDataService.upsert(user("olaf")), storeAdmin("nina"))
 
         listOf(correction.copy(countBefore = -1), correction.copy(countAfter = -1), correction.copy(note = ""))
             .forEach { invalid ->
-                assertThatThrownBy { countCorrectionDataService.upsert(invalid) }
-                    .isInstanceOf(DataIntegrityViolationException::class.java)
+                assertThatThrownBy { countCorrectionDataService.insert(invalid) }
+                    .isInstanceOf(DataConstraintException::class.java)
             }
     }
 
@@ -321,9 +307,9 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
         val user = userDataService.upsert(user("tina"))
         val otherUser = userDataService.upsert(user("uwe"))
         val admin = storeAdmin("vera")
-        val first = countCorrectionDataService.upsert(correction(user, admin, note = "First"))
-        countCorrectionDataService.upsert(correction(otherUser, admin, note = "Other user"))
-        val second = countCorrectionDataService.upsert(correction(user, admin, note = "Second"))
+        val first = countCorrectionDataService.insert(correction(user, admin, note = "First"))
+        countCorrectionDataService.insert(correction(otherUser, admin, note = "Other user"))
+        val second = countCorrectionDataService.insert(correction(user, admin, note = "Second"))
 
         assertThat(countCorrectionDataService.getAllByUserId(requireNotNull(user.id))).containsExactly(second, first)
     }
@@ -332,23 +318,23 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     fun `deleting a user deletes the corrections of the user`() {
         val user = userDataService.upsert(user("walter"))
         val admin = storeAdmin("xenia")
-        countCorrectionDataService.upsert(correction(user, admin))
+        countCorrectionDataService.insert(correction(user, admin))
 
         userDataService.delete(requireNotNull(user.id))
 
-        assertThat(countCorrectionDataService.getAll()).isEmpty()
+        assertThat(countCorrectionDataService.getAllByUserId(requireNotNull(user.id))).isEmpty()
     }
 
     @Test
-    fun `deleting an admin who corrected another coffee count throws DataIntegrityViolationException`() {
+    fun `deleting an admin who corrected another coffee count throws DataConstraintException`() {
         val user = userDataService.upsert(user("yusuf"))
         val admin = storeAdmin("zora")
-        countCorrectionDataService.upsert(correction(user, admin))
+        countCorrectionDataService.insert(correction(user, admin))
 
         // the foreign key admin_id has the default NO ACTION, because a correction does not belong to its admin
         assertThatThrownBy { userDataService.delete(requireNotNull(admin.id)) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
-        assertThat(countCorrectionDataService.getAll()).hasSize(1)
+            .isInstanceOf(DataConstraintException::class.java)
+        assertThat(countCorrectionDataService.getAllByUserId(requireNotNull(user.id))).hasSize(1)
     }
 
     private companion object {

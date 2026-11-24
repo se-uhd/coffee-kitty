@@ -1,6 +1,7 @@
 package de.seuhd.campuscoffee.data.implementations
 
 import de.seuhd.campuscoffee.data.integration.AbstractDataIntegrationTest
+import de.seuhd.campuscoffee.domain.exceptions.DataConstraintException
 import de.seuhd.campuscoffee.domain.exceptions.DuplicationException
 import de.seuhd.campuscoffee.domain.model.CoffeePrice
 import de.seuhd.campuscoffee.domain.ports.data.CoffeePriceDataService
@@ -8,7 +9,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.dao.DataIntegrityViolationException
 
 /**
  * Integration tests of [CoffeePriceDataServiceImpl] against PostgreSQL. The table `coffee_prices` holds at most one
@@ -56,9 +56,9 @@ class CoffeePriceDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
-    fun `upsert throws DataIntegrityViolationException for a negative price`() {
+    fun `upsert throws DataConstraintException for a negative price`() {
         assertThatThrownBy { coffeePriceDataService.upsert(CoffeePrice(amountCents = -1)) }
-            .isInstanceOf(DataIntegrityViolationException::class.java)
+            .isInstanceOf(DataConstraintException::class.java)
         assertThat(coffeePriceDataService.findCurrent()).isNull()
     }
 }

@@ -83,7 +83,7 @@ class DatabaseCleanerIntegrationTest : AbstractDataIntegrationTest() {
     private fun storeARowInEveryTable() {
         val admin = userDataService.upsert(TestFixtures.admin())
         coffeeConsumptionDataService.upsert(TestFixtures.consumptionWithRecentCoffee(admin))
-        countCorrectionDataService.upsert(
+        countCorrectionDataService.insert(
             CountCorrection(user = admin, admin = admin, countBefore = 2, countAfter = 1, note = "Double tap")
         )
         coffeePriceDataService.upsert(CoffeePrice(amountCents = 50))

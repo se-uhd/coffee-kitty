@@ -111,7 +111,7 @@ class CoffeeConsumptionServiceImpl(
             coffeeConsumptionDataService.upsert(
                 current.copy(count = total, coffeeTimes = current.coffeeTimes.dropLast(removedCoffees))
             )
-        countCorrectionDataService.upsert(
+        countCorrectionDataService.insert(
             CountCorrection(
                 user = current.user,
                 admin = actingUser,
