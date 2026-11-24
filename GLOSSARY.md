@@ -78,7 +78,8 @@ with a line "Avoid:", which lists words not to use for the concept.
   the coffees added after the change (FR-5 in `requirements/FR-5-pay-for-coffee.md`). An undo raises the balance by the
   amount by which the coffee lowered it (FR-11 in `requirements/FR-11-credit-undone-coffee.md`). Coffee Kitty stores at
   most one price, and no endpoint reads or sets it yet. No price is stored after the migrations, so the startup has to
-  store the start price. Code: `CoffeePrice`, `CoffeePriceDataService`, `coffee_prices`, `coffee_times.price_cents`.
+  store the start price.
+  Code: `CoffeePrice`, `CoffeePriceDataService`, `coffee_prices`, `coffee_times.price_cents`.
 - **balance**: A user's amount of money in euro cents, negative when the user owes the kitty money and positive when the
   kitty owes the user money. Coffees lower the balance, and deposits and the private shares of the user's expenses
   raise it. The table `user_balance` holds the balance of each user, but no code writes it yet.
