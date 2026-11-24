@@ -25,13 +25,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   migrations V10 and V11 create the tables `expenses`, `user_balance`, and
   `kitty_balance`, which have only a JPA entity and a repository so far. The section "Tables Without an Endpoint" in
   `CLAUDE.md` lists what each feature still needs, and GLOSSARY.md defines the new terms.
-- The requirements FR-4 (record a deposit), FR-4b (raise the kitty balance), and FR-6 (record own expenses) in
-  `requirements/`. Coffee Kitty does not implement them yet.
-- The requirements FR-5 (charge the price per cup) and FR-5b (credit an undone coffee) in `requirements/`. FR-5b
-  specifies that an undo credits the price that the coffee was charged, also when the price per cup changed in between.
-  The migration V12 adds the column `coffee_times.price_cents` for this price. Until now, the table stored only the
-  time of a coffee, so an undo could have credited only the price at the time of the undo. Coffee Kitty does not
-  implement FR-5 and FR-5b yet, and no JPA entity maps the column.
+- The requirements FR-4 (record a deposit), FR-10 (raise the kitty balance), and FR-6 (record own expenses) in
+  `requirements/`. Coffee Kitty does not implement them yet. FR-10 had the ID FR-4b until now. A requirement ID has no
+  suffix, and each requirement lists the requirements that it depends on and those that depend on it.
+- The requirements FR-5 (pay for a coffee) and FR-11 (credit an undone coffee) in `requirements/`. FR-11 specifies that
+  an undo raises the balance by the amount by which the coffee lowered it, also when the price per cup changed in
+  between. The migration V12 adds the column `coffee_times.price_cents` for this amount. Until now, the table stored
+  only the time of a coffee. Coffee Kitty does not implement FR-5 and FR-11 yet, and no JPA entity maps the column.
+- The requirement FR-12 (rate a bean) in `requirements/`, which follows the coffee app of SE@UHD. Coffee Kitty does not
+  implement it yet.
 - A client can read the undo status of a user (FR-9 in `requirements/FR-9-undo-status.md`).
   `GET /api/users/{userId}/consumption/undo` returns `undoable` and `undoableUntil`, the end of the grace period of the
   most recent coffee or null. `undoable` is true exactly when `POST` to the same path would undo a coffee at that time.

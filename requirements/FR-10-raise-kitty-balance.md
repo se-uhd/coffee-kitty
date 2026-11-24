@@ -1,4 +1,4 @@
-# FR-4b: Raise the Kitty Balance
+# FR-10: Raise the Kitty Balance
 
 ## Statement
 
@@ -28,3 +28,4 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
 - Parent, from the team assistant: "When someone pays me cash, I record it as a deposit for that person."
 - Depends on FR-4: The success criteria of FR-4 specify which requests return 400 Bad Request and 403 Forbidden.
 - A deposit raises the balance of the user and the kitty by the same amount (GLOSSARY.md).
+- This requirement had the ID FR-4b until 2026-11-24. No release of Coffee Kitty contains that ID.

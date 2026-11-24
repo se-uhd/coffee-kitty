@@ -48,9 +48,9 @@ and the corrections of their coffee counts.
   payments, the beans, and the ratings, the data module also implements the data ports. For the expenses and the
   balances, it has only the JPA entities and the repositories. No endpoint uses these tables yet. The section "Tables
   Without an Endpoint" in `CLAUDE.md` lists what each feature still needs. The migration V12 adds a column for the price
-  of each recent coffee. Three of these features have requirements in `requirements/`: FR-4 and FR-4b for deposits,
-  FR-5 and FR-5b for the price of a coffee and its undo, and FR-6 for an expense that a user paid with their own
-  money.
+  of each recent coffee. These features have requirements in `requirements/`: FR-4 and FR-10 for deposits, FR-5
+  and FR-11 for the price of a coffee and its undo, FR-6 for an expense that a user paid with their own money, and
+  FR-12 for ratings.
 
 ## Architecture
 

@@ -33,7 +33,9 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
 
 - Business requirement (parent), decided by the group lead: "From now on, an admin can correct a wrong coffee count at
   any time and has to add a note with the reason for the correction."
-- Resolves the TBD of FR-3 on who is allowed to correct a coffee count after the grace period.
+- Depends on FR-3: A correction applies after the grace period of FR-3, and the last success criterion uses the undo.
+  This requirement resolves the TBD of FR-3 on who is allowed to correct a coffee count after the grace period.
+- FR-11 has an open TBD on the amount by which a correction changes the balance of the user.
 - Verified by: correction.feature.
 - The last success criterion follows the coffee app of SE@UHD, which removes the newest coffees of the user when a
   correction lowers the coffee count.

@@ -19,8 +19,8 @@ import java.time.LocalDateTime
  * `CrudDataServiceImpl`).
  *
  * The migration `V12__add_price_to_coffee_times.sql` adds the column `price_cents` to `coffee_times`. It is for the
- * price in euro cents that a coffee was charged, which an undo has to credit (FR-5b in
- * `requirements/FR-5b-credit-undone-coffee.md`). A CHECK constraint rejects a negative price. The column allows null,
+ * amount in euro cents by which a coffee lowered the balance, by which an undo has to raise it again (FR-11 in
+ * `requirements/FR-11-credit-undone-coffee.md`). A CHECK constraint rejects a negative price. The column allows null,
  * because the coffees from before FR-5 have no price. The entity does not map the column yet, so every stored coffee
  * time has a null price. The implementation of FR-5 has to map it, for example with an embeddable class that holds the
  * time and the price of a coffee.

@@ -9,8 +9,11 @@ and a first and a last name. Each user has exactly one consumption, which holds 
 REST API lists, creates, and reads users, reads a coffee count, adds one coffee at a time, undoes the most recent coffee
 within 5 minutes, and reads the undo status, which states whether that undo is possible. An admin can also correct a
 coffee count with a note and list the corrections of a user. `requirements/` holds the functional requirements, such as
-FR-3 for the undo, FR-8 for the correction, and FR-9 for the undo status. FR-4, FR-4b, FR-5, FR-5b, and FR-6 specify
-deposits, the price of a coffee, and expenses, which the app does not implement yet. Every user has a role, `USER` or
+FR-3 for the undo, FR-8 for the correction, and FR-9 for the undo status. FR-4, FR-5, FR-6, FR-10, FR-11, and FR-12
+specify deposits, the price of a coffee, expenses, and ratings, which the app does not implement yet. Each requirement
+follows the template of the lecture and has one ID, which never changes and is never reused. An ID has no suffix such
+as `b`. A requirement lists the requirements that it depends on under Supporting Information, and each of those lists
+it in return. FR-7 was deleted and stays unused. Every user has a role, `USER` or
 `ADMIN`, and only an admin may create a user, correct a coffee count, or list the corrections. The app has no
 authentication yet: The header `X-Acting-User` of a request contains the login name of the acting user.
 `ActingUserAuthenticationFilter` in `api/.../security/` resolves the login name in this header to a `User` before the
@@ -161,12 +164,12 @@ follow that app without its event log. The KDoc of each JPA entity explains the 
   `UserBalanceRepository.findForUpdateByUserId` or `KittyBalanceRepository.findForUpdateById` through its data adapter,
   as `applyDelta` locks a consumption. No migration inserts a row. The first operation that changes a balance has to
   insert its row, unless `UserServiceImpl.create` creates the row of a new user together with the consumption.
-- An undo has to credit the price that the coffee was charged, also when the price per cup changed in between (FR-5b).
-  The column `coffee_times.price_cents` (migration V12) is for this price. No JPA entity maps it yet. The
-  implementation of FR-5 has to store the price with the time of each coffee, and the implementation of FR-5b has to
-  credit it. Coffee Kitty drops the time and the price of a coffee outside its grace period when the user adds a coffee,
-  so a correction that removes such a coffee cannot credit the price that the coffee was charged. FR-5b lists this
-  question as an open TBD with a proposal.
+- An undo has to raise the balance by the amount by which the coffee lowered it, also when the price per cup changed
+  in between (FR-11). The column `coffee_times.price_cents` (migration V12) is for this amount. No JPA entity maps it
+  yet. The implementation of FR-5 has to store the price with the time of each coffee, and the implementation of FR-11
+  has to use it. Coffee Kitty drops the time and the price of a coffee outside its grace period when the user adds a
+  coffee, so a correction that removes such a coffee cannot use the price of that coffee. FR-11 lists this question as
+  an open TBD.
 
 ### Naming and File Conventions
 
