@@ -16,7 +16,6 @@ dependencies {
     // springdoc generates the OpenAPI definition from the controllers and serves it with Swagger UI.
     // application.yaml turns both off, and the dev profile turns them on.
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
-    implementation(libs.spring.boot.starter.validation)
     // Spring Security runs ActingUserAuthenticationFilter before the controllers (see SecurityConfig).
     implementation(libs.spring.boot.starter.security)
     // Spring MVC in Spring Boot 4 converts the DTOs from and to JSON with Jackson 3 (package `tools.jackson`).

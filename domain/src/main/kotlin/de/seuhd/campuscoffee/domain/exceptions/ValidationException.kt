@@ -5,8 +5,8 @@ package de.seuhd.campuscoffee.domain.exceptions
  * 256 characters, and a name with a control character. The exception handler maps the exception to the status 400 Bad
  * Request with the error code `ValidationException`.
  *
- * The api module checks only the structure of a request body: A missing field fails Bean Validation (`@NotNull`), and
- * Jackson rejects a value of the wrong JSON type and an unknown field. Such a request gets a 400 with the error code
+ * The api module checks only the structure of a request body: Jackson rejects a missing field, a value of the wrong
+ * JSON type, and an unknown field. Such a request gets a 400 with the error code
  * `BadRequest` before it reaches the domain. Every rule for a value is in the domain, so that it also holds for a user
  * that the bootstrap admin loader or a test creates without a request.
  *

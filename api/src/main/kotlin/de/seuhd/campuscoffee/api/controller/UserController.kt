@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.ParameterIn
 import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -85,7 +84,7 @@ class UserController(
     fun create(
         @ApiRequestBody(description = "The fields of the user to create.", required = true)
         @RequestBody
-        @Valid dto: CreateUserDto
+        dto: CreateUserDto
     ): ResponseEntity<UserDto> {
         val created = userService.create(userDtoMapper.toDomain(dto), currentUserProvider.currentUser())
         return ResponseEntity.created(locationOf(created.persistedId)).body(userDtoMapper.toDto(created))

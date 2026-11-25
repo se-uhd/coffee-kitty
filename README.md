@@ -57,8 +57,8 @@ and the corrections of their coffee counts.
 The project is a multi-module Gradle build with Kotlin build scripts and a hexagonal (ports-and-adapters)
 architecture. ArchUnit tests check the boundaries between the four modules:
 
-- `domain`: the domain models, the ports, and the business logic. The module depends on Spring, but not on Bean
-  Validation, JPA, or the other modules.
+- `domain`: the domain models, the ports, and the business logic. The module depends on Spring, but not on Spring MVC,
+  JPA, or the other modules.
 - `api`: the REST controllers, the data transfer objects (DTOs), the MapStruct DTO mappers, and the exception handler.
 - `data`: the JPA entities and repositories, the MapStruct entity mappers, the implementations of the data ports, and
   the Flyway migrations.
@@ -298,8 +298,9 @@ The consumption endpoints return 404 Not Found for an unknown user. An error res
 the class name of the exception: `NotFoundException`, `DuplicationException`, `ConflictException`, `ForbiddenException`,
 or `ValidationException`. For any other error, `errorCode` is the reason phrase of the status without spaces, such as
 `BadRequest`. A 400 has the error code `BadRequest` when the app cannot read the request: A field is missing, has the
-wrong JSON type, or is unknown. It has the error code `ValidationException` when a value breaks a rule, such as a login
-name of 256 characters or a blank note. Every timestamp in a response is in UTC and has no offset.
+wrong JSON type, or is unknown. Unless the field is unknown, the message names it. A 400 has the error code
+`ValidationException` when a value breaks a rule, such as a login name of 256 characters or a blank note. Every
+timestamp in a response is in UTC and has no offset.
 
 ## Testing
 

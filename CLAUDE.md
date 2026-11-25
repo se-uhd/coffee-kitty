@@ -40,7 +40,7 @@ repository of the build, and `FAIL_ON_PROJECT_REPOS` fails the build when a buil
 ### Module Dependencies
 
 - `domain`: the domain models, the ports, and the business logic. Depends on the Spring Boot core and `spring-tx`,
-  never on Bean Validation, Jakarta Persistence (JPA), or the other modules.
+  never on Spring MVC, Jakarta Persistence (JPA), or the other modules.
 - `api`: the controllers, the data transfer objects (DTOs), the DTO mappers, the exception handler, and the OpenAPI
   definition. Depends on `domain`.
 - `data`: the JPA entities, the repositories, the entity mappers, the data adapters, and the Flyway migrations. Depends
@@ -404,7 +404,7 @@ operation changes nothing, although the test asserts it. Avoid `should`, and use
 A test checks behavior that a caller can observe, such as the status, the error code, the exception type, or the stored
 state. It never checks an implementation detail, that is, anything that can change while the behavior stays the same.
 Examples are the wording of a message, an annotation, a configuration setting, the calls between domain classes, and the
-number and order of calls. It does not check a framework either, such as the messages of Bean Validation or the rule of
+number and order of calls. It does not check a framework either, such as the messages of Jackson or the rule of
 Spring that a lock needs a transaction. A test may check which values a message contains or leaves out, such as the name
 of an invalid field, a rejected value, or a login name in a log message.
 
@@ -443,8 +443,8 @@ raising the threshold.
 
 - Spring Boot and Kotlin on Java, with the versions in `gradle/libs.versions.toml` and `mise.toml`.
 - Spring Data JPA with Hibernate, PostgreSQL, and Flyway.
-- MapStruct through kapt (the Kotlin annotation processing tool), Bean Validation for the request DTOs, and springdoc
-  for the OpenAPI definition and Swagger UI.
+- MapStruct through kapt (the Kotlin annotation processing tool), Jackson with its Kotlin module for the JSON bodies,
+  and springdoc for the OpenAPI definition and Swagger UI.
 - JUnit, Mockito with mockito-kotlin, AssertJ, Testcontainers, Cucumber, and ArchUnit for the tests.
 - ktlint for the formatting, and detekt with the `campus-coffee-kdoc` rule set for the static analysis.
 
@@ -475,7 +475,7 @@ cleaning the database.
   calls `CurrentUserProvider.currentUser` needs the annotation `ActingUserRequired`. `SecurityConfig` reads the HTTP
   method and the path of every function with this annotation from Spring MVC and requires authentication for these
   endpoints. Without the annotation, a request that has no acting user and lacks a required field gets 400 instead of
-  401. The reason is that Spring MVC validates the body before the controller calls `CurrentUserProvider.currentUser`.
+  401. The reason is that Spring MVC reads the body before the controller calls `CurrentUserProvider.currentUser`.
   An architecture test fails for a controller function that calls `currentUser` without the annotation.
 - Firewall: The default firewall of Spring Security rejects, among others, a path with `;`, `//`, `..`, or an encoded
   slash and a header value with a control character. `SecurityConfig.requestRejectedHandler` and
@@ -492,20 +492,23 @@ cleaning the database.
   the domain exception or, for any other error, the reason phrase of the status without spaces (e.g., `BadRequest`). To
   add a domain exception, create a subclass of the sealed class `DomainException` and add its status to
   `GlobalExceptionHandler.statusOf`, which does not compile without it.
-- Validation: The api module checks the structure of a request body, and the domain checks its values. A request DTO
-  has nullable properties and only `@NotNull` constraints, and its `@Schema` annotations document the limits of the
-  domain in the OpenAPI definition. A body with a missing field, a value of the wrong JSON type, or an unknown field
-  gets a 400 with the error code `BadRequest`. A domain service checks every rule for a value, such as a length or a
-  range, and throws a `ValidationException` (400). These rules then also hold for a user that no request creates, such
-  as the bootstrap admin. Do not add a constraint such as `@Size` or `@Pattern` to a DTO.
+- Validation: The api module checks the structure of a request body, and the domain checks its values. The types of a
+  request DTO state the structure: A required field is a property that is not nullable, such as `val delta: Int`, and
+  an optional field is a nullable property with the default `null`. Jackson rejects a body without a required field or
+  with `null` as its value. The `@Schema` annotations of a request DTO document the limits of the domain in the OpenAPI
+  definition. A body with a missing field, a value of the wrong JSON type, or an unknown field gets a 400 with the
+  error code `BadRequest`, and `GlobalExceptionHandler.handleHttpMessageNotReadable` names the field in the message
+  unless the field is unknown. A domain service checks every rule for a value, such as a length or a range, and throws
+  a `ValidationException` (400). These rules then also hold for a user that no request creates, such as the bootstrap
+  admin. The app does not use Bean Validation: Do not add an annotation such as `@NotNull` or `@Size` to a DTO, and do
+  not make a required property nullable (`doc/adr/008-required-fields-of-a-request.md`).
 - Request bodies: Jackson rejects a value of the wrong JSON type instead of converting it, and the request gets a 400
   with the error code `BadRequest`. It also rejects a field that the DTO does not have
   (`spring.jackson.deserialization.fail-on-unknown-properties`), such as an `id` in the body of `POST /api/users`. The
   `spring.jackson` settings in `application.yaml` reject a number with a fraction for an integer field, a JSON string
   for a number or a boolean field, and a JSON number for an enum field. `JsonConfig` in `api/.../configuration/` rejects
   a JSON number or boolean for a `String` field, because Spring Boot has no property for this setting. A new DTO gets
-  these checks without any code. The API responds only in English: `spring.web.locale-resolver` in `application.yaml`
-  fixes the locale, so that the messages of Bean Validation do not depend on the header `Accept-Language`.
+  these checks without any code. The API responds only in English, because the app writes every message itself.
 - MapStruct: The `kotlin-kapt-conventions` plugin runs MapStruct through kapt with the option
   `mapstruct.unmappedTargetPolicy=ERROR`. With this option, the build fails when a target property has neither a
   source nor `ignore = true`.
@@ -560,9 +563,9 @@ is the API port (step 2).
 8. Create the implementation of the API port in `domain/.../implementation/`.
 9. Create the DTOs in `api/.../dtos/` and the DTO mapper in `api/.../mapper/`. A response DTO has only non-null
    properties, including `id`, `createdAt`, and `updatedAt`, and marks each as required for the OpenAPI definition with
-   `@field:Schema(requiredMode = Schema.RequiredMode.REQUIRED)` (see `UserDto`). A request DTO has nullable properties
-   with `@NotNull` and no property for a value that the server assigns (see `CreateUserDto` and Validation in Important
-   Patterns).
+   `@field:Schema(requiredMode = Schema.RequiredMode.REQUIRED)` (see `UserDto`). A request DTO has a property that is
+   not nullable for each required field, with the same `@Schema` annotation, and no property for a value that the
+   server assigns (see `CreateUserDto` and Validation in Important Patterns).
 10. Create the controller in `api/.../controller/` and keep it thin (see Testing Strategy). An endpoint that creates an
     object returns 201 Created with a `Location` header (see `UserController.create`). Put `ActingUserRequired` on a
     function that needs the acting user.

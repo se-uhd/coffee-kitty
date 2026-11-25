@@ -180,9 +180,9 @@ from the term. Some entries end with a line "Avoid:", which lists words not to u
   has no annotations or code for the web or the database. An instance of such a class is a domain object.
   Code: `DomainModel`, `User`, `CoffeeConsumption`, `CountCorrection`.
 - **DTO**: A data transfer object, that is, a class in `api/.../dtos/` that defines the JSON body of a request or a
-  response. A request DTO has nullable properties, and Bean Validation rejects a missing field (`@NotNull`) before the
-  controller function runs. A request DTO checks no value: The domain checks the values and throws a
-  `ValidationException`. A response DTO has only non-null properties. A MapStruct mapper in `api/.../mapper/` converts
+  response. In a request DTO, a required field is a property that is not nullable, and Jackson rejects a body without
+  the field before the controller function runs. A request DTO checks no value: The domain checks the values and throws
+  a `ValidationException`. A response DTO has only non-null properties. A MapStruct mapper in `api/.../mapper/` converts
   between a domain object and the matching DTOs. `UserDtoMapper` converts a `User` to a `UserDto` and a `CreateUserDto`
   to a `User`, `ConsumptionDtoMapper` converts a `CoffeeConsumption` to a `ConsumptionDto`, and
   `CountCorrectionDtoMapper` a `CountCorrection` to a `CountCorrectionDto`. `ConsumptionDeltaDto` and

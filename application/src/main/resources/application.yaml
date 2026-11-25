@@ -49,11 +49,6 @@ spring:
         # Jackson rejects a JSON number for an enum field, and the request gets a 400. With the default false,
         # Jackson would read a role of 1 as ADMIN, the constant of Role with the index 1.
         fail-on-numbers-for-enums: true
-  web:
-    # The API responds in English. With the default locale resolver, Spring takes the locale from the Accept-Language
-    # header of the request, and Bean Validation translates its default messages, such as "must not be null".
-    locale: en
-    locale-resolver: fixed
   flyway:
     enabled: true
     locations: classpath:db/migration
