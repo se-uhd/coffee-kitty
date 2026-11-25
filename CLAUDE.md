@@ -11,11 +11,21 @@ coffee count that starts at zero. The REST API lists, creates, and reads users, 
 coffee at a time. It undoes the most recent coffee within 5 minutes and reads the undo status, which states whether that
 undo is possible. An admin can also correct a coffee count with a note and list the corrections of a user.
 
-`requirements/` holds the functional requirements, such as FR-3 for the undo, FR-8 for the correction, and FR-9 for the
-undo status. FR-4, FR-5, FR-6, FR-10, FR-11, and FR-12 specify deposits, the price per cup, expenses, and ratings, which
-the app does not implement yet. Each requirement follows the template of the lecture and has one ID. Never change or
-reuse an ID. An ID has no suffix such as `b`. A requirement lists the requirements that it depends on under Supporting
-Information, and each of those lists it in return. FR-7 was deleted and stays unused.
+`requirements/` holds the functional requirements. The app implements FR-3 (undo), FR-8 (correction), FR-9 (undo
+status), FR-13 (add a coffee), and FR-14 (create a user). It does not implement the others yet. They specify how Coffee
+Kitty handles money: FR-4 and FR-10 (deposits), FR-5 and FR-17 (price per cup), FR-6 (expenses), FR-11 and FR-18
+(balance after an undo and a correction), and FR-15 and FR-16 (reading the balances). FR-12 specifies the ratings. Each
+requirement follows the template of the lecture and has one ID. Its Statement and the sentences below the Statement that
+bind Coffee Kitty use the key words of RFC 2119: MUST and MUST NOT for a rule, SHOULD for a plausibility check, and MAY
+for an optional input. Never change or reuse an ID. An ID has no suffix such as `b`. No requirement ever had the ID FR-1
+or FR-2, and the requirement FR-7 no longer exists. Do not use these three IDs. The next new requirement is FR-19. A
+requirement lists the requirements that it depends on under Supporting Information, and each of those lists it in
+return.
+
+Every number in a requirement has a source in the same file. The source is a quoted input of a stakeholder, a technical
+limit with its reason, or an open TBD. An open TBD names a contact person and states what the requirement specifies
+until that person answers. Do not add a limit without one of these sources, and do not copy a limit from the coffee app
+of SE@UHD without asking the stakeholder.
 
 Every user has a role, `USER` or `ADMIN`, and only an admin may create a user, correct a coffee count, or list the
 corrections. The app has no authentication yet: The header `X-Acting-User` of a request contains the login name of the
@@ -112,10 +122,11 @@ period, `campus-coffee.consumption.grace-period`, with a default of 5 minutes.
 `CoffeeConsumptionServiceImpl.correctCount` lets an admin set the coffee count to a new total with a note (FR-8). It
 checks the role with `requireAdmin`, locks the consumption like `applyDelta`, and creates a `CountCorrection` with the
 count before and after, the note, and the admin. `DomainValidator` checks the correction: The constraints on
-`CountCorrection` refuse a total outside 0 to `CountCorrection.MAX_TOTAL` and a note that is blank or longer than
-`CountCorrection.MAX_NOTE_LENGTH`. A total below the count drops the times of the newest coffees from `coffeeTimes`, as
-the coffee app of SE@UHD removes the newest coffees of the user from its undo stack. A higher total adds coffees without
-a time. In the same transaction, the function calls `insert` of the data port `CountCorrectionDataService` to store the
+`CountCorrection` refuse a negative total and a note that is blank or longer than `CountCorrection.MAX_NOTE_LENGTH`. A
+total has no upper limit, which is an open TBD of FR-8, so `applyDelta` refuses to add a coffee at the largest `Int`
+with a `ConflictException`. A total below the count drops the times of the newest coffees from `coffeeTimes`, as the
+coffee app of SE@UHD removes the newest coffees of the user from its undo stack. A higher total adds coffees without a
+time. In the same transaction, the function calls `insert` of the data port `CountCorrectionDataService` to store the
 correction. The data module stores the corrections in the table `count_corrections`, which references the corrected user
 with `ON DELETE CASCADE` and the admin with the default `NO ACTION`. `getCorrections` also checks the role with
 `requireAdmin` and returns the corrections of a user, newest first.
@@ -175,8 +186,8 @@ follow that app without its event log. The KDoc of each JPA entity explains the 
   between (FR-11). The column `coffee_times.price_cents` (migration V12) is for this amount. No JPA entity maps it yet.
   The implementation of FR-5 has to store the price with the time of each coffee, and the implementation of FR-11 has to
   use it. Coffee Kitty drops the time and the price of a coffee outside its grace period when the user adds a coffee. A
-  correction that removes such a coffee therefore cannot use the price of that coffee. FR-11 has an open TBD on the
-  amount by which a correction changes the balance.
+  correction that removes such a coffee therefore cannot use the price of that coffee. A correction changes the balance
+  by the price per cup at the time of the correction for each coffee that it adds or removes (FR-18).
 
 ### Naming and File Conventions
 
@@ -349,7 +360,7 @@ The tests are in these places:
   container from Testcontainers that the system and acceptance tests share. The system tests run with the system clock.
   `UndoWithoutGracePeriodSystemTests` sets the grace period to zero with `@TestPropertySource` and therefore runs in a
   Spring context of its own. `FailureSystemTests` also runs in a Spring context of its own, because Mockito spies wrap
-  two data adapters, so that a test can make one of their functions fail.
+  three data adapters, so that a test can make one of their functions fail.
 - Acceptance tests: Cucumber scenarios for behavior-driven development (BDD). The step definitions and the Cucumber
   configuration are in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/acceptance/`, and the feature files,
   such as `consumption.feature`, are in `application/src/test/resources/de/seuhd/campuscoffee/tests/acceptance/`.
@@ -443,6 +454,11 @@ of `any` in `createInitialAdmin`, which does not change the behavior.
 copy of a domain function of 10 to 16 lines. `gradle cpd` runs it alone. Extract the shared code instead of
 raising the threshold.
 
+Every threshold of the build has a measurement on Coffee Kitty: the duplicate size, the mutation score, the coverage
+minimums, the memory of the Gradle daemon, and the wait times of the tests. A comment at each threshold states the
+result and the date, and `doc/adr/010-thresholds-of-the-build.md` has the numbers. Before you change a threshold or add
+one, measure, record the result at the threshold, and write a new ADR. Do not copy a threshold from another project.
+
 ## Key Technologies
 
 - Spring Boot and Kotlin on Java, with the versions in `gradle/libs.versions.toml` and `mise.toml`.
@@ -454,11 +470,6 @@ raising the threshold.
 - ktlint for the formatting, and detekt with the `campus-coffee-kdoc` rule set for the static analysis.
 
 ## REST API Endpoints
-Every threshold of the build has a measurement on Coffee Kitty: the duplicate size, the mutation score, the coverage
-minimums, the memory of the Gradle daemon, and the wait times of the tests. A comment at each threshold states the
-result and the date, and `doc/adr/010-thresholds-of-the-build.md` has the numbers. Before you change a threshold or add
-one, measure, record the result at the threshold, and write a new ADR. Do not copy a threshold from another project.
-
 
 The endpoints accept and return only JSON. `ApiWebConfig` adds the prefix `/api` to the path of every controller, and
 the controllers leave the prefix out of their `@RequestMapping`. The REST API section of `README.md` lists every
@@ -503,13 +514,13 @@ cleaning the database.
   add a domain exception, create a subclass of the sealed class `DomainException` and add its status to
   `GlobalExceptionHandler.statusOf`, which does not compile without it.
 - Validation: The api module checks the structure of a request body, and the domain checks its values. The types of a
-  request DTO state the structure: A required field is a property that is not nullable, such as `val delta: Int`, and
-  an optional field is a nullable property with the default `null`. Jackson rejects a body without a required field or
-  with `null` as its value. The `@Schema` annotations of a request DTO document the limits of the domain in the OpenAPI
-  definition. A body with a missing field, a value of the wrong JSON type, or an unknown field gets a 400 with the
-  error code `BadRequest`, and `GlobalExceptionHandler.handleHttpMessageNotReadable` names the field in the message
-  unless the field is unknown. Do not add a Bean Validation annotation such as `@NotNull` or `@Size` to a DTO, and do
-  not make a required property nullable (`doc/adr/008-required-fields-of-a-request.md`).
+  request DTO state the structure: A required field is a property that is not nullable, such as `val delta: Int`, and an
+  optional field is a nullable property with the default `null`. Jackson rejects a body without a required field or with
+  `null` as its value. The `@Schema` annotations of a request DTO document the limits of the domain in the OpenAPI
+  definition. A body with a missing field, a value of the wrong JSON type, or an unknown field gets a 400 with the error
+  code `BadRequest`. `GlobalExceptionHandler.handleHttpMessageNotReadable` names the field in the message unless the
+  field is unknown. Do not add a Bean Validation annotation such as `@NotNull` or `@Size` to a DTO, and do not make a
+  required property nullable (`doc/adr/008-required-fields-of-a-request.md`).
 - Value rules: A domain model declares each rule for a value, such as a length or a range, as a Bean Validation
   constraint on the property, such as `@field:Size` on `User.loginName`. A domain service calls
   `DomainValidator.requireValid` with the domain object before it stores the object, and a violated constraint becomes

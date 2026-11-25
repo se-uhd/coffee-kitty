@@ -48,9 +48,10 @@ and the corrections of their coffee counts.
   balance. For the price, the payments, the beans, and the ratings, the data module also implements the data ports. For
   the expenses and the balances, it has only the JPA entities and the repositories. No endpoint uses these tables yet.
   The section "Tables Without an Endpoint" in `CLAUDE.md` lists what each feature still needs. The migration V12 adds a
-  column for the price of each recent coffee. These features have requirements in `requirements/`: FR-4 and FR-10 for
-  deposits, FR-5 for the price of a coffee, FR-11 for its undo, FR-6 for expenses, and FR-12 for ratings. FR-6 specifies
-  an expense that a user paid with their own money.
+  column for the price of each recent coffee. These features have requirements in `requirements/`. FR-4 and FR-10
+  specify deposits, FR-5 and FR-17 the price of a coffee, and FR-6 expenses. FR-11 and FR-18 specify the balance after
+  an undo and after a correction, FR-15 and FR-16 how a user reads the balances, and FR-12 ratings. FR-6 specifies an
+  expense that a user records for themselves.
 
 ## Architecture
 
@@ -269,9 +270,9 @@ curl http://localhost:8081/api/users/$USER_ID/consumption/undo
 the correction with its note, and returns the corrected coffee count as `{ "loginName", "count" }`. Only an admin may
 correct a coffee count. The header `X-Acting-User` has to contain the login name of an admin. The endpoint returns 401
 Unauthorized without the header or for an unknown login name, and 403 Forbidden when the acting user is not an admin. It
-returns 400 Bad Request for a missing or negative total, for a total above 1,000,000, and for a missing or blank note. A
-note has at most 500 characters. These limits and the rule that only an admin may list the corrections hold until the
-group lead, the contact person of FR-8, answers its open questions (TBDs). The command sets the coffee count of
+returns 400 Bad Request for a missing or negative total, for a missing or blank note, and for a note of more than 500
+characters. The rule that only an admin may list the corrections holds until the group lead, the contact person of
+FR-8, answers its open questions (TBDs). The command sets the coffee count of
 `jane_doe` to 1:
 
 ```shell
