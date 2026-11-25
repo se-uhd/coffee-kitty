@@ -6,11 +6,11 @@
 # Dependabot does not read mise.toml, which pins the JDK and Gradle. The workflow .github/workflows/mise-outdated.yml
 # checks these pins every Monday and opens an issue when a pin needs a bump.
 #
-# With the `cooldown` of each entry, Dependabot proposes a release only 7 days after the release is published. A
-# release that an attacker publishes from the stolen account of a maintainer is usually withdrawn within days. A
-# reviewer cannot tell such a release from a genuine one, because the pull request shows only a new version number.
-# Students build this project on their own machines, where a malicious release would run. The cooldown does not delay
-# security updates.
+# With the `cooldown` of each entry, Dependabot proposes a release only 7 days after the release is published. In
+# William Woodruff's review of ten supply chain attacks ("We should all be using dependency cooldowns", November 2025,
+# blog.yossarian.net), the malicious release was available for less than a week in eight of them. A reviewer cannot
+# tell such a release from a genuine one, because the pull request shows only a new version number. Students build this
+# project on their own machines, where a malicious release would run. The cooldown does not delay security updates.
 version: 2
 updates:
   # The actions in .github/workflows/. A workflow pins each action to a full commit SHA and names the release in a
@@ -34,7 +34,6 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
-    open-pull-requests-limit: 10
     groups:
       # One pull request bundles the minor and patch updates. Each major update gets a separate pull request for a
       # careful review.

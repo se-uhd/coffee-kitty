@@ -31,3 +31,11 @@ Feature: Correction of a coffee count
     When the user undoes the coffee at 10:03:00
     Then the response status is 409
     And the coffee count is 2
+
+  Scenario: Undo after a correction that added coffees
+    Given the user "maxmustermann" has 2 coffees, the last one added at 10:00:00
+    And "jane_doe" corrected the coffee count of "maxmustermann" to 4 with the note "Forgot two coffees" at 10:01:00
+    When the user undoes the coffee at 10:02:00
+    And the user undoes the coffee at 10:03:00
+    Then the response status is 409
+    And the coffee count is 3

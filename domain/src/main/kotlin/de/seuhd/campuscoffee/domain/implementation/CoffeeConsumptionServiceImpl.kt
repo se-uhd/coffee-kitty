@@ -52,6 +52,11 @@ class CoffeeConsumptionServiceImpl(
             throw ValidationException("The delta must be +1.")
         }
         val current = coffeeConsumptionDataService.getByUserIdForUpdate(userId)
+        // An Int and the column coffee_consumptions.count cannot hold a higher count. Only a correction can set a
+        // count this high.
+        if (current.count == Int.MAX_VALUE) {
+            throw ConflictException("The coffee count is at its maximum of ${Int.MAX_VALUE}.")
+        }
         return coffeeConsumptionDataService.upsert(
             current.copy(
                 count = current.count + delta,

@@ -1,6 +1,5 @@
 package de.seuhd.campuscoffee.domain.model
 
-import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 import java.time.LocalDateTime
@@ -26,19 +25,22 @@ data class User(
     @field:Size(max = MAX_EMAIL_LENGTH, message = EMAIL_ADDRESS_MESSAGE)
     @field:Pattern(regexp = EMAIL_ADDRESS_PATTERN, message = EMAIL_ADDRESS_MESSAGE)
     val emailAddress: String,
-    @field:NotBlank(message = FIRST_NAME_MESSAGE)
+    @field:Pattern(regexp = TextPatterns.NOT_BLANK, message = FIRST_NAME_MESSAGE)
     @field:Size(max = MAX_NAME_LENGTH, message = FIRST_NAME_MESSAGE)
-    @field:Pattern(regexp = NO_CONTROL_CHARACTER_PATTERN, message = FIRST_NAME_MESSAGE)
+    @field:Pattern(regexp = TextPatterns.NO_CONTROL_CHARACTER, message = FIRST_NAME_MESSAGE)
     val firstName: String,
-    @field:NotBlank(message = LAST_NAME_MESSAGE)
+    @field:Pattern(regexp = TextPatterns.NOT_BLANK, message = LAST_NAME_MESSAGE)
     @field:Size(max = MAX_NAME_LENGTH, message = LAST_NAME_MESSAGE)
-    @field:Pattern(regexp = NO_CONTROL_CHARACTER_PATTERN, message = LAST_NAME_MESSAGE)
+    @field:Pattern(regexp = TextPatterns.NO_CONTROL_CHARACTER, message = LAST_NAME_MESSAGE)
     val lastName: String,
     val role: Role = Role.USER
 ) : DomainModel<UUID> {
     /** The limits that every new user must meet. */
     companion object {
-        /** The maximum length of a login name. The column `users.login_name` has the same width. */
+        /**
+         * The maximum length of a login name, which the team assistant set (FR-14 in
+         * `requirements/FR-14-create-user.md`). The column `users.login_name` has the same width.
+         */
         const val MAX_LOGIN_NAME_LENGTH = 255
 
         /**
@@ -54,20 +56,20 @@ data class User(
          */
         const val EMAIL_ADDRESS_PATTERN = "[^@\\s]+@[^@\\s]+"
 
-        /** The maximum length of an email address. The column `users.email_address` has the same width. */
+        /**
+         * The maximum length of an email address that a mail server accepts. RFC 5321, section 4.5.3.1.3, limits a
+         * path in an SMTP command to 256 characters, which include the two angle brackets around the address (see
+         * Erratum 1690 to RFC 3696). The column `users.email_address` has the same width.
+         */
         const val MAX_EMAIL_LENGTH = 254
 
         /**
-         * The maximum length of a first or a last name. The columns `users.first_name` and `users.last_name` have the
-         * same width.
+         * The maximum length of a first or a last name. No stakeholder set this limit, which is an open TBD in FR-14.
+         * Until the answer, the limit is the width of the columns `users.first_name` and `users.last_name`, so that
+         * no request can store a text of any length. `@Size` counts UTF-16 code units, so a character outside the
+         * Basic Multilingual Plane counts as two.
          */
         const val MAX_NAME_LENGTH = 255
-
-        /**
-         * The regular expression that a whole first or last name must match: no control character. The control
-         * characters include NUL, which PostgreSQL cannot store in a `varchar` column.
-         */
-        const val NO_CONTROL_CHARACTER_PATTERN = "[^\\p{Cc}]*"
 
         /** The message of the error response for an invalid login name. */
         const val LOGIN_NAME_MESSAGE =

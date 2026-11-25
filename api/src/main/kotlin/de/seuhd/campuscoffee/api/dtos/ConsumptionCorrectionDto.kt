@@ -9,16 +9,15 @@ import io.swagger.v3.oas.annotations.media.Schema
  * fields `total` and `note`, in which the note is optional.
  * The class checks only the structure of the body. Neither property is nullable, so Jackson rejects a body without a
  * [total] or without a [note], and the request gets a 400 with the error code `BadRequest`. The domain checks the
- * values in `CoffeeConsumptionService.correctCount`. It rejects a [total] that is negative or above
- * [CountCorrection.MAX_TOTAL] and a [note] that is blank, is longer than [CountCorrection.MAX_NOTE_LENGTH] characters,
- * or contains the NUL character. It throws a `ValidationException` (400). The `@Schema` annotations only document these
- * limits in the OpenAPI definition.
+ * values in `CoffeeConsumptionService.correctCount`. It rejects a [total] that is negative and a [note] that is blank,
+ * is longer than [CountCorrection.MAX_NOTE_LENGTH] characters, or contains the NUL character. It throws a
+ * `ValidationException` (400). The `@Schema` annotations only document these limits in the OpenAPI definition. The
+ * [total] has no upper limit except the largest value of an `Int`, and Jackson rejects a higher number.
  */
 data class ConsumptionCorrectionDto(
     @field:Schema(
         description = "The corrected coffee count.",
         minimum = "0",
-        maximum = CountCorrection.MAX_TOTAL.toString(),
         requiredMode = Schema.RequiredMode.REQUIRED
     )
     val total: Int,

@@ -12,7 +12,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - An admin can correct the coffee count of a user at any time and has to add a note with the reason for the correction
   (FR-8 in `requirements/FR-8-correct-coffee-count.md`). `PUT /api/users/{userId}/consumption` with
   `{ "total", "note" }` sets the coffee count and returns 403 Forbidden when the acting user is not an admin. It returns
-  400 Bad Request for a negative total, a total above 1,000,000, or a note that is missing, blank, or longer than 500
+  400 Bad Request for a negative total or a note that is missing, blank, or longer than 500
   characters. A lower count removes the newest coffees, and an undo then applies to the newest coffee that remains. The
   migration V5 creates the table `count_corrections`, which stores each correction with the count before and after, the
   note, and the admin. `GET /api/users/{userId}/consumption/corrections` lists the corrections of a user, newest first,
@@ -26,8 +26,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `user_balance`, and `kitty_balance`, which have only a JPA entity and a repository so far. The section "Tables Without
   an Endpoint" in `CLAUDE.md` lists what each feature still needs, and GLOSSARY.md defines the new terms.
 - The requirements FR-4 (record a deposit), FR-10 (raise the kitty balance), and FR-6 (record own expenses) in
-  `requirements/`. Coffee Kitty does not implement them yet. FR-10 had the ID FR-4b until now. A requirement ID has no
-  suffix, and each requirement lists the requirements that it depends on and those that depend on it.
+  `requirements/`. Coffee Kitty does not implement them yet. FR-10 had the ID FR-4b and FR-11 the ID FR-5b until now. A
+  requirement ID has no suffix, and each requirement lists the requirements that it depends on and those that depend on
+  it.
+- The requirements for functions that had none: FR-13 (add a coffee) and FR-14 (create a user), which Coffee Kitty
+  implements, and FR-15 (report a balance), FR-16 (report the kitty balance), FR-17 (set the price per cup), and FR-18
+  (charge or credit a correction), which it does not implement yet. FR-18 resolves the TBD of FR-11 on the balance
+  after a correction.
 - The requirements FR-5 (pay for a coffee) and FR-11 (credit an undone coffee) in `requirements/`. FR-11 specifies that
   an undo raises the balance by the amount by which the coffee lowered it, even when the price per cup changed in
   between. The migration V12 adds the column `coffee_times.price_cents` for this amount. Until now, the table stored
@@ -78,7 +83,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   error code `BadRequest` for a missing field, a value of the wrong JSON type, or an unknown field, and the error code
   `ValidationException` for a value that breaks a rule. The error code therefore changes from `BadRequest` to
   `ValidationException` for a login name that is too long or has an invalid character and for a blank first or last
-  name. The same change applies to a total of a correction that is negative or above 1,000,000 and to a note that is
+  name. The same change applies to a total of a correction that is negative and to a note that is
   blank or longer than 500 characters. Until now, both modules checked these rules, and the email address had to pass
   two different checks.
 - Breaking: A request DTO states a required field with a property that is not nullable, such as `val delta: Int`, and
@@ -94,6 +99,17 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   404 instead of 400, because the domain reads the consumption before it checks the correction.
 - `gradle :domain:pitest` no longer removes the null checks that the Kotlin compiler generates, which no test can
   detect.
+- Breaking: A corrected coffee count no longer has the upper limit of 1,000,000. No stakeholder set this value, and FR-8
+  leaves the limit open. The only limit is 2,147,483,647, the largest count that Coffee Kitty can store, and a request
+  to add a coffee at this count returns 409 Conflict.
+- Every limit in the code and in the build names its source: a requirement with the input of a stakeholder, a standard,
+  a technical limit, or a measurement. The limit of 254 characters for an email address cites RFC 5321. The limit of
+  255 characters for a first or last name is an open TBD in FR-14. Dependabot uses its default limit of open pull
+  requests.
+- The requirements quote the input of the team assistant for each of their numbers, state the responses to refused
+  requests below the Statement, and give each open TBD the interim rule that holds until the answer. FR-8 states the
+  time of a correction, the list of corrections, and the effect of a correction to a higher coffee count, and resolves
+  the TBD on the length of a note. FR-12 states that a coffee has at most one rating. The glossary follows.
 - Breaking: A request body with an unknown field returns 400 with the error code `BadRequest`
   (`spring.jackson.deserialization.fail-on-unknown-properties`). `POST /api/users` with an `id` returned 400 with the
   error code `ValidationException` until now, and the server ignored the fields `createdAt` and `updatedAt` and any

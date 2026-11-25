@@ -141,7 +141,7 @@ class UserServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["", "   ", "Fre\u0000sh", "Fre\nsh"])
+    @ValueSource(strings = ["", "   ", "\u00A0", "Fre\u0000sh", "Fre\nsh"])
     fun `create throws ValidationException for a first name that is blank or contains a control character`(
         firstName: String
     ) {

@@ -87,6 +87,15 @@ class CoffeeConsumptionServiceTest {
     }
 
     @Test
+    fun `applyDelta throws ConflictException for the largest coffee count`() {
+        whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(consumption(Int.MAX_VALUE))
+
+        assertThrows<ConflictException> { service.applyDelta(userId, 1) }
+
+        verify(dataService, never()).upsert(any())
+    }
+
+    @Test
     fun `applyDelta stores a count of 1 and the time of the first coffee`() {
         whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(TestFixtures.consumptionWithoutCoffee(user))
         whenever(dataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
@@ -238,8 +247,8 @@ class CoffeeConsumptionServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = [0, CountCorrection.MAX_TOTAL])
-    fun `correctCount stores a count of 0 or the maximum total`(total: Int) {
+    @ValueSource(ints = [0, Int.MAX_VALUE])
+    fun `correctCount stores a count of 0 or the largest Int`(total: Int) {
         stubCorrection(consumption(3))
 
         service.correctCount(userId, total, note, admin)
@@ -275,17 +284,8 @@ class CoffeeConsumptionServiceTest {
         verifyNothingStored()
     }
 
-    @Test
-    fun `correctCount throws ValidationException for a count above the maximum total`() {
-        stubCorrection(consumption(3))
-
-        assertThrows<ValidationException> { service.correctCount(userId, CountCorrection.MAX_TOTAL + 1, note, admin) }
-
-        verifyNothingStored()
-    }
-
     @ParameterizedTest
-    @ValueSource(strings = ["", "   ", "\t\n"])
+    @ValueSource(strings = ["", "   ", "\t\n", "\u00A0"])
     fun `correctCount throws ValidationException for a blank note`(blankNote: String) {
         stubCorrection(consumption(3))
 

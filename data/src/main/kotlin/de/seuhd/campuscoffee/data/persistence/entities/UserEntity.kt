@@ -25,7 +25,10 @@ class UserEntity : Entity() {
     @field:Column(name = "last_name")
     var lastName: String? = null
 
-    /** The role of the user, stored as the name of the [Role] constant, such as `ADMIN` (migration V4). */
+    /**
+     * The role of the user, stored as the name of the [Role] constant, such as `ADMIN` (migration V4). A CHECK
+     * constraint allows only the names of the constants. The width of the column, 16 characters, limits nothing.
+     */
     @field:Enumerated(EnumType.STRING)
     @field:Column(name = "role")
     var role: Role? = null

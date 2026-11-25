@@ -25,7 +25,10 @@ data class CoffeeBean(
 ) : DomainModel<UUID> {
     /** The limits that the table `coffee_beans` sets. */
     companion object {
-        /** The maximum length of a name. The column `coffee_beans.name` has the same width. */
+        /**
+         * The maximum length of a name, which the team assistant set (FR-6). The column `coffee_beans.name` has the
+         * same width.
+         */
         const val MAX_NAME_LENGTH = 200
     }
 }
