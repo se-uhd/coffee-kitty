@@ -162,6 +162,10 @@ follow that app without its event log. The KDoc of each JPA entity explains the 
 
 - The price per cup, the payments, the beans, and the ratings have these parts: a domain model, a data port, an entity
   mapper, and a data adapter. The domain models are `CoffeePrice`, `Payment`, `CoffeeBean`, and `CoffeeRating`.
+  Each of them declares the rules for its values as constraints, which `ModelConstraintsTest` checks, because no
+  domain service checks them yet. Two rules are not constraints, and the domain service of the operation has to check
+  them: The limits of the amount of a payment depend on the kind of payment, and the upper limit of a price is a
+  plausibility check (FR-17).
   The table `coffee_prices` holds at most one row. A row of `payments` is a deposit with a user or a kitty adjustment
   without a user. A row of `coffee_beans` has a unique name among the live beans and, for a merged bean, the id of the
   bean that an admin merged it into. A row of `coffee_ratings` holds a score from 1 to 5 of a bean by a user.

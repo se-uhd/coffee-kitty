@@ -7,6 +7,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- The domain models of the later features declare the rules for their values as Bean Validation constraints:
+  `Payment.note`, `CoffeeBean.name`, `CoffeeRating.value`, and `CoffeePrice.amountCents`. `CLAUDE.md` stated that these
+  models were complete, but they had no constraints, so a domain service that followed the steps of "Adding a New
+  Entity" checked nothing and a note of 501 characters returned 500. `ModelConstraintsTest` checks the constraints.
+
 ## [0.3.0] - 2026-11-25
 
 ### Added
