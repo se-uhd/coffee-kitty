@@ -61,6 +61,28 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
     }
 
     @Test
+    fun `a HEAD request for the corrections without the acting user header returns 401 Unauthorized`() {
+        // Spring MVC answers a HEAD request with the controller function of the GET endpoint, so the endpoint needs
+        // an acting user for both methods.
+        client
+            .head()
+            .uri("/api/users/{userId}/consumption/corrections", userFixture("maxmustermann").persistedId)
+            .exchange()
+            .expectStatus()
+            .isUnauthorized
+    }
+
+    @Test
+    fun `a HEAD request for the users without the acting user header returns 200 OK`() {
+        client
+            .head()
+            .uri("/api/users")
+            .exchange()
+            .expectStatus()
+            .isOk
+    }
+
+    @Test
     fun `an error response has the content type application json with the charset UTF-8`() {
         val response = get("/api/unknown")
 

@@ -14,12 +14,12 @@ undo is possible. An admin can also correct a coffee count with a note and list 
 `requirements/` holds the functional requirements. The app implements FR-3 (undo), FR-8 (correction), FR-9 (undo
 status), FR-13 (add a coffee), and FR-14 (create a user). It does not implement the others yet. They specify how Coffee
 Kitty handles money: FR-4 and FR-10 (deposits), FR-5 and FR-17 (price per cup), FR-6 and FR-19 (expenses), FR-11 and
-FR-18 (balance after an undo and a correction), and FR-15 and FR-16 (reading the balances). FR-12 specifies the ratings. Each
-requirement follows the template of the lecture and has one ID. Its Statement and the sentences below the Statement that
-bind Coffee Kitty use the key words of RFC 2119: MUST and MUST NOT for a rule, SHOULD for a plausibility check, and MAY
-for an optional input. Never change or reuse an ID. An ID has no suffix such as `b`. No requirement ever had the ID FR-1
-or FR-2, and the requirement FR-7 no longer exists. Do not use these three IDs. The next new requirement is FR-20. A
-requirement lists the requirements that it depends on under Supporting Information, and each of those lists it in
+FR-18 (balance after an undo and a correction), and FR-15 and FR-16 (reading the balances). FR-12 specifies the ratings.
+Each requirement follows the template of the lecture and has one ID. Its Statement and the sentences below the Statement
+that bind Coffee Kitty use the key words of RFC 2119: MUST and MUST NOT for a rule, SHOULD for a plausibility check, and
+MAY for an optional input. Never change or reuse an ID. An ID has no suffix such as `b`. No requirement ever had the ID
+FR-1 or FR-2, and the requirement FR-7 no longer exists. Do not use these three IDs. The next new requirement is FR-20.
+A requirement lists the requirements that it depends on under Supporting Information, and each of those lists it in
 return.
 
 Every number in a requirement has a source in the same file. The source is a quoted input of a stakeholder, a technical
@@ -76,7 +76,7 @@ repository of the build, and `FAIL_ON_PROJECT_REPOS` fails the build when a buil
 - No production class in `api` may depend on the internal ports.
 - Within the domain module, the production classes of `data` may depend only on the models, the exceptions, and the data
   ports. The rule lists these packages, so `data` cannot depend on a new package of the domain until the rule names it.
-- A controller function that calls `CurrentUserProvider.currentUser` must have the annotation `ActingUserRequired` (see
+- A controller function that calls `CurrentUserProvider.currentUser` must not have the annotation `OpenEndpoint` (see
   Important Patterns).
 - No class under `tests..` may depend on a class of the api module, such as a DTO (see Testing Strategy).
 - The production classes must not contain the test fixtures. `PRODUCTION_CLASSES` leaves out the jars with the test
@@ -375,7 +375,8 @@ The tests are in these places:
 System tests and step definitions send every request through `UserRequests` and `ConsumptionRequests` and never build an
 HTTP request themselves, so that a reader of a test does not need to know the REST API. The exception is
 `ErrorResponseSystemTests`, in which the request itself is under test. It builds the requests for an unknown path, for a
-path that the firewall rejects, and with a `Content-Type` or `Accept` header that the API does not support.
+path that the firewall rejects, with a `Content-Type` or `Accept` header that the API does not support, and with the
+method `HEAD`.
 
 The system and acceptance tests are clients of the REST API and use no class of the api module, which an architecture
 test checks. A request body is a map with the JSON field names, such as `mapOf("delta" to 1)`. The tests parse a
@@ -495,12 +496,13 @@ cleaning the database.
 
 ## Important Patterns
 
-- Acting user: Spring Security runs `ActingUserAuthenticationFilter` before the controllers. A controller function that
-  calls `CurrentUserProvider.currentUser` needs the annotation `ActingUserRequired`. `SecurityConfig` reads the HTTP
-  method and the path of every function with this annotation from Spring MVC and requires authentication for these
-  endpoints. Without the annotation, a request that has no acting user and lacks a required field gets 400 instead of
-  401. The reason is that Spring MVC reads the body before the controller calls `CurrentUserProvider.currentUser`.
-  An architecture test fails for a controller function that calls `currentUser` without the annotation.
+- Acting user: Spring Security runs `ActingUserAuthenticationFilter` before the controllers. Every controller function
+  needs an acting user, unless it has the annotation `OpenEndpoint`. `SecurityConfig` reads the HTTP method and the path
+  of every controller function without this annotation from Spring MVC and requires authentication for these endpoints.
+  A request without a known acting user gets its 401 before Spring MVC reads the body. A new endpoint is therefore never
+  open by mistake. Put `OpenEndpoint` only on a function with an endpoint that every client may use, such as reading a
+  coffee count. An architecture test fails for a function with the annotation that calls
+  `CurrentUserProvider.currentUser` (`doc/adr/011-endpoints-need-an-acting-user-by-default.md`).
 - Firewall: The default firewall of Spring Security rejects, among others, a path with `;`, `//`, `..`, or an encoded
   slash and a header value with a control character. `SecurityConfig.requestRejectedHandler` and
   `RequestRejectedExceptionHandler` respond to such a request with 400 and an `ErrorResponse` (`writeErrorResponse` in
@@ -600,8 +602,8 @@ is the API port (step 2).
    not nullable for each required field, with the same `@Schema` annotation, and no property for a value that the
    server assigns (see `CreateUserDto` and Validation in Important Patterns).
 10. Create the controller in `api/.../controller/` and keep it thin (see Testing Strategy). An endpoint that creates an
-    object returns 201 Created with a `Location` header (see `UserController.create`). Put `ActingUserRequired` on a
-    function that needs the acting user.
+    object returns 201 Created with a `Location` header (see `UserController.create`). The endpoint needs an acting
+    user by default. Put `OpenEndpoint` on the function only if every client may use the endpoint.
 11. Add tests: a domain unit test modeled on `UserServiceTest`, an integration test class for the data adapter, such as
     `PaymentDataServiceIntegrationTest`, and a system test class that extends `AbstractSystemTest`. The integration
     tests include an update without timestamps, which fails when the entity mapper copies the timestamps. Add the

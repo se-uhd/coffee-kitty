@@ -150,7 +150,7 @@ from the term. Some entries end with a line "Avoid:", which lists words not to u
 - **acting user**: The user who sends a request, identified by the login name in the header `X-Acting-User`. Because
   Coffee Kitty has no authentication yet, any client can act as any user.
   API: `X-Acting-User`, `WWW-Authenticate: X-Acting-User realm="Coffee Kitty"` in a 401. Code: `CurrentUserProvider`,
-  `ActingUserAuthenticationFilter`, `ActingUserRequired`, `SecurityConfig`.
+  `ActingUserAuthenticationFilter`, `OpenEndpoint`, `SecurityConfig`.
   Avoid: current user (except in the class name `CurrentUserProvider` and its function `currentUser`, which the coffee
   app of SE@UHD has as well), caller.
 - **bootstrap admin**: The admin that the app stores on startup from the keys under `campus-coffee.bootstrap-admin` when
@@ -244,8 +244,9 @@ from the term. Some entries end with a line "Avoid:", which lists words not to u
   Swagger UI on port 8081 and connects to PostgreSQL on port 5433. The dev application runs in this profile. The tests
   run without it.
   Code: `application.yaml`, `--spring.profiles.active=dev`.
-- **endpoint**: An HTTP method with a path that a controller function serves, such as `POST /api/users`.
-  Code: `UserController`, `ConsumptionController`, `ActingUserRequired`.
+- **endpoint**: An HTTP method with a path that a controller function serves, such as `POST /api/users`. An endpoint
+  needs an acting user, unless its controller function has the annotation `OpenEndpoint`.
+  Code: `UserController`, `ConsumptionController`, `OpenEndpoint`.
   Avoid: route.
 - **error response**: The response to a failed request. Its JSON body has the fields `errorCode`, `message`,
   `statusCode`, `statusMessage`, `timestamp` (in UTC), and `path`. For a domain exception, `errorCode` is the class name

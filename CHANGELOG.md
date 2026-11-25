@@ -14,6 +14,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Every endpoint needs an acting user, unless its controller function has the new annotation `OpenEndpoint` (ADR 011).
+  Until now, an endpoint was open unless its function had the annotation `ActingUserRequired`, which no longer exists,
+  so a forgotten annotation gave an open endpoint. The status codes of the existing endpoints stay the same. A `HEAD`
+  request needs an acting user wherever the `GET` request needs one.
 - FR-6 specifies a daily limit for the expenses that a user who is not an admin records: at most 5 expenses and 50.00 €
   on one day, with a configurable amount of at most 100.00 €. It replaces the limit of 100.00 € for a single expense of
   such a user, and it resolves the TBD on a daily limit. GLOSSARY.md defines the term daily limit.

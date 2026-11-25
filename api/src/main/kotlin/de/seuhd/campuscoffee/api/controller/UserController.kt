@@ -3,8 +3,8 @@ package de.seuhd.campuscoffee.api.controller
 import de.seuhd.campuscoffee.api.dtos.CreateUserDto
 import de.seuhd.campuscoffee.api.dtos.UserDto
 import de.seuhd.campuscoffee.api.mapper.UserDtoMapper
-import de.seuhd.campuscoffee.api.security.ActingUserRequired
 import de.seuhd.campuscoffee.api.security.CurrentUserProvider
+import de.seuhd.campuscoffee.api.security.OpenEndpoint
 import de.seuhd.campuscoffee.domain.model.persistedId
 import de.seuhd.campuscoffee.domain.ports.api.UserService
 import io.swagger.v3.oas.annotations.Operation
@@ -43,6 +43,7 @@ class UserController(
      * group has few users.
      */
     @Operation(summary = "Get all users.")
+    @OpenEndpoint
     @GetMapping("")
     fun getAll(): ResponseEntity<List<UserDto>> =
         ResponseEntity.ok(userService.getAll().map { userDtoMapper.toDto(it) })
@@ -53,6 +54,7 @@ class UserController(
      * @param id the id of the user
      */
     @Operation(summary = "Get a user by id.")
+    @OpenEndpoint
     @GetMapping("/{id}")
     fun getById(
         @Parameter(description = "The id of the user.", required = true)
@@ -79,7 +81,6 @@ class UserController(
         required = true
     )
     @ResponseStatus(HttpStatus.CREATED)
-    @ActingUserRequired
     @PostMapping("")
     fun create(
         @ApiRequestBody(description = "The fields of the user to create.", required = true)

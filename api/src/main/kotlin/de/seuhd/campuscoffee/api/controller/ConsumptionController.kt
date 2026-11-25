@@ -7,8 +7,8 @@ import de.seuhd.campuscoffee.api.dtos.CountCorrectionDto
 import de.seuhd.campuscoffee.api.dtos.UndoStatusDto
 import de.seuhd.campuscoffee.api.mapper.ConsumptionDtoMapper
 import de.seuhd.campuscoffee.api.mapper.CountCorrectionDtoMapper
-import de.seuhd.campuscoffee.api.security.ActingUserRequired
 import de.seuhd.campuscoffee.api.security.CurrentUserProvider
+import de.seuhd.campuscoffee.api.security.OpenEndpoint
 import de.seuhd.campuscoffee.domain.ports.api.CoffeeConsumptionService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -52,6 +52,7 @@ class ConsumptionController(
      * @param userId the id of the user
      */
     @Operation(summary = "Get a user's coffee count.")
+    @OpenEndpoint
     @GetMapping("")
     fun get(
         @Parameter(description = "The id of the user.", required = true)
@@ -68,6 +69,7 @@ class ConsumptionController(
      * @param dto    the request body with the delta, which must be `+1`
      */
     @Operation(summary = "Add a coffee to a user's coffee count (a delta of +1).")
+    @OpenEndpoint
     @PostMapping("")
     fun applyDelta(
         @Parameter(description = "The id of the user.", required = true)
@@ -88,6 +90,7 @@ class ConsumptionController(
      * @param userId the id of the user
      */
     @Operation(summary = "Undo the most recent coffee of a user within its grace period.")
+    @OpenEndpoint
     @PostMapping("/undo")
     fun undo(
         @Parameter(description = "The id of the user.", required = true)
@@ -103,6 +106,7 @@ class ConsumptionController(
      * @param userId the id of the user
      */
     @Operation(summary = "Get the undo status of a user.")
+    @OpenEndpoint
     @GetMapping("/undo")
     fun undoStatus(
         @Parameter(description = "The id of the user.", required = true)
@@ -129,7 +133,6 @@ class ConsumptionController(
         description = "The login name of the acting user, who has to be an admin.",
         required = true
     )
-    @ActingUserRequired
     @PutMapping("")
     fun correctCount(
         @Parameter(description = "The id of the user.", required = true)
@@ -164,7 +167,6 @@ class ConsumptionController(
         description = "The login name of the acting user, who has to be an admin.",
         required = true
     )
-    @ActingUserRequired
     @GetMapping("/corrections")
     fun getCorrections(
         @Parameter(description = "The id of the user.", required = true)

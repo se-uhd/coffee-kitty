@@ -43,7 +43,7 @@ val aggregateReport = tasks.named<JacocoReport>("testCodeCoverageReport") {
 // The first rule checks the coverage of all modules together: at least 90% of the lines and 80% of the branches. The
 // minimums are on purpose several points below the measured coverage. A minimum close to the measured value makes
 // developers write tests only to reach the number, and such tests check implementation details. Measured on 2026-11-25
-// with the exclusions of the gate: The tests cover 699 of 719 lines (97.2%) and 142 of 166 branches (85.5%). Do not
+// with the exclusions of the gate: The tests cover 700 of 721 lines (97.1%) and 148 of 174 branches (85.1%). Do not
 // raise the minimums when the coverage grows (doc/adr/010-thresholds-of-the-build.md). A ratio over all modules cannot
 // detect a single untested function: The undo status (FR-9) once had no test at all, and the ratio stayed above its
 // minimum.

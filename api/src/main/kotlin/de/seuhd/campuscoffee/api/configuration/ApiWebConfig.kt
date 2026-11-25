@@ -19,7 +19,7 @@ class ApiWebConfig : WebMvcConfigurer {
     override fun configurePathMatch(configurer: PathMatchConfigurer) {
         configurer.addPathPrefix(
             API_BASE_PATH,
-            HandlerTypePredicate.forBasePackage("de.seuhd.campuscoffee.api.controller")
+            HandlerTypePredicate.forBasePackage(CONTROLLER_PACKAGE)
         )
     }
 
@@ -63,5 +63,8 @@ class ApiWebConfig : WebMvcConfigurer {
 
     companion object {
         const val API_BASE_PATH = "/api"
+
+        /** The package of the controllers of Coffee Kitty. */
+        const val CONTROLLER_PACKAGE = "de.seuhd.campuscoffee.api.controller"
     }
 }
