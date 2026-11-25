@@ -25,7 +25,10 @@ data class Payment(
 ) : DomainModel<UUID> {
     /** The limits that the table `payments` sets. */
     companion object {
-        /** The maximum length of a note. The column `payments.note` has the same width. */
+        /**
+         * The maximum length of a note, which the team assistant set (FR-4 and FR-8). The column `payments.note` has
+         * the same width.
+         */
         const val MAX_NOTE_LENGTH = 500
     }
 }

@@ -101,8 +101,8 @@ class CorrectionSystemTests : AbstractSystemTest() {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = [0, 1_000_000])
-    fun `correcting a coffee count to 0 or 1000000 returns 200 OK with that count`(total: Int) {
+    @ValueSource(ints = [0, Int.MAX_VALUE])
+    fun `correcting a coffee count to 0 or 2147483647 returns 200 OK with that count`(total: Int) {
         val response = consumptionRequests.correctCount(userId(), total, note)
 
         assertThat(response.status).isEqualTo(200)
@@ -111,12 +111,39 @@ class CorrectionSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `correcting a coffee count to more than 1000000 returns 400 Bad Request`() {
-        val response =
-            consumptionRequests.correctCount(userId(), 1_000_001, note)
+    fun `correcting a coffee count to more than 2147483647 returns 400 Bad Request`() {
+        val response = consumptionRequests.correctCount(userId(), mapOf("total" to 2_147_483_648, "note" to note))
 
         assertThat(response.status).isEqualTo(400)
-        assertThat(response.error.errorCode).isEqualTo("ValidationException")
+        assertThat(response.error.errorCode).isEqualTo("BadRequest")
+        assertThat(count()).isEqualTo(3)
+    }
+
+    @Test
+    fun `adding a coffee at a coffee count of 2147483647 returns 409 Conflict`() {
+        consumptionRequests.correctCount(userId(), Int.MAX_VALUE, note).requireStatus(200)
+
+        val response = consumptionRequests.addCoffee(userId())
+
+        assertThat(response.status).isEqualTo(409)
+        assertThat(response.error.errorCode).isEqualTo("ConflictException")
+        assertThat(count()).isEqualTo(Int.MAX_VALUE)
+    }
+
+    @Test
+    fun `correcting a coffee count to its current value returns 200 OK and stores the correction`() {
+        val response = consumptionRequests.correctCount(userId(), 3, note)
+
+        assertThat(response.status).isEqualTo(200)
+        assertThat(count()).isEqualTo(3)
+        assertThat(corrections()).hasSize(1)
+    }
+
+    @Test
+    fun `correcting a coffee count with a blank note as a user who is not an admin returns 403 Forbidden`() {
+        val response = consumptionRequests.correctCount(userId(), 2, "   ", actingUser = USER_LOGIN_NAME)
+
+        assertThat(response.status).isEqualTo(403)
         assertThat(count()).isEqualTo(3)
     }
 
@@ -140,7 +167,7 @@ class CorrectionSystemTests : AbstractSystemTest() {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["", "   "])
+    @ValueSource(strings = ["", "   ", "\u00A0"])
     fun `correcting a coffee count with a blank note returns 400 Bad Request`(blankNote: String) {
         val response = consumptionRequests.correctCount(userId(), 1, blankNote)
 

@@ -34,6 +34,7 @@ interface CoffeeConsumptionService {
      * @param delta  the change to the coffee count, which must be `+1`
      * @throws ValidationException if [delta] is not `+1`
      * @throws NotFoundException if no user has [userId]
+     * @throws ConflictException if the coffee count is 2,147,483,647, the largest count that Coffee Kitty can store
      */
     fun applyDelta(
         userId: UUID,
@@ -71,13 +72,13 @@ interface CoffeeConsumptionService {
      * SE@UHD has a function with the same name.
      *
      * @param userId     the id of the user whose coffee count the admin corrects
-     * @param total      the corrected coffee count, from 0 to [CountCorrection.MAX_TOTAL]
+     * @param total      the corrected coffee count, which must not be negative
      * @param note       the note with the reason for the correction, which must not be blank
      * @param actingUser the user who sends the request
      * @return the consumption with the corrected coffee count
      * @throws ForbiddenException if [actingUser] is not an admin
-     * @throws ValidationException if [total] is negative or above [CountCorrection.MAX_TOTAL], if [note] is blank, or
-     *   if [note] has more than [CountCorrection.MAX_NOTE_LENGTH] characters or the NUL character
+     * @throws ValidationException if [total] is negative, if [note] is blank, or if [note] has more than
+     *   [CountCorrection.MAX_NOTE_LENGTH] characters or the NUL character
      * @throws NotFoundException if no user has [userId]
      */
     fun correctCount(

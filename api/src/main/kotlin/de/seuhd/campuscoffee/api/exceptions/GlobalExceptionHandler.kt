@@ -225,7 +225,12 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
          */
         private val CONTROL_AND_LINE_SEPARATOR_CHARACTERS = Regex("[\\p{Cc}\\u2028\\u2029]")
 
-        /** The maximum length of a text that [loggableText] returns. */
+        /**
+         * The maximum length of a text that [loggableText] returns. The limit has to leave every text of a legitimate
+         * request whole. The longest path of the API has 71 characters, and the longest message is the message of
+         * Jackson for a body with an unknown field, which has about 400 characters for `CreateUserDto`. Only a client
+         * can cause a longer text, for example with a long path, and the function cuts it.
+         */
         private const val MAX_LOGGED_LENGTH = 500
     }
 }

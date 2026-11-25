@@ -135,7 +135,7 @@ class ConsumptionController(
         @Parameter(description = "The id of the user.", required = true)
         @PathVariable userId: UUID,
         @ApiRequestBody(
-            description = "The corrected coffee count, from 0 to 1,000,000, and a note with the reason.",
+            description = "The corrected coffee count, which must not be negative, and a note with the reason.",
             required = true
         )
         @RequestBody
