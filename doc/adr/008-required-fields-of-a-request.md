@@ -19,7 +19,7 @@ Accepted
 
 [ADR 006](006-validation-of-requests.md) decided that the api module checks the structure of a request and the domain
 checks the values. For a missing field, ADR 006 gave a request DTO nullable properties with `@NotNull`, and Bean
-Validation rejected a body without the field. This rule had three disadvantages:
+Validation rejected a body without the field. This rule had disadvantages:
 
 * The type of a property did not state whether the field is required. The required `loginName: String?` and the optional
   `role: Role?` were both nullable, and only an annotation distinguished them.

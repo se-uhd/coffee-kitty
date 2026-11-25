@@ -12,15 +12,18 @@ from the term. Some entries end with a line "Avoid:", which lists words not to u
   API: `/api/users`, `UserDto`, `userId`. Code: `User`, `UserService`, `users`.
   Avoid: member, drinker, account.
 - **login name**: A user's unique name, which consists of ASCII letters, digits, and underscores and has at most 255
-  characters. Two users can have names that differ only in case, such as `jane_doe` and `Jane_Doe`. `GET /api/users`
-  sorts the users by this name, and the consumption endpoints return it together with the coffee count.
+  characters (FR-14 in `requirements/FR-14-create-user.md`). Two users can have names that differ only in case, such as
+  `jane_doe` and `Jane_Doe`. `GET /api/users` sorts the users by this name, and the consumption endpoints return it
+  together with the coffee count.
   API: `loginName`. Code: `User.loginName`, `login_name`.
   Avoid: login (for the name).
-- **email address**: A user's unique address of the form name@domain, at most 254 characters long. Because the app trims
+- **email address**: A user's unique address of the form name@domain, at most 254 characters long, which is the longest
+  address that a mail server accepts. Because the app trims
   the address and stores it in lowercase, `Jane@se.de` and `jane@se.de` are the same address.
   API: `emailAddress`. Code: `User.emailAddress`, `email_address`.
   Avoid: email (for the address).
-- **coffee**: One cup that a user drinks. Adding a cup raises the user's coffee count by one.
+- **coffee**: One cup that a user drinks. Adding a cup raises the user's coffee count by one (FR-13 in
+  `requirements/FR-13-add-coffee.md`).
   API: `POST /api/users/{userId}/consumption` with `delta` 1. Code: `CoffeeConsumptionService.applyDelta`.
   Avoid: bump (a count).
 - **coffee count**: A user's total number of coffees. The number starts at zero when the app creates the user. Adding a
@@ -43,7 +46,8 @@ from the term. Some entries end with a line "Avoid:", which lists words not to u
   `requirements/FR-3-undo-coffee.md`).
   API: `POST /api/users/{userId}/consumption/undo`. Code: `CoffeeConsumptionService.undo`.
   Avoid: cancel, coffee canceled.
-- **grace period**: The time after a user adds a coffee, 5 minutes by default, in which the user can undo the coffee.
+- **grace period**: The 5 minutes after a user adds a coffee, in which the user can undo that coffee (FR-3). A setting
+  can change the length.
   The grace period includes the instant at which it ends: For a coffee added at 10:00:00, an undo at 10:05:00
   succeeds, and an undo at 10:05:01 returns 409 Conflict.
   Code: `GracePeriod`, `campus-coffee.consumption.grace-period`, environment variable
@@ -64,16 +68,22 @@ from the term. Some entries end with a line "Avoid:", which lists words not to u
   `GET /api/users/{userId}/consumption/corrections`, `CountCorrectionDto`. Code:
   `CoffeeConsumptionService.correctCount`, `CountCorrection`, `count_corrections`.
   Avoid: adjustment, override, reset (for a coffee count).
-- **note**: The text with which an admin explains a correction, such as "Double tap on 16.11." A correction needs a note
-  that is not blank and has at most 500 characters. A note can span several lines. A payment and an expense can have a
-  note of at most 500 characters.
+- **note**: The text that explains a correction, a payment, or an expense, such as "Double tap on 16.11." A note has at
+  most 500 characters, which the team assistant set (FR-8), and can span several lines. A correction needs a note that
+  is not blank. The note of a payment or an expense is optional, and a blank note counts as no note (FR-4 and FR-6).
   API: `ConsumptionCorrectionDto.note`, `CountCorrectionDto.note`. Code: `CountCorrection.note`,
   `CountCorrection.MAX_NOTE_LENGTH`, `count_corrections.note`, `Payment.note`, `payments.note`, `expenses.note`.
   Avoid: comment, reason (for the field).
 - **euro cents**: The unit of every amount of money in the code and in the database. Each amount is an integer, so that
   sums have no rounding errors.
   Code: `amountCents`, `balanceCents`, `amount_cents`, `balance_cents`.
-- **price per cup**: The one price of a coffee in euro cents, which applies to every user and which an admin sets. Each
+- **plausibility check**: A check that refuses a value that probably comes from a typing error, although no rule of the
+  group forbids the value. Coffee Kitty checks amounts and weights in this way. A single amount of money is at most
+  100.00 € when a user enters it and at most 1,000.00 € when an admin enters it (FR-4, FR-6, and FR-17). The weight of a
+  bean purchase is from 100 g to 1,000 g (FR-6). A requirement states a plausibility check with SHOULD, because the
+  group can do without the check.
+- **price per cup**: The one price of a coffee in euro cents, which applies to every user and which an admin sets to an
+  amount from 0.00 € to 1,000.00 €. It starts at 0.50 € (FR-17 in `requirements/FR-17-set-price-per-cup.md`). Each
   coffee lowers the balance of its user by the price per cup at the time of the coffee, so a new price applies only to
   the coffees added after the change (FR-5 in `requirements/FR-5-pay-for-coffee.md`). An undo raises the balance by the
   amount by which the coffee lowered it (FR-11 in `requirements/FR-11-credit-undone-coffee.md`). Coffee Kitty stores at
@@ -81,11 +91,14 @@ from the term. Some entries end with a line "Avoid:", which lists words not to u
   the start price.
   Code: `CoffeePrice`, `CoffeePriceDataService`, `coffee_prices`, `coffee_times.price_cents`.
 - **balance**: A user's amount of money in euro cents, negative when the user owes the kitty money and positive when the
-  kitty owes the user money. Coffees lower the balance, and deposits and the private shares of the user's expenses
-  raise it. The table `user_balance` holds the balance of each user, but no code writes it yet.
+  kitty owes the user money. The balance of a new user is zero (FR-15 in `requirements/FR-15-report-balance.md`).
+  Coffees lower the balance, and undos, deposits, and the private shares of the user's expenses raise it. A correction
+  lowers or raises it (FR-18 in `requirements/FR-18-charge-correction.md`). The table `user_balance` holds the balance
+  of each user, but no code writes it yet.
   Code: `UserBalanceEntity`, `user_balance`.
   Avoid: member balance, account.
-- **kitty**: The shared cash of the group in euro cents. The current amount is the kitty balance. Deposits raise the
+- **kitty**: The shared cash of the group in euro cents. The current amount is the kitty balance, which every user can
+  read (FR-16 in `requirements/FR-16-report-kitty-balance.md`). Deposits raise the
   kitty, the kitty shares of expenses lower it, and kitty adjustments change it in either direction. The kitty never
   goes negative. The table `kitty_balance` holds the kitty balance in one row, but no code writes it yet.
   Code: `KittyBalanceEntity`, `kitty_balance`.
@@ -118,11 +131,12 @@ from the term. Some entries end with a line "Avoid:", which lists words not to u
   no admin merged into another bean, has a name that no other live bean has, ignoring case. An admin can merge a bean
   into another bean, and the merged bean stays as an inactive record that refers to the other bean.
   Code: `CoffeeBean`, `CoffeeBean.mergedIntoId`, `CoffeeBeanDataService`, `coffee_beans`.
-- **rating**: The stored record of one score that a user gives a bean. A new rating of a user for the same bean does not
-  replace an earlier rating, and a rating moves no money. FR-12 in `requirements/FR-12-rate-a-bean.md` specifies how a
-  user rates a bean. No endpoint records a rating yet.
+- **rating**: The stored record of one score that a user gives a bean for their most recent coffee. Each coffee has at
+  most one rating: Until the user adds the next coffee, a new rating replaces the rating of the most recent coffee. The
+  ratings of different coffees stay, also for the same bean. A rating moves no money. FR-12 in
+  `requirements/FR-12-rate-a-bean.md` specifies how a user rates a bean. No endpoint records a rating yet.
   Code: `CoffeeRating`, `CoffeeRatingDataService`, `coffee_ratings`.
-- **score**: The number from 1 to 5 of a rating.
+- **score**: The whole number from 1 to 5 of a rating.
   Code: `CoffeeRating.value`, `coffee_ratings.value`.
   Avoid: value (in prose), rating (for the number).
 - **role**: What a user may do in Coffee Kitty, either `USER` or `ADMIN`. An admin may also create users, correct coffee

@@ -23,8 +23,8 @@ no reason for most of these numbers. Some of the numbers came from the coffee ap
 numbers, only a commit message recorded the measurement, or nobody recorded it. Nobody can check a threshold without a
 recorded measurement, and nobody knows when to change it.
 
-The measurements below ran on 2026-11-25 on one developer machine (16 cores, macOS, JDK 25, Gradle 9.9.2) at commit
-d117385, unless a row names another date. No measurement ran on the CI runner.
+The measurements below ran on 2026-11-25 on one developer machine (16 cores, macOS, JDK 25, Gradle 9.9.2) unless a row
+names another date. No measurement ran on the CI runner.
 
 ## Considered Options
 
@@ -59,7 +59,7 @@ extracted.
 
 ### Mutation testing: 90% (`pitest-conventions.gradle.kts`)
 
-The unit tests detect 31 of the 32 mutants in `domain/.../implementation/` at commit 231a76d (96.9%). The surviving
+The unit tests detect 31 of the 32 mutants in `domain/.../implementation/` (96.9%). The surviving
 mutant is a condition in the inlined code of `any` in `createInitialAdmin`, which does not change the behavior. The
 mutation score and the test strength have the same value, because the tests execute every mutant. With 32 mutants, each
 mutant is 3.1 points, so a minimum of 90% lets the task pass with up to three undetected mutants and fail at the fourth.
@@ -72,9 +72,9 @@ Two settings from the coffee app of SE@UHD are gone, because they showed no effe
 
 ### Coverage: 90% of the lines and 80% of the branches (`coverage/build.gradle.kts`)
 
-With the exclusions of the gate, the tests cover 695 of 715 lines (97.2%) and 142 of 166 branches (85.5%) at commit
-231a76d. 8 of the 24 missed branches belong to the three functions of the undo status, which have no tests until
-2026-12-08. With these tests, the tests cover 150 of 166 branches (90.4%).
+With the exclusions of the gate, the tests cover 695 of 715 lines (97.2%) and 142 of 166 branches (85.5%). 8 of the 24
+missed branches belong to the three functions of the undo status, which have no tests until 2026-12-08. With these
+tests, the tests cover 150 of 166 branches (90.4%).
 
 The minimums are on purpose 7.2 and 5.5 points below the measured values. A minimum close to the measured value makes
 developers write tests only to reach the number. Such tests check implementation details and are more than the code

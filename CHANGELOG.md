@@ -29,10 +29,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `requirements/`. Coffee Kitty does not implement them yet. FR-10 had the ID FR-4b and FR-11 the ID FR-5b until now. A
   requirement ID has no suffix, and each requirement lists the requirements that it depends on and those that depend on
   it.
-- The requirements for functions that had none: FR-13 (add a coffee) and FR-14 (create a user), which Coffee Kitty
-  implements, and FR-15 (report a balance), FR-16 (report the kitty balance), FR-17 (set the price per cup), and FR-18
-  (charge or credit a correction), which it does not implement yet. FR-18 resolves the TBD of FR-11 on the balance
-  after a correction.
+- The requirements for functions that had none. Coffee Kitty implements FR-13 (add a coffee) and FR-14 (create a user).
+  It does not implement FR-15 (report a balance), FR-16 (report the kitty balance), FR-17 (set the price per cup), and
+  FR-18 (charge or credit a correction) yet. FR-18 resolves the TBD of FR-11 on the balance after a correction.
 - The requirements FR-5 (pay for a coffee) and FR-11 (credit an undone coffee) in `requirements/`. FR-11 specifies that
   an undo raises the balance by the amount by which the coffee lowered it, even when the price per cup changed in
   between. The migration V12 adds the column `coffee_times.price_cents` for this amount. Until now, the table stored
@@ -108,10 +107,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   a technical limit, or a measurement. The limit of 254 characters for an email address cites RFC 5321. The limit of
   255 characters for a first or last name is an open TBD in FR-14. Dependabot uses its default limit of open pull
   requests.
-- The requirements quote the input of the team assistant for each of their numbers, state the responses to refused
-  requests below the Statement, and give each open TBD the interim rule that holds until the answer. FR-8 states the
-  time of a correction, the list of corrections, and the effect of a correction to a higher coffee count, and resolves
-  the TBD on the length of a note. FR-12 states that a coffee has at most one rating. The glossary follows.
+- The requirements quote the input of the team assistant for each of their numbers and state the responses to refused
+  requests below the Statement. Each open TBD states what the requirement specifies until the contact person answers.
+  The sentences below a Statement use the key words MUST and MUST NOT for a rule, SHOULD for a plausibility check, and
+  MAY for an optional input. FR-8 states the time of a correction, the list of corrections, and the effect of a
+  correction to a higher coffee count, and resolves the TBD on the length of a note. FR-12 states that a coffee has at
+  most one rating. FR-4, FR-6, and FR-17 state the limits of an amount and of a weight as plausibility checks, which
+  protect against a typing error and are not rules on what the group pays, spends, or buys. A user can enter an amount
+  of at most 100.00 € and an admin an amount of at most 1,000.00 €. The glossary follows.
 - Breaking: A request body with an unknown field returns 400 with the error code `BadRequest`
   (`spring.jackson.deserialization.fail-on-unknown-properties`). `POST /api/users` with an `id` returned 400 with the
   error code `ValidationException` until now, and the server ignored the fields `createdAt` and `updatedAt` and any
