@@ -57,8 +57,8 @@ and the corrections of their coffee counts.
 The project is a multi-module Gradle build with Kotlin build scripts and a hexagonal (ports-and-adapters)
 architecture. ArchUnit tests check the boundaries between the four modules:
 
-- `domain`: the domain models, the ports, and the business logic. The module depends on Spring, but not on Spring MVC,
-  JPA, or the other modules.
+- `domain`: the domain models, the ports, and the business logic. The module depends on Spring and on the API of Jakarta
+  Bean Validation, but not on Spring MVC, JPA, or the other modules.
 - `api`: the REST controllers, the data transfer objects (DTOs), the MapStruct DTO mappers, and the exception handler.
 - `data`: the JPA entities and repositories, the MapStruct entity mappers, the implementations of the data ports, and
   the Flyway migrations.

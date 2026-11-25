@@ -26,19 +26,20 @@ import java.util.UUID
  * user did not undo. It checks the grace period of this coffee with [gracePeriod] and removes the time. As in the
  * coffee app of SE@UHD, the user can then undo the coffee before if the grace period of that coffee is open.
  * [undoableUntil] applies the checks of [undo] without changing the consumption, because it must return a time exactly
- * when an undo at the current time succeeds.
- *
- * [correctCount] locks the consumption like [applyDelta], stores the corrected count, and stores a [CountCorrection]
- * with the note in the same transaction. A correction to a lower count removes the times of the newest coffees. The
- * coffee app of SE@UHD removes the newest coffees of the user from its undo stack in the same way. An undo after the
- * correction then checks the newest coffee that remains.
+ * when an undo at the current time succeeds. [correctCount] locks the consumption like [applyDelta] and creates a
+ * [CountCorrection] with the new coffee count and the note. It checks the correction against the constraints on
+ * [CountCorrection] with the [DomainValidator]. It then stores the corrected count and the correction in the same
+ * transaction. A correction to a lower count removes the times of the newest coffees. The coffee app of SE@UHD removes
+ * the newest coffees of the user from its undo stack in the same way. An undo after the correction then checks the
+ * newest coffee that remains.
  */
 @Service
 class CoffeeConsumptionServiceImpl(
     private val coffeeConsumptionDataService: CoffeeConsumptionDataService,
     private val countCorrectionDataService: CountCorrectionDataService,
     private val gracePeriod: GracePeriod,
-    private val clock: Clock
+    private val clock: Clock,
+    private val domainValidator: DomainValidator
 ) : CoffeeConsumptionService {
     override fun getByUserId(userId: UUID): CoffeeConsumption = coffeeConsumptionDataService.getByUserId(userId)
 
@@ -96,29 +97,23 @@ class CoffeeConsumptionServiceImpl(
         actingUser: User
     ): CoffeeConsumption {
         requireAdmin(actingUser, "correct a coffee count")
-        if (total < 0) {
-            throw ValidationException("The coffee count must not be negative.")
-        }
-        if (total > CountCorrection.MAX_TOTAL) {
-            throw ValidationException("The coffee count must not exceed ${CountCorrection.MAX_TOTAL}.")
-        }
-        val validNote = requireValidNote(note)
         val current = coffeeConsumptionDataService.getByUserIdForUpdate(userId)
+        val correction =
+            CountCorrection(
+                user = current.user,
+                admin = actingUser,
+                countBefore = current.count,
+                countAfter = total,
+                note = note
+            )
+        domainValidator.requireValid(correction)
         // keep every time for a higher total, because the added coffees have no time and the user cannot undo them
         val removedCoffees = (current.count - total).coerceAtLeast(0)
         val corrected =
             coffeeConsumptionDataService.upsert(
                 current.copy(count = total, coffeeTimes = current.coffeeTimes.dropLast(removedCoffees))
             )
-        countCorrectionDataService.insert(
-            CountCorrection(
-                user = current.user,
-                admin = actingUser,
-                countBefore = current.count,
-                countAfter = total,
-                note = validNote
-            )
-        )
+        countCorrectionDataService.insert(correction)
         return corrected
     }
 
@@ -131,25 +126,6 @@ class CoffeeConsumptionServiceImpl(
         // the endpoint returns 404 like the other consumption endpoints.
         coffeeConsumptionDataService.getByUserId(userId)
         return countCorrectionDataService.getAllByUserId(userId)
-    }
-
-    /**
-     * Returns [note] if it is not blank, has at most [CountCorrection.MAX_NOTE_LENGTH] characters, and does not
-     * contain the NUL character, which PostgreSQL cannot store in a `varchar` column. A note can contain line breaks.
-     *
-     * @param note the note of a correction
-     * @throws ValidationException if [note] is blank or too long or contains the NUL character
-     */
-    private fun requireValidNote(note: String): String {
-        if (note.isBlank()) {
-            throw ValidationException("The note of a correction must not be blank.")
-        }
-        if (note.length > CountCorrection.MAX_NOTE_LENGTH || note.contains('\u0000')) {
-            throw ValidationException(
-                "A note must have at most ${CountCorrection.MAX_NOTE_LENGTH} characters and no NUL character."
-            )
-        }
-        return note
     }
 
     /** Returns the current UTC time of [clock], truncated to microseconds like the timestamps in the database. */

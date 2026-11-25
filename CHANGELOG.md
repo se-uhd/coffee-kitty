@@ -68,8 +68,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the domain. A controller function that reads the acting user has the annotation `ActingUserRequired`. The system and
   acceptance tests use no class of the api module. The production classes contain no test fixtures.
 - ADRs 002 to 004 in `doc/adr/` record the decisions on Spring in the domain, the role checks, and the read methods
-  without a transaction. ADRs 005 to 008 record the decisions on the test fixtures, the validation, the tests of the
-  JSON field names, and the required fields of a request.
+  without a transaction. ADRs 005 to 009 record the decisions on the test fixtures, the validation, the tests of the
+  JSON field names, the required fields of a request, and the value rules on the domain models.
 - `gradle build` runs CPD, the copy-paste detector of PMD, on the production code and fails at a duplicate of 70 tokens.
 
 ### Changed
@@ -87,6 +87,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   "emailAddress must not be null" to "The field emailAddress is missing or has a value that the server cannot read."
   A 400 for a value of the wrong JSON type has the same message. Until now, its message was "Bad Request". A response
   names only the first such field. Until now, it named every missing field.
+- The domain models declare the rules for their values as Bean Validation constraints, such as `@Size` on
+  `User.loginName`, and the domain services check a new object with the new `DomainValidator` before they store it
+  (ADR 009). Until now, the domain services checked each value with a hand-written condition. The messages and the
+  error code `ValidationException` stay the same. A correction with an invalid value for an unknown user now returns
+  404 instead of 400, because the domain reads the consumption before it checks the correction.
+- `gradle :domain:pitest` no longer removes the null checks that the Kotlin compiler generates, which no test can
+  detect.
 - Breaking: A request body with an unknown field returns 400 with the error code `BadRequest`
   (`spring.jackson.deserialization.fail-on-unknown-properties`). `POST /api/users` with an `id` returned 400 with the
   error code `ValidationException` until now, and the server ignored the fields `createdAt` and `updatedAt` and any

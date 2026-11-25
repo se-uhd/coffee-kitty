@@ -50,6 +50,11 @@ pmd = "7.29.0"
 # Libraries that a BOM manages, declared without a version
 spring-boot-starter-webmvc = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
 spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
+# Hibernate Validator, the implementation of Jakarta Bean Validation, and the Validator bean of Spring Boot. The domain
+# needs them only at runtime.
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
+# The constraint annotations and the Validator interface of Jakarta Bean Validation, for the domain.
+jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api" }
 spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
 # Spring Boot 4 moved the autoconfiguration of each technology into a separate module. spring-boot-starter-data-jpa does
 # not include the module for Flyway.
@@ -57,7 +62,7 @@ spring-boot-flyway = { module = "org.springframework.boot:spring-boot-flyway" }
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 spring-tx = { module = "org.springframework:spring-tx" }
 # The Spring Boot core without a starter, for the domain. It brings spring-context for @Service and @Component. The
-# domain needs neither a web framework nor a logging backend.
+# domain compiles against neither a web framework nor a logging backend.
 spring-boot-core = { module = "org.springframework.boot:spring-boot" }
 postgresql = { module = "org.postgresql:postgresql" }
 flyway-core = { module = "org.flywaydb:flyway-core" }

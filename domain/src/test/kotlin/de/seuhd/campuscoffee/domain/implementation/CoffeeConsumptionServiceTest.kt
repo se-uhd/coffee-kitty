@@ -42,7 +42,8 @@ class CoffeeConsumptionServiceTest {
             dataService,
             correctionDataService,
             GracePeriod(ConsumptionProperties(), clock),
-            clock
+            clock,
+            domainValidator()
         )
     }
 
@@ -267,6 +268,8 @@ class CoffeeConsumptionServiceTest {
 
     @Test
     fun `correctCount throws ValidationException for a negative count`() {
+        stubCorrection(consumption(3))
+
         assertThrows<ValidationException> { service.correctCount(userId, -1, note, admin) }
 
         verifyNothingStored()
@@ -274,6 +277,8 @@ class CoffeeConsumptionServiceTest {
 
     @Test
     fun `correctCount throws ValidationException for a count above the maximum total`() {
+        stubCorrection(consumption(3))
+
         assertThrows<ValidationException> { service.correctCount(userId, CountCorrection.MAX_TOTAL + 1, note, admin) }
 
         verifyNothingStored()
@@ -282,6 +287,8 @@ class CoffeeConsumptionServiceTest {
     @ParameterizedTest
     @ValueSource(strings = ["", "   ", "\t\n"])
     fun `correctCount throws ValidationException for a blank note`(blankNote: String) {
+        stubCorrection(consumption(3))
+
         assertThrows<ValidationException> { service.correctCount(userId, 1, blankNote, admin) }
 
         verifyNothingStored()
@@ -289,12 +296,16 @@ class CoffeeConsumptionServiceTest {
 
     @Test
     fun `correctCount throws ValidationException for a note of 501 characters`() {
+        stubCorrection(consumption(3))
+
         assertThrows<ValidationException> { service.correctCount(userId, 1, "a".repeat(501), admin) }
         verifyNothingStored()
     }
 
     @Test
     fun `correctCount throws ValidationException for a note with a NUL character`() {
+        stubCorrection(consumption(3))
+
         // PostgreSQL cannot store NUL in a varchar column. Without the check, the request would get a 500.
         assertThrows<ValidationException> { service.correctCount(userId, 1, "Double\u0000tap", admin) }
         verifyNothingStored()

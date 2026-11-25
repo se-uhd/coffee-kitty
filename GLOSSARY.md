@@ -181,13 +181,14 @@ from the term. Some entries end with a line "Avoid:", which lists words not to u
   Code: `DomainModel`, `User`, `CoffeeConsumption`, `CountCorrection`.
 - **DTO**: A data transfer object, that is, a class in `api/.../dtos/` that defines the JSON body of a request or a
   response. In a request DTO, a required field is a property that is not nullable, and Jackson rejects a body without
-  the field before the controller function runs. A request DTO checks no value: The domain checks the values and throws
-  a `ValidationException`. A response DTO has only non-null properties. A MapStruct mapper in `api/.../mapper/` converts
-  between a domain object and the matching DTOs. `UserDtoMapper` converts a `User` to a `UserDto` and a `CreateUserDto`
-  to a `User`, `ConsumptionDtoMapper` converts a `CoffeeConsumption` to a `ConsumptionDto`, and
-  `CountCorrectionDtoMapper` a `CountCorrection` to a `CountCorrectionDto`. `ConsumptionDeltaDto` and
-  `ConsumptionCorrectionDto` have no mapper, because the controller passes their values to the domain. `UndoStatusDto`
-  has no mapper either, because the controller creates it from the result of `CoffeeConsumptionService.undoableUntil`.
+  the field before the controller function runs. A request DTO checks no value: The domain models declare the rules for
+  the values as Bean Validation constraints, and a domain service checks them and throws a `ValidationException`. A
+  response DTO has only non-null properties. A MapStruct mapper in `api/.../mapper/` converts between a domain object
+  and the matching DTOs. `UserDtoMapper` converts a `User` to a `UserDto` and a `CreateUserDto` to a `User`,
+  `ConsumptionDtoMapper` converts a `CoffeeConsumption` to a `ConsumptionDto`, and `CountCorrectionDtoMapper` a
+  `CountCorrection` to a `CountCorrectionDto`. `ConsumptionDeltaDto` and `ConsumptionCorrectionDto` have no mapper,
+  because the controller passes their values to the domain. `UndoStatusDto` has no mapper either, because the controller
+  creates it from the result of `CoffeeConsumptionService.undoableUntil`.
   Code: `UserDto`, `CreateUserDto`, `ConsumptionDto`, `ConsumptionDeltaDto`, `UserDtoMapper`.
 - **JPA entity**: A class in `data/.../persistence/entities/` that JPA maps to one table, such as `UserEntity` for the
   table `users`. Each such class has a name that ends in `Entity`, and each one except `UserBalanceEntity` and

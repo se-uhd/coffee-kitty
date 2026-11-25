@@ -1,14 +1,17 @@
 package de.seuhd.campuscoffee.domain.model
 
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
+import jakarta.validation.constraints.Size
 import java.time.LocalDateTime
 import java.util.UUID
 
 /**
- * The domain model of a person whose coffees the app counts. Instances are immutable. The constants in the companion
- * object are the limits for a new user. `UserServiceImpl.create` checks these limits for every new user, including the
- * user fixtures and the bootstrap admin. It also refuses a blank name and a name with a control character. The api
- * module checks only that a request contains every field. `CreateUserDto` repeats the limits in `@Schema` annotations
- * to document them in the OpenAPI definition.
+ * The domain model of a person whose coffees the app counts. Instances are immutable. The Bean Validation constraints
+ * on the properties are the limits for a new user, and the constants in the companion object hold their values and
+ * messages. `UserServiceImpl.create` checks the constraints with `DomainValidator` for every new user, including the
+ * user fixtures and the bootstrap admin. The api module checks only that a request contains every field.
+ * `CreateUserDto` repeats the limits in `@Schema` annotations to document them in the OpenAPI definition.
  *
  * The data module assigns [id], [createdAt], and [updatedAt]. They are null on a user that is not stored yet. [role]
  * determines which actions the user may perform, and it is [Role.USER] by default.
@@ -17,9 +20,19 @@ data class User(
     override val id: UUID? = null,
     val createdAt: LocalDateTime? = null,
     val updatedAt: LocalDateTime? = null,
+    @field:Size(max = MAX_LOGIN_NAME_LENGTH, message = LOGIN_NAME_MESSAGE)
+    @field:Pattern(regexp = LOGIN_NAME_PATTERN, message = LOGIN_NAME_MESSAGE)
     val loginName: String,
+    @field:Size(max = MAX_EMAIL_LENGTH, message = EMAIL_ADDRESS_MESSAGE)
+    @field:Pattern(regexp = EMAIL_ADDRESS_PATTERN, message = EMAIL_ADDRESS_MESSAGE)
     val emailAddress: String,
+    @field:NotBlank(message = FIRST_NAME_MESSAGE)
+    @field:Size(max = MAX_NAME_LENGTH, message = FIRST_NAME_MESSAGE)
+    @field:Pattern(regexp = NO_CONTROL_CHARACTER_PATTERN, message = FIRST_NAME_MESSAGE)
     val firstName: String,
+    @field:NotBlank(message = LAST_NAME_MESSAGE)
+    @field:Size(max = MAX_NAME_LENGTH, message = LAST_NAME_MESSAGE)
+    @field:Pattern(regexp = NO_CONTROL_CHARACTER_PATTERN, message = LAST_NAME_MESSAGE)
     val lastName: String,
     val role: Role = Role.USER
 ) : DomainModel<UUID> {
@@ -49,5 +62,31 @@ data class User(
          * same width.
          */
         const val MAX_NAME_LENGTH = 255
+
+        /**
+         * The regular expression that a whole first or last name must match: no control character. The control
+         * characters include NUL, which PostgreSQL cannot store in a `varchar` column.
+         */
+        const val NO_CONTROL_CHARACTER_PATTERN = "[^\\p{Cc}]*"
+
+        /** The message of the error response for an invalid login name. */
+        const val LOGIN_NAME_MESSAGE =
+            "A login name must have 1 to $MAX_LOGIN_NAME_LENGTH characters, each an ASCII letter, a digit, or an " +
+                "underscore."
+
+        /** The message of the error response for an invalid email address. */
+        const val EMAIL_ADDRESS_MESSAGE =
+            "An email address must have the form name@domain, with no spaces and one at sign, and at most " +
+                "$MAX_EMAIL_LENGTH characters."
+
+        /** The message of the error response for an invalid first name. */
+        const val FIRST_NAME_MESSAGE =
+            "A first name must have 1 to $MAX_NAME_LENGTH characters, must not be blank, and must not contain a " +
+                "control character."
+
+        /** The message of the error response for an invalid last name. */
+        const val LAST_NAME_MESSAGE =
+            "A last name must have 1 to $MAX_NAME_LENGTH characters, must not be blank, and must not contain a " +
+                "control character."
     }
 }
