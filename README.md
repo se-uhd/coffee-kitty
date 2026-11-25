@@ -49,9 +49,9 @@ and the corrections of their coffee counts.
   the expenses and the balances, it has only the JPA entities and the repositories. No endpoint uses these tables yet.
   The section "Tables Without an Endpoint" in `CLAUDE.md` lists what each feature still needs. The migration V12 adds a
   column for the price of each recent coffee. These features have requirements in `requirements/`. FR-4 and FR-10
-  specify deposits, FR-5 and FR-17 the price of a coffee, and FR-6 expenses. FR-11 and FR-18 specify the balance after
-  an undo and after a correction, FR-15 and FR-16 how a user reads the balances, and FR-12 ratings. FR-6 specifies an
-  expense that a user records for themselves.
+  specify deposits, FR-5 and FR-17 the price of a coffee, and FR-6 and FR-19 expenses. FR-11 and FR-18 specify the
+  balance after an undo and after a correction, FR-15 and FR-16 how a user reads the balances, and FR-12 ratings. FR-6
+  specifies an expense that a user records for themselves, and FR-19 an expense that an admin records for a user.
 
 ## Architecture
 

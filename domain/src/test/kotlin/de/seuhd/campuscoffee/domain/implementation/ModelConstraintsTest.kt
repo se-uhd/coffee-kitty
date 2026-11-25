@@ -81,13 +81,15 @@ class ModelConstraintsTest {
         assertThrows<ValidationException> { domainValidator.requireValid(rating) }
     }
 
-    @Test
-    fun `requireValid accepts a price per cup of 0 cents`() {
-        assertDoesNotThrow { domainValidator.requireValid(CoffeePrice(amountCents = 0)) }
+    @ParameterizedTest
+    @ValueSource(ints = [0, CoffeePrice.MAX_AMOUNT_CENTS])
+    fun `requireValid accepts a price per cup of 0 or 100,000 cents`(cents: Int) {
+        assertDoesNotThrow { domainValidator.requireValid(CoffeePrice(amountCents = cents)) }
     }
 
-    @Test
-    fun `requireValid throws ValidationException for a price per cup of -1 cent`() {
-        assertThrows<ValidationException> { domainValidator.requireValid(CoffeePrice(amountCents = -1)) }
+    @ParameterizedTest
+    @ValueSource(ints = [-1, CoffeePrice.MAX_AMOUNT_CENTS + 1])
+    fun `requireValid throws ValidationException for a price per cup of -1 or 100,001 cents`(cents: Int) {
+        assertThrows<ValidationException> { domainValidator.requireValid(CoffeePrice(amountCents = cents)) }
     }
 }

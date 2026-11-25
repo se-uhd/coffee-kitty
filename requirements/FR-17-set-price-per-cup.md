@@ -10,8 +10,8 @@ and a price per cup of 0.00 € is allowed. Coffee Kitty MUST report the price p
 Coffee Kitty MUST refuse a price that a user who is not an admin sets with 403 Forbidden and a negative price with 400
 Bad Request. A refused request MUST NOT change the price per cup.
 
-Coffee Kitty SHOULD refuse a price above 1,000.00 € with 400 Bad Request. This limit is a plausibility check: It
-protects against a typing error and is far above a real price per cup.
+Coffee Kitty MUST refuse a price above 1,000.00 € with 400 Bad Request. This limit protects against a typing error and
+is far above a real price per cup.
 
 ## Rationale
 
@@ -40,8 +40,8 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
 - Input, from the team assistant: "There is one price per cup for everybody. It starts at 0.50 €, and an admin can
   change it. It can also be set to 0." "A single amount, the price included, is at most 1,000 €." "Users see their own
   balance and the current price per cup."
-- Input, from the group lead (2026-11-25): The limit of 1,000 € is a plausibility check for the admin who sets the
-  price, not a rule on the price per cup.
+- Input, from the group lead (2026-11-25): The 1,000 € are a hard upper limit for a single amount, also for the price
+  per cup. The limit protects against a typing error of the admin who sets the price.
 - Depends on FR-14: FR-14 specifies which users are admins.
 - FR-5 and FR-18 depend on this requirement: A coffee lowers the balance by the price per cup (FR-5), and a correction
   changes the balance by the price per cup at the time of the correction (FR-18).

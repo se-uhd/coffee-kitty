@@ -16,14 +16,18 @@ Kitty removes the spaces at its start and end.
 Coffee Kitty MUST refuse an expense that breaks one of these rules with 400 Bad Request. A refused expense MUST NOT
 change the balance. An expense MUST NOT change the kitty balance.
 
-A user who is not an admin has a daily limit: at most 10 expenses and at most 50.00 € in total on one day. Coffee Kitty
-MUST refuse an expense that exceeds the daily limit with 409 Conflict. A day starts at midnight in the time zone
-Europe/Berlin. The group MAY configure another amount for the daily limit, and Coffee Kitty MUST NOT start with a
-configured amount above 100.00 €. The daily limit does not apply to an admin.
+A user who is not an admin has a daily limit: at most 5 expenses and at most 50.00 € in total on one day. The daily
+limit counts every expense of the user on that day, also an expense that an admin recorded for the user (FR-19). Coffee
+Kitty MUST refuse an expense that exceeds the daily limit with 409 Conflict, and the message of the response MUST state
+that an admin can record the expense. A day starts at midnight in the time zone Europe/Berlin. The group MAY configure
+another amount for the daily limit, and Coffee Kitty MUST NOT start with a configured amount above 100.00 €. The daily
+limit does not apply to an admin.
 
-Coffee Kitty SHOULD refuse an expense above 1,000.00 € with 400 Bad Request. Coffee Kitty SHOULD also refuse a bean
-purchase with a weight below 100 g or above 1,000 g with 400 Bad Request. These limits are plausibility checks: They
-protect against a typing error and do not state how much the group spends or buys.
+Coffee Kitty MUST refuse an expense above 1,000.00 € with 400 Bad Request. This limit protects against a typing error
+and does not state how much the group spends.
+
+Coffee Kitty SHOULD refuse a bean purchase with a weight below 100 g or above 1,000 g with 400 Bad Request. These two
+limits are plausibility checks: They protect against a typing error and do not state how much the group buys.
 
 ## Rationale
 
@@ -39,11 +43,11 @@ assistant pays back the money from the kitty or forgets the receipts.
   Request, and the balance stays the same.
 - maxmustermann, who is not an admin, has recorded no expense today. An expense of 50.00 € by maxmustermann raises the
   balance by 50.00 €. A request by maxmustermann to record a further expense of 0.01 € on the same day returns 409
-  Conflict, and the balance stays the same.
+  Conflict with a message that names an admin, and the balance stays the same.
 - maxmustermann has recorded expenses of 30.00 € and 19.99 € today. A request by maxmustermann to record an expense of
   0.02 € returns 409 Conflict, and an expense of 0.01 € raises the balance.
-- maxmustermann has recorded 10 expenses of 1.00 € today. A request by maxmustermann to record an eleventh expense of
-  1.00 € returns 409 Conflict, and the balance stays the same.
+- maxmustermann has recorded 5 expenses of 1.00 € today. A request by maxmustermann to record a sixth expense of 1.00 €
+  returns 409 Conflict, and the balance stays the same.
 - maxmustermann recorded an expense of 50.00 € at 23:59 in Europe/Berlin. An expense of 50.00 € by maxmustermann at
   00:00 of the next day raises the balance.
 - With a configured amount of 100.00 € for the daily limit, an expense of 100.00 € by maxmustermann raises the balance,
@@ -88,10 +92,11 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
   Reaching exactly 50 € is fine. Everything beyond that needs an admin, and the message says so. The day starts at
   midnight, German time."
 - Input, from the group lead (2026-11-25): The daily limit is the only limit for the expenses that users record
-  themselves. Its amount is a setting, which the group can raise to at most 100 €. An expense can be higher, for example
-  for a spare part of the coffee machine or for a new machine, so the daily limit does not apply to an admin. The limit
-  of 1,000 € for a single amount stays as a plausibility check, not as a rule on what the group pays or spends.
-- Input, from the group lead (2026-11-25): The limits for the weight are plausibility checks as well. A bag of beans
+  themselves. 10 expenses per day are too many, so the daily limit is 5 expenses. Its amount is a setting, which the
+  group can raise to at most 100 €. An expense can be higher, for example for a spare part of the coffee machine or for
+  a new machine. An admin records such an expense for the user (FR-19), and the daily limit does not apply to an admin.
+  The 1,000 € are a hard upper limit for a single amount.
+- Input, from the group lead (2026-11-25): The limits for the weight are plausibility checks. A bag of beans
   weighs at least 100 g, and a weight above 1,000 g is more likely a typing error than one bag, such as a weight in
   kilograms that someone enters as grams. A user who buys more records several bean purchases.
 - This requirement covers only an expense that a user records for themselves. Coffee Kitty cannot check with whose money
@@ -100,17 +105,16 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
 - Depends on FR-14: FR-14 specifies the users and which of them are admins.
 - Design, not part of this requirement: Coffee Kitty stores every time in UTC, so the check of the daily limit has to
   convert the time of an expense to Europe/Berlin.
-- FR-12 and FR-15 depend on this requirement: A bean purchase creates the beans that users rate (FR-12), and FR-15
-  reports the balance that an expense raises.
-- TBD (open): How does a user who is not an admin record an expense beyond the daily limit, for example for a spare part
-  of the coffee machine? In the coffee app of SE@UHD, an admin records an expense for any user, and the daily limit
-  does not apply to such an expense. Until the group lead answers this question, this requirement has no function for
-  an admin to record an expense for another user, and the response to a refused expense does not name one. Contact
-  person: group lead.
+- FR-12, FR-15, and FR-19 depend on this requirement: A bean purchase creates the beans that users rate (FR-12), FR-15
+  reports the balance that an expense raises, and FR-19 uses the rules of this requirement for an expense that an
+  admin records for a user.
+- TBD (resolved): How does a user who is not an admin record an expense beyond the daily limit, for example for a spare
+  part of the coffee machine? An admin records the expense for the user (FR-19), as in the coffee app of SE@UHD. Decided
+  by: group lead (2026-11-25).
 - TBD (open): Can users change or delete their own expenses? Contact person: team assistant.
-- TBD (resolved): Is there a daily limit for the expenses that users record themselves? Yes, at most 10 expenses and
-  50.00 € on one day, as in the coffee app of SE@UHD. The amount can be configured up to 100.00 €. Decided by: group
-  lead (2026-11-25).
+- TBD (resolved): Is there a daily limit for the expenses that users record themselves? Yes, at most 5 expenses and
+  50.00 € on one day. The amount can be configured up to 100.00 €. The coffee app of SE@UHD allowed 10 expenses until
+  this decision. Decided by: group lead (2026-11-25).
 - TBD (open): How does Coffee Kitty record the cash that the team assistant pays a user from the kitty for a positive
   balance? A deposit cannot be negative (FR-4), and a kitty adjustment belongs to no user (GLOSSARY.md). Contact person:
   team assistant.

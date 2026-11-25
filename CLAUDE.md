@@ -13,12 +13,12 @@ undo is possible. An admin can also correct a coffee count with a note and list 
 
 `requirements/` holds the functional requirements. The app implements FR-3 (undo), FR-8 (correction), FR-9 (undo
 status), FR-13 (add a coffee), and FR-14 (create a user). It does not implement the others yet. They specify how Coffee
-Kitty handles money: FR-4 and FR-10 (deposits), FR-5 and FR-17 (price per cup), FR-6 (expenses), FR-11 and FR-18
-(balance after an undo and a correction), and FR-15 and FR-16 (reading the balances). FR-12 specifies the ratings. Each
+Kitty handles money: FR-4 and FR-10 (deposits), FR-5 and FR-17 (price per cup), FR-6 and FR-19 (expenses), FR-11 and
+FR-18 (balance after an undo and a correction), and FR-15 and FR-16 (reading the balances). FR-12 specifies the ratings. Each
 requirement follows the template of the lecture and has one ID. Its Statement and the sentences below the Statement that
 bind Coffee Kitty use the key words of RFC 2119: MUST and MUST NOT for a rule, SHOULD for a plausibility check, and MAY
 for an optional input. Never change or reuse an ID. An ID has no suffix such as `b`. No requirement ever had the ID FR-1
-or FR-2, and the requirement FR-7 no longer exists. Do not use these three IDs. The next new requirement is FR-19. A
+or FR-2, and the requirement FR-7 no longer exists. Do not use these three IDs. The next new requirement is FR-20. A
 requirement lists the requirements that it depends on under Supporting Information, and each of those lists it in
 return.
 
@@ -163,9 +163,8 @@ follow that app without its event log. The KDoc of each JPA entity explains the 
 - The price per cup, the payments, the beans, and the ratings have these parts: a domain model, a data port, an entity
   mapper, and a data adapter. The domain models are `CoffeePrice`, `Payment`, `CoffeeBean`, and `CoffeeRating`.
   Each of them declares the rules for its values as constraints, which `ModelConstraintsTest` checks, because no
-  domain service checks them yet. Two rules are not constraints, and the domain service of the operation has to check
-  them: The limits of the amount of a payment depend on the kind of payment, and the upper limit of a price is a
-  plausibility check (FR-17).
+  domain service checks them yet. One rule is not a constraint, and the domain service of the operation has to check
+  it: The limits of the amount of a payment depend on the kind of payment.
   The table `coffee_prices` holds at most one row. A row of `payments` is a deposit with a user or a kitty adjustment
   without a user. A row of `coffee_beans` has a unique name among the live beans and, for a merged bean, the id of the
   bean that an admin merged it into. A row of `coffee_ratings` holds a score from 1 to 5 of a bean by a user.

@@ -53,9 +53,9 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
   starts with a coffee count of 0."
 - Input, from the team assistant: "Admins add users: login name, first and last name, email address, and whether the new
   user is an admin." "The very first admin is set up when the app is installed."
-- FR-4, FR-6, FR-8, FR-13, and FR-17 depend on this requirement, because they need users and admins. An admin records a
-  deposit (FR-4), corrects a coffee count (FR-8), and sets the price per cup (FR-17). A user records an expense (FR-6)
-  and adds a coffee (FR-13).
+- FR-4, FR-6, FR-8, FR-13, FR-17, and FR-19 depend on this requirement, because they need users and admins. An admin
+  records a deposit (FR-4), corrects a coffee count (FR-8), sets the price per cup (FR-17), and records an expense for
+  a user (FR-19). A user records an expense (FR-6) and adds a coffee (FR-13).
 - Technical limit, not a decision of a stakeholder: An email address has at most 254 characters, the longest address
   that a mail server accepts (RFC 5321, section 4.5.3.1.3, and Erratum 1690 to RFC 3696).
 - Verified by: `UserSystemTests`, `UserServiceTest`, and `BootstrapAdminLoaderTest`.

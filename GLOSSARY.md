@@ -78,10 +78,10 @@ from the term. Some entries end with a line "Avoid:", which lists words not to u
   sums have no rounding errors.
   Code: `amountCents`, `balanceCents`, `amount_cents`, `balance_cents`.
 - **plausibility check**: A check that refuses a value that probably comes from a typing error, although no rule of the
-  group forbids the value. Coffee Kitty checks amounts and weights in this way. A single amount of money is at most
-  1,000.00 € (FR-4, FR-6, and FR-17). The weight of a bean purchase is from 100 g to 1,000 g (FR-6). A requirement
-  states a plausibility check with SHOULD, because the group can do without the check. The daily limit is a rule of
-  the group and therefore no plausibility check.
+  group forbids the value. Coffee Kitty checks the weight of a bean purchase in this way, from 100 g to 1,000 g (FR-6).
+  A requirement states a plausibility check with SHOULD, because the group can do without the check. The upper limit
+  of 1,000.00 € for a single amount of money (FR-4, FR-6, FR-17, and FR-19) and the daily limit are rules of the group,
+  which the requirements state with MUST.
 - **price per cup**: The one price of a coffee in euro cents, which applies to every user and which an admin sets to an
   amount from 0.00 € to 1,000.00 €. It starts at 0.50 € (FR-17 in `requirements/FR-17-set-price-per-cup.md`). Each
   coffee lowers the balance of its user by the price per cup at the time of the coffee, so a new price applies only to
@@ -116,14 +116,15 @@ from the term. Some entries end with a line "Avoid:", which lists words not to u
   Code: `Payment` without a `user`.
   Avoid: correction (for a change of the kitty).
 - **expense**: Money that a user, the buyer, spent for the group, either a bean purchase or any other expense. FR-6 in
-  `requirements/FR-6-record-own-expense.md` specifies how a user records an expense that they paid with their own money.
+  `requirements/FR-6-record-own-expense.md` specifies how a user records an expense that they paid with their own money,
+  and FR-19 in `requirements/FR-19-record-expense-for-user.md` how an admin records an expense for a user.
   So far, Coffee Kitty has only the table, the JPA entity, and the repository for expenses, without a domain model.
   Code: `ExpenseEntity`, `ExpenseEntity.buyer`, `expenses`, `buyer_user_id`.
   Avoid: outlay, purchase (except in bean purchase).
-- **daily limit**: The most that a user who is not an admin records as expenses for themselves on one day: 10 expenses
+- **daily limit**: The most that a user who is not an admin records as expenses for themselves on one day: 5 expenses
   and 50.00 € in total. A day starts at midnight in the time zone Europe/Berlin. The group can configure another
-  amount of at most 100.00 €. The daily limit does not apply to an admin (FR-6 in
-  `requirements/FR-6-record-own-expense.md`). Coffee Kitty does not implement it yet.
+  amount of at most 100.00 €. The daily limit does not apply to an admin, and an admin records an expense beyond it for
+  the user (FR-6 in `requirements/FR-6-record-own-expense.md` and FR-19). Coffee Kitty does not implement it yet.
 - **bean purchase**: The kind of expense for coffee beans, which refers to a bean and has a weight in grams.
   Code: `BEANS`, `ExpenseEntity.bean`, `ExpenseEntity.weightGrams`.
 - **other expense**: The kind of expense for anything except beans, such as filters or milk, without a bean or a weight.

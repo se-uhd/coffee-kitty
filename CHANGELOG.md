@@ -7,12 +7,18 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- The requirement FR-19 (record an expense for a user) in `requirements/`: An admin records an expense for a user, and
+  the daily limit of FR-6 does not refuse it. Coffee Kitty does not implement it yet.
+
 ### Changed
 
-- FR-6 specifies a daily limit for the expenses that a user who is not an admin records: at most 10 expenses and 50.00 €
+- FR-6 specifies a daily limit for the expenses that a user who is not an admin records: at most 5 expenses and 50.00 €
   on one day, with a configurable amount of at most 100.00 €. It replaces the limit of 100.00 € for a single expense of
-  such a user, and it resolves the TBD on a daily limit. The plausibility check of 1,000.00 € for a single amount stays.
-  GLOSSARY.md defines the term daily limit.
+  such a user, and it resolves the TBD on a daily limit. GLOSSARY.md defines the term daily limit.
+- The upper limit of 1,000.00 € for a single amount is a rule (MUST) in FR-4, FR-6, and FR-17. Until now, these
+  requirements stated it as a plausibility check (SHOULD). `CoffeePrice.amountCents` has the constraint for it.
 
 ## [0.3.1] - 2026-11-25
 

@@ -31,8 +31,8 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
 - Input, from the team assistant: "Users see their own balance and the current price per cup." "A new user has a balance
   of 0.00 €." "A negative balance means that the user owes the kitty money. A positive balance means that the kitty owes
   the user money."
-- Depends on FR-4, FR-5, FR-6, FR-11, and FR-18: These requirements specify what changes a balance: a deposit (FR-4), a
-  coffee (FR-5), an expense (FR-6), an undo (FR-11), and a correction (FR-18).
+- Depends on FR-4, FR-5, FR-6, FR-11, FR-18, and FR-19: These requirements specify what changes a balance: a deposit
+  (FR-4), a coffee (FR-5), an expense (FR-6 and FR-19), an undo (FR-11), and a correction (FR-18).
 - TBD (open): Who is allowed to read the balance of another user? In the coffee app of SE@UHD, a user sees only their
   own balance, and an admin sees every balance. Coffee Kitty has no authentication yet. Until the group lead answers
   this question, this requirement lets every known acting user read every balance. Contact person: group lead.

@@ -12,8 +12,8 @@ Coffee Kitty MUST refuse a deposit that a user who is not an admin records with 
 a deposit with an amount that is not positive or with a note of more than 500 characters with 400 Bad Request, and a
 deposit for an unknown user with 404 Not Found. A refused deposit MUST NOT change the balance.
 
-Coffee Kitty SHOULD refuse a deposit above 1,000.00 € with 400 Bad Request. This limit is a plausibility check: It
-protects against a typing error and does not state how much a user pays.
+Coffee Kitty MUST refuse a deposit above 1,000.00 € with 400 Bad Request. This limit protects against a typing error
+and does not state how much a user pays.
 
 ## Rationale
 
@@ -50,7 +50,8 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
 - Input, from the team assistant: "A deposit is always positive and at most 1,000 €. A note is optional." "Only admins
   record deposits and adjustments. Users can't record their own deposits." "Notes have at most 500 characters."
 - Input, from the group lead (2026-11-25): Nobody pays 1,000 € into the kitty, and a usual deposit is at most about 100
-  €. The limit of 1,000 € is a plausibility check for the admin who records the deposit, not a rule on what a user pays.
+  €. The 1,000 € are a hard upper limit for a single amount, which protects against a typing error of the admin who
+  records the deposit.
 - Depends on FR-14: FR-14 specifies the users and which of them are admins.
 - FR-10 and FR-15 depend on this requirement: A deposit also raises the kitty balance by the deposit amount (FR-10), and
   FR-15 reports the balance that a deposit raises.
