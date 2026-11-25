@@ -7,6 +7,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- FR-6 specifies a daily limit for the expenses that a user who is not an admin records: at most 10 expenses and 50.00 €
+  on one day, with a configurable amount of at most 100.00 €. It replaces the limit of 100.00 € for a single expense of
+  such a user, and it resolves the TBD on a daily limit. The plausibility check of 1,000.00 € for a single amount stays.
+  GLOSSARY.md defines the term daily limit.
+
 ## [0.3.1] - 2026-11-25
 
 ### Fixed

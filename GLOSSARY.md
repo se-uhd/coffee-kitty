@@ -79,9 +79,9 @@ from the term. Some entries end with a line "Avoid:", which lists words not to u
   Code: `amountCents`, `balanceCents`, `amount_cents`, `balance_cents`.
 - **plausibility check**: A check that refuses a value that probably comes from a typing error, although no rule of the
   group forbids the value. Coffee Kitty checks amounts and weights in this way. A single amount of money is at most
-  100.00 € when a user enters it and at most 1,000.00 € when an admin enters it (FR-4, FR-6, and FR-17). The weight of a
-  bean purchase is from 100 g to 1,000 g (FR-6). A requirement states a plausibility check with SHOULD, because the
-  group can do without the check.
+  1,000.00 € (FR-4, FR-6, and FR-17). The weight of a bean purchase is from 100 g to 1,000 g (FR-6). A requirement
+  states a plausibility check with SHOULD, because the group can do without the check. The daily limit is a rule of
+  the group and therefore no plausibility check.
 - **price per cup**: The one price of a coffee in euro cents, which applies to every user and which an admin sets to an
   amount from 0.00 € to 1,000.00 €. It starts at 0.50 € (FR-17 in `requirements/FR-17-set-price-per-cup.md`). Each
   coffee lowers the balance of its user by the price per cup at the time of the coffee, so a new price applies only to
@@ -120,6 +120,10 @@ from the term. Some entries end with a line "Avoid:", which lists words not to u
   So far, Coffee Kitty has only the table, the JPA entity, and the repository for expenses, without a domain model.
   Code: `ExpenseEntity`, `ExpenseEntity.buyer`, `expenses`, `buyer_user_id`.
   Avoid: outlay, purchase (except in bean purchase).
+- **daily limit**: The most that a user who is not an admin records as expenses for themselves on one day: 10 expenses
+  and 50.00 € in total. A day starts at midnight in the time zone Europe/Berlin. The group can configure another
+  amount of at most 100.00 €. The daily limit does not apply to an admin (FR-6 in
+  `requirements/FR-6-record-own-expense.md`). Coffee Kitty does not implement it yet.
 - **bean purchase**: The kind of expense for coffee beans, which refers to a bean and has a weight in grams.
   Code: `BEANS`, `ExpenseEntity.bean`, `ExpenseEntity.weightGrams`.
 - **other expense**: The kind of expense for anything except beans, such as filters or milk, without a bean or a weight.
