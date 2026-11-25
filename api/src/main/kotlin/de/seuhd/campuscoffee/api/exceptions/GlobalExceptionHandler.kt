@@ -13,12 +13,14 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.context.request.ServletWebRequest
 import org.springframework.web.context.request.WebRequest
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
+import tools.jackson.databind.exc.MismatchedInputException
+import tools.jackson.databind.exc.PropertyBindingException
 import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -29,7 +31,8 @@ import java.time.ZoneOffset
  * [handleDomainException] maps each domain exception to a status and uses the class name of the exception as the
  * error code. The base class [ResponseEntityExceptionHandler] maps each standard Spring MVC exception to its status
  * code. Examples are the exceptions for an unsupported HTTP method, a body that Jackson cannot read, and an unknown
- * path. [handleExceptionInternal] builds the error response for the standard Spring MVC exceptions.
+ * path. [handleExceptionInternal] builds the error response for the standard Spring MVC exceptions, and
+ * [handleHttpMessageNotReadable] names the field at which Jackson cannot read a request body.
  * [handleGenericException] returns a 500 for every other exception.
  *
  * A failed `require` or `check` throws an `IllegalArgumentException` or an `IllegalStateException`. Such an exception
@@ -90,27 +93,27 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     /**
-     * Returns a 400 with the error code `BadRequest` for a request body that fails Bean Validation (`@Valid`). The
-     * message contains the field errors, separated by "; ", and each field error starts with the field name. An error
-     * of a constraint on the class would have no field name, but no DTO has such a constraint. The handler logs the
-     * message at INFO.
+     * Returns a 400 with the error code `BadRequest` for a request body that Jackson cannot read. When Jackson fails at
+     * a field of the DTO, the message names this field (see [unreadableField]). Every other body that Jackson cannot
+     * read, such as invalid JSON or a body with an unknown field, gets the response of [handleExceptionInternal].
      */
-    override fun handleMethodArgumentNotValid(
-        exception: MethodArgumentNotValidException,
+    override fun handleHttpMessageNotReadable(
+        exception: HttpMessageNotReadableException,
         headers: HttpHeaders,
         status: HttpStatusCode,
         request: WebRequest
     ): ResponseEntity<Any>? {
-        val message =
-            exception.bindingResult.fieldErrors.joinToString("; ") { error -> "${error.field} ${error.defaultMessage}" }
-        log.info { "Request validation failed on ${describe(request)}: ${loggableText(message)}" }
+        val field =
+            unreadableField(exception) ?: return handleExceptionInternal(exception, null, headers, status, request)
+        val message = "The field $field is missing or has a value that the server cannot read."
+        log.info { "${exception.javaClass.simpleName} -> $status on ${describe(request)}: $message" }
         return respond(status, errorBody(status, request, message), headers)
     }
 
     /**
      * Builds the error response for an exception that [ResponseEntityExceptionHandler] maps to a status. Examples are
      * the exceptions for a body that Jackson cannot read, an unsupported method or media type, and an unknown path.
-     * [handleMethodArgumentNotValid] builds the error response for a request body that fails Bean Validation. The error
+     * [handleHttpMessageNotReadable] builds the error response for a request body with an unreadable field. The error
      * response has the reason phrase of the status as its message and the same phrase without spaces as its error code.
      * It does not contain the message or the class name of the exception. The message of such an exception can quote
      * client input, for example a value from a body that Jackson cannot read.
@@ -168,6 +171,21 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             timestamp = LocalDateTime.now(ZoneOffset.UTC),
             path = request.servletRequest().requestURI
         )
+
+    /**
+     * Returns the name of the DTO property at which Jackson failed to read a request body, or null if [exception] has
+     * no such property. Jackson fails at a property when the field is missing or `null` although the property is not
+     * nullable, and when the value has the wrong JSON type or is not a constant of the enum. The name comes from the
+     * DTO and is not client input. For an unknown field, the name would be client input, so the function returns null
+     * for a [PropertyBindingException]. It also returns null for a body that is not valid JSON or not a JSON object.
+     */
+    private fun unreadableField(exception: HttpMessageNotReadableException): String? {
+        val cause = exception.cause
+        if (cause !is MismatchedInputException || cause is PropertyBindingException) {
+            return null
+        }
+        return cause.path.lastOrNull()?.propertyName
+    }
 
     /** Returns the method and path of [request] for a log line, without the query string. */
     private fun describe(request: WebRequest): String =

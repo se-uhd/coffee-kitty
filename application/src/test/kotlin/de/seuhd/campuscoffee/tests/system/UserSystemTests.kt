@@ -237,6 +237,13 @@ class UserSystemTests : AbstractSystemTest() {
     }
 
     @Test
+    fun `creating a user with an unknown field leaves the name of the field out of the message`() {
+        val response = userRequests.create(newUser() + ("nickname" to "max"))
+
+        assertThat(response.error.message).doesNotContain("nickname")
+    }
+
+    @Test
     fun `creating a user without the acting user header returns 401 Unauthorized`() {
         val response = userRequests.create(newUser(), actingUser = null)
 
@@ -277,7 +284,7 @@ class UserSystemTests : AbstractSystemTest() {
     @Test
     fun `creating a user without a required field and without the acting user header returns 401 Unauthorized`() {
         // With an acting user, the body without an email address returns 400. Without the rule of SecurityConfig for
-        // this endpoint, Spring MVC would validate the body first, and this request would return 400 as well.
+        // this endpoint, Spring MVC would read the body first, and this request would return 400 as well.
         val response = userRequests.create(newUser() - "emailAddress", actingUser = null)
 
         assertThat(response.status).isEqualTo(401)

@@ -156,7 +156,7 @@ class ArchitectureTests {
     @Test
     fun `a controller function that reads the acting user has the annotation ActingUserRequired`() {
         // SecurityConfig requires authentication only for the endpoints of the functions with ActingUserRequired.
-        // Without the annotation, Spring MVC validates the request body before the controller asks for the acting user.
+        // Without the annotation, Spring MVC reads the request body before the controller asks for the acting user.
         // A request without an acting user and with an invalid body then gets 400 instead of 401. The rule names the
         // classes of the api module as text, because the tests must not depend on that module.
         val readsTheActingUser =

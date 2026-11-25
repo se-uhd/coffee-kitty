@@ -11,6 +11,8 @@ import de.seuhd.campuscoffee.tests.toResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import java.nio.charset.StandardCharsets
@@ -75,6 +77,22 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
         assertThat(response.status).isEqualTo(400)
         assertThat(response.error.errorCode).isEqualTo("BadRequest")
         assertThat(response.error.message).doesNotContain("one coffee")
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["{", "[]"])
+    fun `posting a body that is not a JSON object returns 400 Bad Request`(body: String) {
+        val response: Response<ErrorJson> =
+            client
+                .post()
+                .uri("/api/users/{userId}/consumption", userFixture("maxmustermann").persistedId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .exchange()
+                .toResponse()
+
+        assertThat(response.status).isEqualTo(400)
+        assertThat(response.error.errorCode).isEqualTo("BadRequest")
     }
 
     @Test

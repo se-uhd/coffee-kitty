@@ -163,6 +163,22 @@ class ConsumptionSystemTests : AbstractSystemTest() {
     }
 
     @Test
+    fun `posting a body without a delta names the missing field in the message`() {
+        val response = consumptionRequests.applyDelta(userFixtureId(), emptyMap())
+
+        assertThat(response.error.message).contains("delta")
+    }
+
+    @Test
+    fun `posting a delta of null returns 400 Bad Request`() {
+        val response = consumptionRequests.applyDelta(userFixtureId(), mapOf("delta" to null))
+
+        assertThat(response.status).isEqualTo(400)
+        assertThat(response.error.errorCode).isEqualTo("BadRequest")
+        assertThat(consumption().count).isEqualTo(0)
+    }
+
+    @Test
     fun `getting the consumption of an unknown user returns 404 Not Found`() {
         val userId = UUID.randomUUID()
 

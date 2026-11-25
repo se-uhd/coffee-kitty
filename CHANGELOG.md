@@ -68,8 +68,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the domain. A controller function that reads the acting user has the annotation `ActingUserRequired`. The system and
   acceptance tests use no class of the api module. The production classes contain no test fixtures.
 - ADRs 002 to 004 in `doc/adr/` record the decisions on Spring in the domain, the role checks, and the read methods
-  without a transaction. ADRs 005 to 007 record the decisions on the test fixtures, the validation, and the tests of the
-  JSON field names.
+  without a transaction. ADRs 005 to 008 record the decisions on the test fixtures, the validation, the tests of the
+  JSON field names, and the required fields of a request.
 - `gradle build` runs CPD, the copy-paste detector of PMD, on the production code and fails at a duplicate of 70 tokens.
 
 ### Changed
@@ -81,6 +81,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   name. The same change applies to a total of a correction that is negative or above 1,000,000 and to a note that is
   blank or longer than 500 characters. Until now, both modules checked these rules, and the email address had to pass
   two different checks.
+- Breaking: A request DTO states a required field with a property that is not nullable, such as `val delta: Int`, and
+  Jackson rejects a body without the field. The api module no longer uses Bean Validation, so the DTOs have no
+  `@NotNull` and the controllers no `@Valid` (ADR 008). The message of a 400 for a missing field changes from
+  "emailAddress must not be null" to "The field emailAddress is missing or has a value that the server cannot read."
+  A 400 for a value of the wrong JSON type has the same message. Until now, its message was "Bad Request". A response
+  names only the first such field. Until now, it named every missing field.
 - Breaking: A request body with an unknown field returns 400 with the error code `BadRequest`
   (`spring.jackson.deserialization.fail-on-unknown-properties`). `POST /api/users` with an `id` returned 400 with the
   error code `ValidationException` until now, and the server ignored the fields `createdAt` and `updatedAt` and any
@@ -127,7 +133,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Every error message is in English. Until now, `POST /api/users` with `Accept-Language: de` returned a message that
   mixed German and English, because Spring took the locale from this header and Hibernate Validator translates its
-  default messages. `application.yaml` now sets the locale to English for every request.
+  default messages. The app no longer uses Bean Validation and writes every message itself.
 - The message of a 401 for a blank `X-Acting-User` header is "The header X-Acting-User is missing or blank." Until now,
   the message was "The header X-Acting-User is missing."
 

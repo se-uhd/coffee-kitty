@@ -68,7 +68,7 @@ class CorrectionSystemTests : AbstractSystemTest() {
     @Test
     fun `correcting a coffee count without a total and without the acting user header returns 401 Unauthorized`() {
         // With an acting user, the body without a total returns 400. Without the rule of SecurityConfig for this
-        // endpoint, Spring MVC would validate the body first, and this request would return 400 as well.
+        // endpoint, Spring MVC would read the body first, and this request would return 400 as well.
         val response = consumptionRequests.correctCount(userId(), mapOf("note" to note), actingUser = null)
 
         assertThat(response.status).isEqualTo(401)

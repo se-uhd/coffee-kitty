@@ -8,7 +8,7 @@ import org.mapstruct.Mapping
 
 /**
  * The MapStruct mapper between a [User] and its DTOs. With separate DTOs, the domain models do not need API
- * annotations, such as `@NotNull` or `@Schema`. The kapt convention plugin sets `mapstruct.unmappedTargetPolicy` to
+ * annotations, such as `@Schema`. The kapt convention plugin sets `mapstruct.unmappedTargetPolicy` to
  * `ERROR`. MapStruct therefore stops the build when a target class gets a property that the source class does not have.
  */
 @Mapper(componentModel = "spring")
@@ -25,7 +25,7 @@ interface UserDtoMapper {
      * Converts the request body [dto] to a [User] without an id and timestamps, which the data module assigns. The
      * mapper sets a missing role to `USER`, because the role of a [User] cannot be null.
      *
-     * @param dto the request body, which Bean Validation has checked for missing fields
+     * @param dto the request body
      */
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)

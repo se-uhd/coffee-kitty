@@ -4,7 +4,8 @@
 
 ### Status
 
-Accepted
+Accepted. [ADR 008](008-required-fields-of-a-request.md) replaces the rule that a request DTO has nullable properties
+with `@NotNull`.
 
 ### Date
 

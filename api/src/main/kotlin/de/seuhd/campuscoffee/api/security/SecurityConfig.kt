@@ -21,7 +21,7 @@ import tools.jackson.databind.json.JsonMapper
  * [ActingUserAuthenticationFilter] runs before the controllers and resolves the acting user from the header
  * `X-Acting-User`. [securityFilterChain] requires authentication for the endpoint of every controller function with the
  * annotation [ActingUserRequired]. A request to such an endpoint without an acting user then gets its 401 before Spring
- * MVC reads and validates the request body. Every other endpoint is open to every client.
+ * MVC reads the request body. Every other endpoint is open to every client.
  *
  * The filter authenticates each request separately, so the API stores no sessions and sets no cookies. The
  * configuration turns off sessions, CSRF protection, the login form, HTTP Basic, and the logout endpoint.
