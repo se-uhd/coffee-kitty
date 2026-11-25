@@ -92,7 +92,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   module replaces `DataResetService`. `DatabaseCleaner` truncates every table that the PostgreSQL catalog lists,
   including `expenses`, `user_balance`, and `kitty_balance`, which the data reset left out. `CrudDataService.clear`,
   `FixtureStartupLoader`, `FixturesProperties`, and the keys `campus-coffee.fixtures.load-on-startup` and
-  `campus-coffee.fixtures.reset-on-startup` no longer exist.
+  `campus-coffee.fixtures.reset-on-startup` no longer exist. `DatabaseCleaner` is a Spring bean, which the tests
+  inject, so that only the data module uses the `DataSource`.
 - `gradle :application:bootTestRun` starts the app with the user fixtures (the dev application). Until now,
   `gradle :application:bootRun --args='--spring.profiles.active=dev'` started the app with the user fixtures. This
   command now starts the app on the data of the previous run.

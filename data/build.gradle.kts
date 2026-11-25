@@ -24,6 +24,9 @@ dependencies {
     compileOnly(libs.mapstruct)
     kapt(libs.mapstruct.processor)
 
+    // DatabaseCleaner in src/testFixtures is a Spring bean (@Component).
+    testFixturesImplementation(libs.spring.boot.core)
+
     testImplementation(testFixtures(project(":domain")))
     testImplementation(libs.testcontainers.postgresql)
 }

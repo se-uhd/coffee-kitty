@@ -112,7 +112,7 @@ class DatabaseCleanerIntegrationTest : AbstractDataIntegrationTest() {
         val before = rowCounts()
         assertThat(before.filterValues { it == 0L }).`as`("tables without a row before the cleaning").isEmpty()
 
-        DatabaseCleaner(dataSource).clean()
+        databaseCleaner.clean()
 
         val after = rowCounts()
         assertThat(after.filterKeys { it != FLYWAY_TABLE }.values).containsOnly(0L)

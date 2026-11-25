@@ -17,7 +17,6 @@ import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.servlet.client.RestTestClient
-import javax.sql.DataSource
 
 /**
  * The base class of the system tests. The Spring Boot test context uses the shared PostgreSQL container and serves the
@@ -37,7 +36,7 @@ abstract class AbstractSystemTest {
     protected lateinit var userInternalService: UserInternalService
 
     @Autowired
-    private lateinit var dataSource: DataSource
+    private lateinit var databaseCleaner: DatabaseCleaner
 
     @LocalServerPort
     private var port: Int = 0
@@ -56,7 +55,7 @@ abstract class AbstractSystemTest {
 
     @BeforeEach
     fun beforeEach() {
-        DatabaseCleaner(dataSource).clean()
+        databaseCleaner.clean()
         userFixtures = TestFixtures.createUserFixtures(userInternalService)
         client = SystemTestUtils.clientFor(port)
         userRequests = UserRequests(client)
