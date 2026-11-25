@@ -414,11 +414,12 @@ of an invalid field, a rejected value, or a login name in a log message.
 JaCoCo records the execution data of the tests of every module. The subproject `coverage` merges the data into one
 report at `coverage/build/reports/jacoco/testCodeCoverageReport/html/index.html`, because the system and acceptance
 tests of the application module cover most of the other modules. The task `coverageGate`, which `check` runs, has two
-rules (`coverage/build.gradle.kts`). The first rule fails the build when the tests cover less than 95% of the lines or
-85% of the branches of all modules together. The class `Application` and the generated mappers do not count. Raise these
-minimums as the coverage grows, and never lower them to make a build pass. A ratio over all modules cannot detect a
-single function without a test, so the second rule requires that a test executes every function of a domain service and
-of a controller.
+rules (`coverage/build.gradle.kts`). The first rule fails the build when the tests cover less than 90% of the lines or
+80% of the branches of all modules together. The class `Application` and the generated mappers do not count. These
+minimums are on purpose several points below the measured coverage, so that nobody writes a test only to reach a number.
+Such a test checks implementation details (see Test Naming). Do not raise the minimums when the coverage grows, and do
+not lower them to make a build pass. A ratio over all modules cannot detect a single function without a test, so the
+second rule requires that a test executes every function of a domain service and of a controller.
 
 Until 2026-12-08, both gates leave out the functions of the undo status (FR-9): `undoableUntil`, `GracePeriod.closesAt`,
 and `ConsumptionController.undoStatus`. Their tests are the reference solution of assignment 7, which students submit
@@ -437,8 +438,9 @@ surviving mutant that changes the behavior. PIT does not remove the null checks 
 (`avoidCallsTo`), because no test can detect such a mutant. One mutant survives today, a condition in the inlined code
 of `any` in `createInitialAdmin`, which does not change the behavior.
 
-`check` runs CPD, the copy-paste detector of PMD, on the production code. It fails at a duplicate of 70 tokens, which
-is a copy of about 10 to 13 lines (`build.gradle.kts`). `gradle cpd` runs it alone. Extract the shared code instead of
+`check` runs CPD, the copy-paste detector of PMD, on the production code. It fails at a duplicate of 70 tokens
+(`build.gradle.kts`). The largest duplicate that the code cannot extract has 60 tokens, and at 70 tokens CPD reports a
+copy of a domain function of 10 to 16 lines. `gradle cpd` runs it alone. Extract the shared code instead of
 raising the threshold.
 
 ## Key Technologies
@@ -452,6 +454,11 @@ raising the threshold.
 - ktlint for the formatting, and detekt with the `campus-coffee-kdoc` rule set for the static analysis.
 
 ## REST API Endpoints
+Every threshold of the build has a measurement on Coffee Kitty: the duplicate size, the mutation score, the coverage
+minimums, the memory of the Gradle daemon, and the wait times of the tests. A comment at each threshold states the
+result and the date, and `doc/adr/010-thresholds-of-the-build.md` has the numbers. Before you change a threshold or add
+one, measure, record the result at the threshold, and write a new ADR. Do not copy a threshold from another project.
+
 
 The endpoints accept and return only JSON. `ApiWebConfig` adds the prefix `/api` to the path of every controller, and
 the controllers leave the prefix out of their `@RequestMapping`. The REST API section of `README.md` lists every

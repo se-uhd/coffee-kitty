@@ -330,7 +330,7 @@ gradle ktlintFormat
 ```
 
 Create the coverage report of all modules, `coverage/build/reports/jacoco/testCodeCoverageReport/html/index.html`.
-`gradle build` also creates it. The build fails when the tests cover less than 95% of the lines or 85% of the branches.
+`gradle build` also creates it. The build fails when the tests cover less than 90% of the lines or 80% of the branches.
 It also fails when the tests do not execute every function of the domain services and the controllers:
 
 ```shell
