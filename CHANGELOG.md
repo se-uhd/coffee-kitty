@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-25
+
 ### Added
 
 - An admin can correct the coffee count of a user at any time and has to add a note with the reason for the correction
@@ -138,11 +140,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `SecurityConfig` reads the routes that need an acting user from the controller functions with the new annotation
   `ActingUserRequired` instead of a list of paths.
 - The unit tests of the api module are in `api/src/test`.
-- The messages of three errors have new wording: "The coffee count must not be negative.", "The coffee count must not
-  exceed 1000000.", and "The grace period of the most recent coffee has passed." The message for an invalid first or
-  last name states the rules in parallel form. In the OpenAPI definition, the description of the path parameter
-  `userId` is "The id of the user.", and the summary of `GET /users/{userId}/consumption/undo` uses the term undo
-  status.
+- The message of a 409 for an undo after the grace period is "The grace period of the most recent coffee has passed."
+  The message for an invalid first or last name states the rules in parallel form. In the OpenAPI definition, the
+  description of the path parameter `userId` is "The id of the user."
 - The data adapters are in the package `data.implementation`, as the domain services are in `domain.implementation`.
   Until now, the package was `data.implementations`.
 - GLOSSARY.md defines the term endpoint, and the documentation no longer uses the word route for it. The message of a
@@ -161,7 +161,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Every error message is in English. Until now, `POST /api/users` with `Accept-Language: de` returned a message that
   mixed German and English, because Spring took the locale from this header and Hibernate Validator translates its
-  default messages. The app no longer uses Bean Validation and writes every message itself.
+  default messages. The api module no longer uses Bean Validation, and every constraint on a domain model has a
+  message in English.
 - The message of a 401 for a blank `X-Acting-User` header is "The header X-Acting-User is missing or blank." Until now,
   the message was "The header X-Acting-User is missing."
 
@@ -294,6 +295,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A REST API that lists and creates users, adds a coffee to a user's coffee count, and stores the users and their
   coffee counts in PostgreSQL. A multi-module Gradle build runs ktlint, detekt, and the tests.
 
+[0.3.0]: https://github.com/se-uhd/coffee-kitty/releases/tag/v0.3.0
 [0.2.3]: https://github.com/se-uhd/coffee-kitty/releases/tag/v0.2.3
 [0.2.2]: https://github.com/se-uhd/coffee-kitty/releases/tag/v0.2.2
 [0.2.1]: https://github.com/se-uhd/coffee-kitty/releases/tag/v0.2.1
