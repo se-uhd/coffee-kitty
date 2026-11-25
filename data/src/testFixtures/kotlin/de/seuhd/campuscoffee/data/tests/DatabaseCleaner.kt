@@ -1,5 +1,6 @@
 package de.seuhd.campuscoffee.data.tests
 
+import org.springframework.stereotype.Component
 import javax.sql.DataSource
 
 /**
@@ -11,8 +12,12 @@ import javax.sql.DataSource
  * together, so the foreign keys between them do not require an order. The table `flyway_schema_history` keeps its rows,
  * because Flyway reads from it which migrations it has applied.
  *
+ * The class is a Spring bean, which the component scan of a test context and of the dev application finds. A test
+ * injects the bean and calls [clean], and does not need the [DataSource].
+ *
  * @param dataSource the data source of the database to clean
  */
+@Component
 class DatabaseCleaner(
     private val dataSource: DataSource
 ) {

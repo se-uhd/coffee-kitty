@@ -383,7 +383,8 @@ Prepare the state that each test of a class needs anew, such as a stored user, i
 `DatabaseCleaner` in `data/src/testFixtures/kotlin/de/seuhd/campuscoffee/data/tests/` deletes the rows of every table
 before each integration test, system test, and scenario and on every start of the dev application. It reads the names
 of the tables from the PostgreSQL catalog and truncates them in one statement, so a new table needs no change to it.
-`DatabaseCleanerIntegrationTest` checks every table that the catalog lists.
+`DatabaseCleanerIntegrationTest` checks every table that the catalog lists. `DatabaseCleaner` is a Spring bean. A test
+class injects it and calls `clean`, so that only the data module knows how the app reaches the database.
 
 `TestFixtures` and `DatabaseCleaner` are in the Gradle source set `src/testFixtures` of their module (plugin
 `java-test-fixtures`). The other modules add them with `testImplementation(testFixtures(project(":domain")))`. The

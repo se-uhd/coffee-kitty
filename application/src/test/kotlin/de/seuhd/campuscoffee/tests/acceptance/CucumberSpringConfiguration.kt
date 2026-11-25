@@ -16,7 +16,6 @@ import org.springframework.context.annotation.Lazy
 import org.springframework.context.annotation.Primary
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import javax.sql.DataSource
 
 /**
  * The Spring context and the hook for every acceptance scenario. Cucumber accepts only one class with
@@ -30,11 +29,11 @@ import javax.sql.DataSource
 @CucumberContextConfiguration
 class CucumberSpringConfiguration(
     private val userInternalService: UserInternalService,
-    private val dataSource: DataSource
+    private val databaseCleaner: DatabaseCleaner
 ) {
     @Before
     fun beforeEach() {
-        DatabaseCleaner(dataSource).clean()
+        databaseCleaner.clean()
         TestFixtures.createUserFixtures(userInternalService)
     }
 

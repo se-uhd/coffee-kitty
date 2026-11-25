@@ -9,7 +9,6 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
-import javax.sql.DataSource
 
 /**
  * The base class of the integration tests of the data module. Each test runs in the Spring context of
@@ -21,11 +20,11 @@ import javax.sql.DataSource
 @SpringBootTest(classes = [DataTestApplication::class], webEnvironment = SpringBootTest.WebEnvironment.NONE)
 abstract class AbstractDataIntegrationTest {
     @Autowired
-    protected lateinit var dataSource: DataSource
+    protected lateinit var databaseCleaner: DatabaseCleaner
 
     @BeforeEach
     fun cleanDatabase() {
-        DatabaseCleaner(dataSource).clean()
+        databaseCleaner.clean()
     }
 
     companion object {
