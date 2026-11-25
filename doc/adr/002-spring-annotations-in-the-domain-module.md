@@ -4,7 +4,8 @@
 
 ### Status
 
-Accepted
+Accepted. [ADR 009](009-value-rules-on-the-domain-models.md) adds the API of Jakarta Bean Validation to the compile
+classpath of the domain.
 
 ### Date
 

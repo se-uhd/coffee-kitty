@@ -26,7 +26,7 @@ import java.util.UUID
 class UserServiceTest {
     private val userDataService: UserDataService = mock()
     private val coffeeConsumptionDataService: CoffeeConsumptionDataService = mock()
-    private val service = UserServiceImpl(userDataService, coffeeConsumptionDataService)
+    private val service = UserServiceImpl(userDataService, coffeeConsumptionDataService, domainValidator())
 
     private val userId: UUID = UUID(0L, 1L)
     private val createdId: UUID = UUID(0L, 2L)

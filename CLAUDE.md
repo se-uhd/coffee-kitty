@@ -39,8 +39,8 @@ repository of the build, and `FAIL_ON_PROJECT_REPOS` fails the build when a buil
 
 ### Module Dependencies
 
-- `domain`: the domain models, the ports, and the business logic. Depends on the Spring Boot core and `spring-tx`,
-  never on Spring MVC, Jakarta Persistence (JPA), or the other modules.
+- `domain`: the domain models, the ports, and the business logic. Depends on the Spring Boot core, `spring-tx`, and
+  the API of Jakarta Bean Validation, never on Spring MVC, Jakarta Persistence (JPA), or the other modules.
 - `api`: the controllers, the data transfer objects (DTOs), the DTO mappers, the exception handler, and the OpenAPI
   definition. Depends on `domain`.
 - `data`: the JPA entities, the repositories, the entity mappers, the data adapters, and the Flyway migrations. Depends
@@ -90,10 +90,10 @@ The ports are in `domain/src/main/kotlin/de/seuhd/campuscoffee/domain/ports/`:
   `UserInternalService` creates a user without an acting user.
 
 The implementations of the API and internal ports are in `domain/.../implementation/`. `UserServiceImpl.create` trims
-the email address, converts it to lowercase, and checks the new user against the limits in the companion object of
-`User`. In one transaction, the function then stores the user and the consumption of the user with a coffee count of
-zero. The test setup and the dev application create the user fixtures through `UserInternalService.create`, which checks
-the user fixtures like any other new user.
+the email address, converts it to lowercase, and checks the new user against the Bean Validation constraints on `User`
+with `DomainValidator` (see Validation in Important Patterns). In one transaction, the function then stores the user and
+the consumption of the user with a coffee count of zero. The test setup and the dev application create the user fixtures
+through `UserInternalService.create`, which checks the user fixtures like any other new user.
 
 `CoffeeConsumptionServiceImpl.applyDelta` accepts only a delta of `+1` and reads the consumption with
 `getByUserIdForUpdate`, which locks the row until the transaction ends. A second request that adds a coffee for the same
@@ -110,14 +110,15 @@ otherwise. `ConsumptionController` serves this result as the undo status (`UndoS
 period, `campus-coffee.consumption.grace-period`, with a default of 5 minutes.
 
 `CoffeeConsumptionServiceImpl.correctCount` lets an admin set the coffee count to a new total with a note (FR-8). It
-checks the role with `requireAdmin`, refuses a total outside 0 to `CountCorrection.MAX_TOTAL` and a note that is
-missing, blank, or longer than `CountCorrection.MAX_NOTE_LENGTH`, and locks the consumption like `applyDelta`. A total
-below the count drops the times of the newest coffees from `coffeeTimes`, as the coffee app of SE@UHD removes the newest
-coffees of the user from its undo stack. A higher total adds coffees without a time. In the same transaction, the
-function calls `insert` of the data port `CountCorrectionDataService` to store a `CountCorrection` with the count before
-and after, the note, and the admin. The data module stores the corrections in the table `count_corrections`, which
-references the corrected user with `ON DELETE CASCADE` and the admin with the default `NO ACTION`. `getCorrections` also
-checks the role with `requireAdmin` and returns the corrections of a user, newest first.
+checks the role with `requireAdmin`, locks the consumption like `applyDelta`, and creates a `CountCorrection` with the
+count before and after, the note, and the admin. `DomainValidator` checks the correction: The constraints on
+`CountCorrection` refuse a total outside 0 to `CountCorrection.MAX_TOTAL` and a note that is blank or longer than
+`CountCorrection.MAX_NOTE_LENGTH`. A total below the count drops the times of the newest coffees from `coffeeTimes`, as
+the coffee app of SE@UHD removes the newest coffees of the user from its undo stack. A higher total adds coffees without
+a time. In the same transaction, the function calls `insert` of the data port `CountCorrectionDataService` to store the
+correction. The data module stores the corrections in the table `count_corrections`, which references the corrected user
+with `ON DELETE CASCADE` and the admin with the default `NO ACTION`. `getCorrections` also checks the role with
+`requireAdmin` and returns the corrections of a user, newest first.
 
 ### Generic Base Classes
 
@@ -432,8 +433,9 @@ behavior is wrong. The report is in `domain/build/reports/pitest/index.html`. Th
 than 90% of all mutants (`pitest-conventions.gradle.kts`). This share also counts the mutants in code that no unit test
 executes, so a function of a domain service without a unit test lowers it. `check` does not run PIT, and CI runs it
 after the build. Run it before you push a change to the domain module, and add a test or improve an assertion for each
-surviving mutant that changes the behavior. The mutants that survive today are null checks that the Kotlin compiler
-generates.
+surviving mutant that changes the behavior. PIT does not remove the null checks that the Kotlin compiler generates
+(`avoidCallsTo`), because no test can detect such a mutant. One mutant survives today, a condition in the inlined code
+of `any` in `createInitialAdmin`, which does not change the behavior.
 
 `check` runs CPD, the copy-paste detector of PMD, on the production code. It fails at a duplicate of 70 tokens, which
 is a copy of about 10 to 13 lines (`build.gradle.kts`). `gradle cpd` runs it alone. Extract the shared code instead of
@@ -445,6 +447,7 @@ raising the threshold.
 - Spring Data JPA with Hibernate, PostgreSQL, and Flyway.
 - MapStruct through kapt (the Kotlin annotation processing tool), Jackson with its Kotlin module for the JSON bodies,
   and springdoc for the OpenAPI definition and Swagger UI.
+- Jakarta Bean Validation with Hibernate Validator for the constraints on the domain models.
 - JUnit, Mockito with mockito-kotlin, AssertJ, Testcontainers, Cucumber, and ArchUnit for the tests.
 - ktlint for the formatting, and detekt with the `campus-coffee-kdoc` rule set for the static analysis.
 
@@ -498,10 +501,17 @@ cleaning the database.
   with `null` as its value. The `@Schema` annotations of a request DTO document the limits of the domain in the OpenAPI
   definition. A body with a missing field, a value of the wrong JSON type, or an unknown field gets a 400 with the
   error code `BadRequest`, and `GlobalExceptionHandler.handleHttpMessageNotReadable` names the field in the message
-  unless the field is unknown. A domain service checks every rule for a value, such as a length or a range, and throws
-  a `ValidationException` (400). These rules then also hold for a user that no request creates, such as the bootstrap
-  admin. The app does not use Bean Validation: Do not add an annotation such as `@NotNull` or `@Size` to a DTO, and do
+  unless the field is unknown. Do not add a Bean Validation annotation such as `@NotNull` or `@Size` to a DTO, and do
   not make a required property nullable (`doc/adr/008-required-fields-of-a-request.md`).
+- Value rules: A domain model declares each rule for a value, such as a length or a range, as a Bean Validation
+  constraint on the property, such as `@field:Size` on `User.loginName`. A domain service calls
+  `DomainValidator.requireValid` with the domain object before it stores the object, and a violated constraint becomes
+  a `ValidationException` (400). The rules then also hold for a user that no request creates, such as the bootstrap
+  admin. Give every constraint a `message`, because Hibernate Validator would translate a default message to the locale
+  of the JVM. Constraints on one property that describe one rule share a message constant. A domain service does not
+  use `@Validated` with `@Valid`, because Spring applies this check only to a call from another bean and not in a unit
+  test. A rule for a parameter of an operation that is not a property of a domain model stays in the domain service,
+  such as the delta of `applyDelta` (`doc/adr/009-value-rules-on-the-domain-models.md`).
 - Request bodies: Jackson rejects a value of the wrong JSON type instead of converting it, and the request gets a 400
   with the error code `BadRequest`. It also rejects a field that the DTO does not have
   (`spring.jackson.deserialization.fail-on-unknown-properties`), such as an `id` in the body of `POST /api/users`. The
@@ -536,7 +546,8 @@ done. For the price, the payments, the beans, and the ratings, steps 1, 3, 6, an
 is the API port (step 2).
 
 1. Create the domain model in `domain/.../model/`. The domain model implements `DomainModel<UUID>` and has a nullable
-   `id`, `createdAt`, and `updatedAt` (see `User`).
+   `id`, `createdAt`, and `updatedAt` (see `User`). Declare each rule for a value as a Bean Validation constraint with
+   a message on the property (see Value rules in Important Patterns).
 2. Create the API port in `domain/.../ports/api/`. An operation that only the startup task or the test setup calls
    belongs to an internal port in `domain/.../ports/internal/`.
 3. Create the data port in `domain/.../ports/data/`. Ports and Adapters states when a data port extends
@@ -560,7 +571,8 @@ is the API port (step 2).
    `CoffeeConsumption`, through the referenced mapper. An update then writes the fields of the nested domain object over
    the referenced row.
 7. Create the data adapter in `data/.../implementation/` (extend `CrudDataServiceImpl`).
-8. Create the implementation of the API port in `domain/.../implementation/`.
+8. Create the implementation of the API port in `domain/.../implementation/`. Call `DomainValidator.requireValid` with
+   a new domain object before the data port stores it.
 9. Create the DTOs in `api/.../dtos/` and the DTO mapper in `api/.../mapper/`. A response DTO has only non-null
    properties, including `id`, `createdAt`, and `updatedAt`, and marks each as required for the OpenAPI definition with
    `@field:Schema(requiredMode = Schema.RequiredMode.REQUIRED)` (see `UserDto`). A request DTO has a property that is

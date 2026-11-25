@@ -13,4 +13,10 @@ dependencies {
     // @Service comes from spring-context, a dependency of spring-boot. @Transactional comes from spring-tx.
     implementation(libs.spring.boot.core)
     implementation(libs.spring.tx)
+    // The domain models declare their limits as Bean Validation constraints, such as @Size, and DomainValidator checks
+    // them. api() puts the annotations on the compile classpath of the modules that use the domain models.
+    api(libs.jakarta.validation.api)
+    // Hibernate Validator checks the constraints at runtime, and Spring Boot provides the Validator bean. The domain
+    // compiles only against the API above, so it cannot use a class of Hibernate Validator.
+    runtimeOnly(libs.spring.boot.starter.validation)
 }
