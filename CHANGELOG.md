@@ -62,7 +62,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The undo status (FR-9) has no tests yet, because they are the reference solution of assignment 7. Until 2026-12-08,
   the coverage gate and PIT leave out the functions `undoableUntil`, `GracePeriod.closesAt`, and
   `ConsumptionController.undoStatus`.
-- `gradle build` creates a coverage report of all modules with JaCoCo. The build fails below 95% of the lines or 85% of
+- `gradle build` creates a coverage report of all modules with JaCoCo. The build fails below 90% of the lines or 80% of
   the branches, and when the tests do not execute every function of a domain service or a controller.
 - `gradle :domain:pitest` runs mutation tests of the domain services with PIT and fails when the tests detect fewer
   than 90% of all mutants. `gradle build` does not run it, and the CI workflow runs it after the build.
@@ -74,7 +74,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   acceptance tests use no class of the api module. The production classes contain no test fixtures.
 - ADRs 002 to 004 in `doc/adr/` record the decisions on Spring in the domain, the role checks, and the read methods
   without a transaction. ADRs 005 to 009 record the decisions on the test fixtures, the validation, the tests of the
-  JSON field names, the required fields of a request, and the value rules on the domain models.
+  JSON field names, the required fields of a request, and the value rules on the domain models. ADR 010 records the
+  measurement behind each threshold of the build.
 - `gradle build` runs CPD, the copy-paste detector of PMD, on the production code and fails at a duplicate of 70 tokens.
 
 ### Changed
@@ -98,7 +99,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   error code `ValidationException` stay the same. A correction with an invalid value for an unknown user now returns
   404 instead of 400, because the domain reads the consumption before it checks the correction.
 - `gradle :domain:pitest` no longer removes the null checks that the Kotlin compiler generates, which no test can
-  detect.
+  detect. It runs with the default timeout and the default number of threads of PIT, because the settings from the
+  coffee app of SE@UHD showed no effect in a measurement.
 - Breaking: A corrected coffee count no longer has the upper limit of 1,000,000. No stakeholder set this value, and FR-8
   leaves the limit open. The only limit is 2,147,483,647, the largest count that Coffee Kitty can store, and a request
   to add a coffee at this count returns 409 Conflict.

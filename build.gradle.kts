@@ -15,7 +15,12 @@ ktlint {
 
 // The configuration `cpd` holds the command-line interface (CLI) of PMD. The `cpd` task runs the copy-paste detector
 // (CPD) of PMD on the Kotlin production code. CPD compares sequences of tokens and leaves out whitespace and comments.
-// A duplicate of 70 tokens is a copy of about 10 to 13 lines.
+//
+// The task fails at a duplicate of 70 tokens. Measured on 2026-11-23 and again on 2026-11-25: The largest duplicate in
+// the production code has 60 tokens, the `@Mapping` annotations that two MapStruct mappers share. A limit of 60 or
+// lower reports these annotations, which cannot be extracted. At 70 tokens, CPD reports a copy of a domain function
+// once the copy has 10 to 16 source lines. At 100 tokens, it reports such a copy only at 13 to 17 lines.
+// doc/adr/010-thresholds-of-the-build.md has the counts for each limit.
 val cpd =
     configurations.create("cpd") {
         isCanBeConsumed = false

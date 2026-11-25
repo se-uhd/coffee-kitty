@@ -346,10 +346,18 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     private companion object {
-        /** The number of milliseconds for which the row lock of `getByUserIdForUpdate` must block a transaction. */
+        /**
+         * The number of milliseconds for which the row lock of `getByUserIdForUpdate` must block a transaction. In 34
+         * runs on 2026-11-25, the second transaction needed at most 35 milliseconds once the lock was released. A
+         * transaction that is still waiting after 500 milliseconds is therefore blocked and not only slow.
+         */
         const val WAIT_MILLIS = 500L
 
-        /** The maximum number of seconds that the test of `getByUserIdForUpdate` waits for a step that must finish. */
+        /**
+         * The maximum number of seconds that the test of `getByUserIdForUpdate` waits for a step that must finish.
+         * Only a step that hangs reaches the limit: The steps together took at most 35 milliseconds (see
+         * [WAIT_MILLIS]).
+         */
         const val TIMEOUT_SECONDS = 10L
     }
 }
