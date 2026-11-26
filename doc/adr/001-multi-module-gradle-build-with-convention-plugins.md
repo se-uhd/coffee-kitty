@@ -88,5 +88,5 @@ Java version for the toolchain and the Kotlin target.
   repositories of `build-logic/`: Maven Central and the Gradle Plugin Portal. `build-logic/` needs the Gradle Plugin
   Portal for the ktlint Gradle plugin, which Maven Central does not publish.
 * Gradle compiles `build-logic/` before the first build and after each change to it.
-* The root `build.gradle.kts` declares the Kotlin Gradle plugin with `apply false`, so that one classloader provides it
-  to every convention plugin.
+* The root `build.gradle.kts` applies the convention plugin `checks-conventions` and requests no plugin with a version,
+  so that one classloader provides the plugins of `build-logic/` to every project.

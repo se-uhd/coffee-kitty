@@ -19,10 +19,11 @@ Accepted
 
 The REST API reads and writes only JSON. Since 2026-11-22, `ApiWebConfig` removes the XML and YAML message converters,
 so a request with the header `Accept: application/yaml` gets 406 Not Acceptable. Spring MVC chooses the media type of a
-response body by content negotiation with the `Accept` header, unless the response already has a content type. Since
-the first version of 2026-10-31, `GlobalExceptionHandler.respond` sets the content type of each error response that the
-exception handler writes. The KDoc of `respond` gave the reason until the cleanup of the comments on 2026-11-26
-(ADR 013) deleted it, because a private function has no KDoc.
+response body by content negotiation with the `Accept` header, unless the response already has a content type
+([`AbstractMessageConverterMethodProcessor`][preset]). Since the first version of 2026-10-31,
+`GlobalExceptionHandler.respond` sets the content type of each error response that the exception handler writes. The
+KDoc of `respond` gave the reason until the cleanup of the comments on 2026-11-26 (ADR 013) deleted it, because a
+private function has no KDoc.
 
 ## Considered Options
 
@@ -42,3 +43,5 @@ header without JSON. The charset is the one that `ApiWebConfig` adds to the JSON
   for `Accept: application/yaml`.
 * The code that writes an error response before Spring MVC, such as `JsonAuthenticationEntryPoint`, sets the same
   content type in `writeErrorResponse`.
+
+[preset]: https://github.com/spring-projects/spring-framework/blob/main/spring-webmvc/src/main/java/org/springframework/web/servlet/mvc/method/annotation/AbstractMessageConverterMethodProcessor.java

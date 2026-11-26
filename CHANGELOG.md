@@ -27,6 +27,8 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
   `mise install` enables it as a Git hook (`mise.toml`).
 - `gradle markdownLimits` checks the structure and the section lengths of each ADR against `doc/adr/template.md`
   (ADR 016).
+- ADRs 020 to 022 record the reasons of the foreign keys, the JPA mapping, and the content type of error responses
+  that the cleanup of the comments removed. ADR-010 and ADR-014 regain the reasons of daemon flags and ktlint blocks.
 - The OpenAPI definition documents the error responses of every endpoint, and a system test checks them against the
   statuses that the tests receive (ADR 019).
 - The detekt rule `OpenApiTextLength` limits the summaries and descriptions of the OpenAPI annotations (ADR 018).
@@ -49,7 +51,7 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
   requirements stated it as a plausibility check (SHOULD). `CoffeePrice.amountCents` has the constraint for it.
 - The models are optional: `gradle build` leaves out the subproject `models`, and `gradle -Pmodels build` checks them.
   CI checks them only in se-uhd/coffee-kitty, so that an assignment needs no TLA+ or Alloy (ADR 012).
-- CLAUDE.md has 162 instead of 639 lines. The guidance for single directories moved into `.claude/rules/`.
+- CLAUDE.md has 168 instead of 639 lines. The guidance for single directories moved into `.claude/rules/`.
 - The README has 199 instead of 366 lines and points to Swagger UI for the REST API.
 - The code keeps KDoc only where ADR 013 requires it or the code cannot say it, and no other comments.
 - CHANGELOG.md follows Keep a Changelog 1.1.0 with bullets of at most 2 lines.

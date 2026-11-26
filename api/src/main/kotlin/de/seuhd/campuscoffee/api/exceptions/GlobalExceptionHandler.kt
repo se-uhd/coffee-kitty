@@ -118,6 +118,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         return respond(statusCode, errorBody(statusCode, request, reason), headers)
     }
 
+    // ADR-022 The content type skips content negotiation, so the body is JSON for any Accept header.
     private fun <T : Any> respond(
         status: HttpStatusCode,
         body: T,

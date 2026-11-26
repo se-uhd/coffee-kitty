@@ -136,8 +136,7 @@ class ConsumptionController(
 
     /**
      * Corrects the coffee count of the user with [userId] to the total in [dto] (FR-8) and returns the corrected coffee
-     * count. The response is 403 Forbidden if the acting user is not an admin, and 400 Bad Request for a body without a
-     * total or a note and for a total or a note that the domain rejects.
+     * count. The coffee app of SE@UHD has an endpoint with the same HTTP method, path, and name.
      *
      * @param userId the id of the user whose coffee count the admin corrects
      * @param dto    the request body with the corrected coffee count and the note with the reason for the correction
