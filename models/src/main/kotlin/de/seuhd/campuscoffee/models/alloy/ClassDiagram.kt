@@ -12,7 +12,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.system.exitProcess
 
-/** The scope of the runs that find how many objects can refer to one object. */
+/** The most objects of each class in the instances that decide the number at the other end of an arrow. */
 const val REFERRER_SCOPE = 4
 
 private const val ARGUMENTS = 3
@@ -50,8 +50,8 @@ fun main(args: Array<String>) {
 
 /**
  * Returns the PlantUML source of the class diagram of the Alloy model [name], as the section Class diagram of
- * `models/README.md` describes it. The Alloy Analyzer finds the multiplicity at the tail of an arrow within
- * [REFERRER_SCOPE].
+ * `models/README.md` describes it. The title is the subject of the first sentence of the comment at the top of the
+ * model.
  *
  * @param name the name of the model, such as `DomainModel`
  * @param text the source of the model
@@ -72,7 +72,7 @@ fun toClassDiagram(
         appendLine("!pragma layout smetana")
         appendLine("hide methods")
         appendLine("skinparam classAttributeIconSize 0")
-        appendLine("title Classes of the Alloy model $name")
+        appendLine("title ${title(name, text)}")
         model.classSigs.forEach { appendClass(it, classNames) }
         model.enumSigs.forEach { sig ->
             appendLine("enum ${sig.name} {")
@@ -82,12 +82,30 @@ fun toClassDiagram(
         references.forEach { appendLine(it.arrow(model)) }
         appendRules(model)
         appendLine(
-            "caption The multiplicity at the head of an arrow comes from the field.\\n" +
-                "The multiplicity at its tail is the number of objects that can refer to one object in the instances " +
-                "that the Alloy Analyzer finds within a scope of $REFERRER_SCOPE."
+            "caption The number at an arrowhead is how many objects one object refers to, as the model " +
+                "declares it.\\nThe number at the other end is how many objects can refer to the same object. The" +
+                " Alloy Analyzer finds\\nwhether it can be 0 and whether it can be more than 1, in every instance" +
+                " with up to $REFERRER_SCOPE objects of each class."
         )
         appendLine("@enduml")
     }
+}
+
+private fun title(
+    name: String,
+    text: String
+): String {
+    val comment = Regex("""/\*(.*?)\*/""", RegexOption.DOT_MATCHES_ALL).find(text)?.groupValues?.get(1)
+    val subject =
+        comment
+            ?.lines()
+            ?.joinToString(" ") { it.trim().removePrefix("*").trim() }
+            ?.trim()
+            ?.substringBefore(" (")
+            ?.substringBefore(".")
+            ?.removePrefix("The ")
+            ?.replaceFirstChar { it.uppercase() }
+    return if (subject.isNullOrBlank()) "Classes of $name.als" else "$subject ($name.als)"
 }
 
 private fun StringBuilder.appendClass(

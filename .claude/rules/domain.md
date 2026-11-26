@@ -50,7 +50,7 @@ them. Before a change goes to `main` of se-uhd/coffee-kitty, whose CI runs `grad
 - When you add or change a property of a domain model, change the Alloy model in the same step:
   1. In `models/src/main/alloy/DomainModel.als`, give the sig of the class a field for each property except `id`,
      `createdAt`, and `updatedAt`, and a predicate `valid<Sig><Field>` for each String and Int property. Add the
-     predicate of each String property to the assertion `NoTextPropertyAcceptsNul`.
+     predicate of each String property to the assertion `NoTextPropertyAcceptsNUL`.
   2. Add the concrete values of each String and Int property to `TEXTS` or `NUMBERS` in `DomainModelConformanceTest`,
      which fails until the model and the class match.
   3. Run `gradle -Pmodels :models:classDiagrams` and commit the class diagram.

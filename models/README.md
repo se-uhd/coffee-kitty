@@ -23,11 +23,14 @@ statechart.
 ## Class diagram
 
 `ClassDiagram.kt` draws each class sig of an Alloy model as a class and each enum sig as an enum. A field with a value
-sig, such as `Text`, or with an enum is an attribute. A field with a class sig is an arrow. The head of an arrow has the
-multiplicity of the field. The tail has the number of objects that can refer to one object. The Alloy Analyzer finds
-this number in two runs within a scope of 4, so the number follows the facts of the model. For example, because of the
-fact `OneConsumptionPerUser`, the tail of the arrow from `CoffeeConsumption` to `User` has the multiplicity 1. A legend
-lists the facts and whether each assertion holds.
+sig, such as `Text`, or with an enum is an attribute. A field with a class sig is an arrow. The number at the arrowhead
+is how many objects one object refers to, as the field declares it: `one` is 1, `lone` 0..1, `some` 1..*, and `set` *.
+The number at the other end is how many objects can refer to the same object. For each arrow, two runs of the Alloy
+Analyzer find whether an object can have no such referrer and whether it can have two, in every instance with up to 4
+objects of each class, so the number follows the facts of the model. For example, because of the fact
+`OneConsumptionPerUser`, exactly one `CoffeeConsumption` refers to each `User`, and the arrow from `CoffeeConsumption`
+to `User` shows 1 at its other end. A legend lists the facts and whether each assertion holds. The title is the subject
+of the first sentence of the comment at the top of the model.
 
 The diagram leaves out the value rules, that is, the predicates `valid<Sig><Field>`. The model states these rules with
 value classes such as `TextWithNul`, and the requirements state them in words.
@@ -39,7 +42,7 @@ counterexample could show them, in the same way as the report of a statechart sh
 Such a diagram would belong in the build directory next to the report, not in `doc/`. An object diagram of an instance
 of each run command could also show an example of valid objects.
 
-`NoTextPropertyAcceptsNul` concerns values, so its counterexample would contain no objects worth drawing.
+`NoTextPropertyAcceptsNUL` concerns values, so its counterexample would contain no objects worth drawing.
 `AsManyConsumptionsAsUsers` concerns objects, but it holds because of the fact `OneConsumptionPerUser`. Object diagrams
 become useful when an assertion about the relations between objects breaks, such as a rule about the beans that a bean
 is merged into. Until then, the Alloy Analyzer in the Alloy jar of the build shows the instances of a model in its

@@ -59,7 +59,7 @@ class DomainModelConformanceTest {
         }
 
     @Test
-    fun `the assertion NoTextPropertyAcceptsNul names each text property`() {
+    fun `the assertion NoTextPropertyAcceptsNUL names each text property`() {
         val named = Regex("valid[A-Z]\\w*").findAll(assertion(NO_NUL_ASSERTION).toString()).map { it.value }
         val textProperties =
             MODEL.classSigs.flatMap { sig -> sig.fields.filter { it.target == "Text" }.map { predicate(sig, it) } }
@@ -335,7 +335,7 @@ class DomainModelConformanceTest {
             )
 
         /** The assertion that no text property accepts the NUL character. */
-        const val NO_NUL_ASSERTION = "NoTextPropertyAcceptsNul"
+        const val NO_NUL_ASSERTION = "NoTextPropertyAcceptsNUL"
 
         val MODEL = AlloyModel.read(Path.of("src/main/alloy/DomainModel.als"))
 
