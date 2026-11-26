@@ -24,6 +24,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The upper limit of 1,000.00 € for a single amount is a rule (MUST) in FR-4, FR-6, and FR-17. Until now, these
   requirements stated it as a plausibility check (SHOULD). `CoffeePrice.amountCents` has the constraint for it.
 
+### Fixed
+
+- The message of a `DataConstraintException` for a value that its column cannot store, such as a text with the NUL
+  character, names the SQL state. Until now, it said that the object violates "the constraint (unnamed)", although
+  PostgreSQL reported no violated constraint.
+
 ## [0.3.1] - 2026-11-25
 
 ### Fixed

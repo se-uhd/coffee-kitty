@@ -13,6 +13,7 @@ import org.springframework.data.domain.Sort
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.annotation.Transactional
+import java.sql.SQLException
 import java.util.UUID
 
 /**
@@ -51,7 +52,8 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
      * @throws NotFoundException if no row has the id of the object, or if the object references a row that does not
      *   exist (see `EntityReferenceResolver`)
      * @throws DuplicationException if the object violates a unique constraint that `ConstraintMapping.REGISTRY` lists
-     * @throws DataConstraintException if the object violates any other constraint
+     * @throws DataConstraintException if the object violates any other constraint, or if a column cannot store one of
+     *   its values
      */
     @Transactional
     override fun upsert(domain: DOMAIN): DOMAIN {
@@ -118,12 +120,30 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
             ?.let { ConstraintMapping.forConstraint(it) }
             ?.duplicationFor(domain)
 
-    /** Returns the [DataConstraintException] for [exception], with the name of the violated constraint if known. */
-    private fun constraintException(exception: DataIntegrityViolationException): DataConstraintException =
-        DataConstraintException(domainClass, ConstraintMapping.constraintNameOf(exception), exception)
+    /**
+     * Returns the [DataConstraintException] for [exception]. Its reason names the violated constraint if the database
+     * reported a name. PostgreSQL reports a value that its column cannot store, such as a text with the NUL character,
+     * as a data exception (SQL state class 22) and not as a violated constraint, so the reason names the SQL state.
+     */
+    private fun constraintException(exception: DataIntegrityViolationException): DataConstraintException {
+        val name = ConstraintMapping.constraintNameOf(exception)
+        val state = generateSequence<Throwable>(exception) { it.cause }.filterIsInstance<SQLException>().firstOrNull()
+        val sqlState = state?.sqlState ?: "unknown"
+        val reason =
+            when {
+                name != null -> "it violates the constraint $name"
+                sqlState.startsWith(DATA_EXCEPTION_CLASS) -> "a column cannot store one of its values"
+                else -> "it violates a constraint, and the database did not report its name"
+            }
+        val suffix = if (name == null) " (SQL state $sqlState)" else ""
+        return DataConstraintException(domainClass, reason + suffix, exception)
+    }
 
     private companion object {
         /** The sort order of [getAll] by creation time and then by id. */
         private val CREATION_ORDER = Sort.by("createdAt", "id")
+
+        /** The first two characters of the SQL state of a data exception, such as 22021 for the NUL character. */
+        const val DATA_EXCEPTION_CLASS = "22"
     }
 }

@@ -138,9 +138,12 @@ without an id under a random `UUID`. For an object with an id, `upsert` updates 
 mapper, or throws a `NotFoundException` when no row has that id. A violated unique constraint becomes the
 `DuplicationException` of the matching `ConstraintMapping.REGISTRY` entry. For any other violated constraint, `upsert`
 and `delete` throw a `DataConstraintException` of the domain module, so that no exception of Spring or Hibernate crosses
-a data port. Examples of such a constraint are a CHECK constraint and a foreign key that prevents a deletion. A
-`DataConstraintException` is not a `DomainException` and becomes a 500, because it means that a domain service did not
-check a rule before it called the data port.
+a data port. Examples of such a constraint are a CHECK constraint and a foreign key that prevents a deletion. A value
+that its column cannot store, such as a text with the NUL character, also causes a `DataConstraintException`, because
+Spring reports the data exception of PostgreSQL as a `DataIntegrityViolationException`, as it does a violated
+constraint. A data exception names no constraint, so the message names the constraint or, without a name, the SQL
+state. A `DataConstraintException` is not a `DomainException` and becomes a 500, because it means that a
+domain service did not check a rule before it called the data port.
 
 The read functions of `CrudDataServiceImpl` and of the data adapters, except `getByUserIdForUpdate`, are not
 `@Transactional`. For a caller without a transaction, these functions map the JPA entity outside any transaction.

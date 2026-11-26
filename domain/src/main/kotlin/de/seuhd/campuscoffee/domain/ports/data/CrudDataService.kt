@@ -36,7 +36,7 @@ interface CrudDataService<DOMAIN : DomainModel<ID>, ID> {
      *   is not stored
      * @throws DuplicationException if [domain] repeats a unique value of another object, such as a taken login name
      * @throws DataConstraintException if [domain] violates another constraint of the database, such as a CHECK
-     *   constraint
+     *   constraint, or if a column cannot store one of its values, such as a text with the NUL character
      */
     fun upsert(domain: DOMAIN): DOMAIN
 

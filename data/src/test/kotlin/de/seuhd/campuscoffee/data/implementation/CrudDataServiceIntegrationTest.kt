@@ -141,6 +141,14 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @Test
+    fun `upsert throws DataConstraintException with the SQL state for an email address with the NUL character`() {
+        assertThatThrownBy { userDataService.upsert(user("nul", emailAddress = "nul\u0000@se.de")) }
+            .isInstanceOf(DataConstraintException::class.java)
+            .hasMessageContaining("22021")
+        assertThat(userDataService.getAll().map { it.loginName }).doesNotContain("nul")
+    }
+
+    @Test
     fun `upsert stores a new count of a consumption`() {
         val user = userDataService.upsert(user("henry"))
         val userId = requireNotNull(user.id)

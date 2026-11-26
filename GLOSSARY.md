@@ -218,7 +218,8 @@ from the term. Some entries end with a line "Avoid:", which lists words not to u
   object without an id as a new row under a new random `UUID`. For a domain object with an id, the operation updates the
   stored row with that id, or throws a `NotFoundException` when no row has that id. The operation throws a
   `DuplicationException` when a row violates a unique constraint that `ConstraintMapping.REGISTRY` lists, and a
-  `DataConstraintException` when a row violates any other constraint.
+  `DataConstraintException` when a row violates any other constraint or when a column cannot store one of its values,
+  such as a text with the NUL character.
   Code: `CrudDataService.upsert`, `CrudDataServiceImpl.upsert`.
 - **migration**: A versioned SQL file in `data/src/main/resources/db/migration/`. At startup, Flyway applies every such
   file that it has not applied to the database before, in version order. A migration that others have applied, such as
