@@ -10,17 +10,11 @@ import org.springframework.data.domain.Persistable
 import java.util.UUID
 
 /**
- * The base class of the JPA entities with a [UUID] id that the application assigns, not the database. By default,
- * Spring Data treats an entity with an id as stored, and `repository.save()` calls `merge`, which first runs a SELECT
- * for the row. This class implements [Persistable], and [isNew] returns true until JPA loads or inserts the row.
- * `save()` therefore inserts a new entity without the SELECT. The private field `entityId` holds the id, and the
- * functions `getId()` and `setId()` read and write it. A Kotlin property named `id` would generate a second `getId()`
- * next to the override of [Persistable.getId], and the two would clash. Kotlin code still accesses the id as
- * `entity.id`. Because `getId()` overrides a getter of the Java interface [Persistable], Kotlin treats `getId()` and
- * `setId()` as the property `id`.
- *
- * [Entity] extends this class with timestamps, and every JPA entity except [UserBalanceEntity] and [KittyBalanceEntity]
- * extends [Entity].
+ * The base class of the JPA entities with a [UUID] id that the application assigns. Spring Data treats an entity with
+ * an id as stored, and `save()` runs a SELECT for the row before an insert. [isNew] returns true until JPA loads or
+ * inserts the row, so `save()` inserts a new entity without the SELECT. The id is in the private field `entityId`,
+ * because a Kotlin property named `id` would generate a second `getId()` next to the override of [Persistable.getId].
+ * Kotlin code still uses `entity.id`, because Kotlin treats `getId()` and `setId()` as the property `id`.
  */
 @MappedSuperclass
 abstract class PersistableEntity : Persistable<UUID> {
@@ -44,7 +38,6 @@ abstract class PersistableEntity : Persistable<UUID> {
 
     override fun isNew(): Boolean = !persisted
 
-    /** Sets `persisted` after JPA loads or inserts the row. [isNew] returns false from then on. */
     @PostLoad
     @PostPersist
     private fun markPersisted() {

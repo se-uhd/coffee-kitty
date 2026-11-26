@@ -6,15 +6,10 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 /**
- * The domain model of the price per cup, which every coffee costs, in euro cents ([amountCents]). Coffee Kitty stores
- * at most one price. It inserts the first price, and every later change updates the stored price. The table
- * `coffee_prices` allows only one row, and `CoffeePriceDataService.upsert` throws a `DuplicationException` for a second
- * price without an id. Money is an integer number of cents, never a floating-point number of euros, so that sums have
- * no rounding errors. A price per cup is from 0.00 € to 1,000.00 € (FR-17), which the Bean Validation constraints on
- * [amountCents] state. A domain service checks them with `DomainValidator` before it stores a price.
- *
- * The data module assigns [id], [createdAt], and [updatedAt]. They are null on a price that is not stored yet.
- * [updatedAt] is the time of the most recent change of the price in UTC.
+ * The domain model of the price per cup in euro cents. Coffee Kitty stores at most one price. It inserts the first
+ * price, and every later change updates the stored price. The table `coffee_prices` allows only one row, and
+ * `CoffeePriceDataService.upsert` throws a `DuplicationException` for a second price without an id. [updatedAt] is the
+ * time of the most recent change of the price in UTC.
  */
 data class CoffeePrice(
     override val id: UUID? = null,

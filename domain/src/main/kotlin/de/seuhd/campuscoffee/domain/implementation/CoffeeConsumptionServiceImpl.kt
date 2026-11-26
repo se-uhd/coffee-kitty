@@ -17,21 +17,11 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 /**
- * The domain implementation of [CoffeeConsumptionService]. [applyDelta] adds a coffee in one transaction. It loads and
- * locks the consumption of the user and then stores a copy with the coffee count raised by one. A concurrent request
- * for the same user waits until the transaction ends and then reads the raised count. Without the lock, two concurrent
- * requests could both read a count of 2 and both store a count of 3. [applyDelta] appends the time of the coffee from
- * [clock], which a test can set to a fixed time. It drops the times of the coffees outside their grace period, because
- * the list of times would otherwise grow with every coffee. [undo] takes the time of the most recent coffee that the
- * user did not undo. It checks the grace period of this coffee with [gracePeriod] and removes the time. As in the
- * coffee app of SE@UHD, the user can then undo the coffee before if the grace period of that coffee is open.
- * [undoableUntil] applies the checks of [undo] without changing the consumption, because it must return a time exactly
- * when an undo at the current time succeeds. [correctCount] locks the consumption like [applyDelta] and creates a
- * [CountCorrection] with the new coffee count and the note. It checks the correction against the constraints on
- * [CountCorrection] with the [DomainValidator]. It then stores the corrected count and the correction in the same
- * transaction. A correction to a lower count removes the times of the newest coffees. The coffee app of SE@UHD removes
- * the newest coffees of the user from its undo stack in the same way. An undo after the correction then checks the
- * newest coffee that remains.
+ * The domain implementation of [CoffeeConsumptionService]. [applyDelta], [undo], and [correctCount] lock the
+ * consumption of the user until their transaction ends. Without the lock, two concurrent requests could both read a
+ * count of 2 and both store a count of 3. [applyDelta] drops the times of the coffees outside their grace period,
+ * because the list of times would otherwise grow with every coffee. A correction to a lower count removes the times of
+ * the newest coffees, as the coffee app of SE@UHD removes them from its undo stack.
  */
 @Service
 class CoffeeConsumptionServiceImpl(
@@ -52,15 +42,12 @@ class CoffeeConsumptionServiceImpl(
             throw ValidationException("The delta must be +1.")
         }
         val current = coffeeConsumptionDataService.getByUserIdForUpdate(userId)
-        // An Int and the column coffee_consumptions.count cannot hold a higher count. Only a correction can set a
-        // count this high.
         if (current.count == Int.MAX_VALUE) {
             throw ConflictException("The coffee count is at its maximum of ${Int.MAX_VALUE}.")
         }
         return coffeeConsumptionDataService.upsert(
             current.copy(
                 count = current.count + delta,
-                // keep only the times within their grace period, because the user can no longer undo the other coffees
                 coffeeTimes = current.coffeeTimes.filter { gracePeriod.isOpen(it) } + now()
             )
         )
@@ -72,8 +59,6 @@ class CoffeeConsumptionServiceImpl(
         if (current.count <= 0) {
             throw ConflictException("There is no coffee to undo.")
         }
-        // The user cannot undo a coffee without a time. The user added such a coffee before Coffee Kitty 0.2.0, a
-        // correction added it, or applyDelta dropped its time after the grace period.
         val lastCoffeeAt = current.coffeeTimes.lastOrNull()
         if (lastCoffeeAt == null || !gracePeriod.isOpen(lastCoffeeAt)) {
             throw ConflictException("The grace period of the most recent coffee has passed.")
@@ -86,8 +71,6 @@ class CoffeeConsumptionServiceImpl(
     override fun undoableUntil(userId: UUID): LocalDateTime? {
         val current = coffeeConsumptionDataService.getByUserId(userId)
         val lastCoffeeAt = current.coffeeTimes.lastOrNull()
-        // These are the checks of undo. The schema allows a coffee count of zero with a stored coffee time, because no
-        // constraint links the coffee count to the stored times. With the check of the count, the result is then null.
         if (current.count <= 0 || lastCoffeeAt == null || !gracePeriod.isOpen(lastCoffeeAt)) {
             return null
         }
@@ -112,7 +95,6 @@ class CoffeeConsumptionServiceImpl(
                 note = note
             )
         domainValidator.requireValid(correction)
-        // keep every time for a higher total, because the added coffees have no time and the user cannot undo them
         val removedCoffees = (current.count - total).coerceAtLeast(0)
         val corrected =
             coffeeConsumptionDataService.upsert(
@@ -127,13 +109,14 @@ class CoffeeConsumptionServiceImpl(
         actingUser: User
     ): List<CountCorrection> {
         requireAdmin(actingUser, "list the corrections of a coffee count")
-        // getAllByUserId returns an empty list for an unknown user. getByUserId throws a NotFoundException instead, and
-        // the endpoint returns 404 like the other consumption endpoints.
-        coffeeConsumptionDataService.getByUserId(userId)
+        requireUserExists(userId)
         return countCorrectionDataService.getAllByUserId(userId)
     }
 
-    /** Returns the current UTC time of [clock], truncated to microseconds like the timestamps in the database. */
+    private fun requireUserExists(userId: UUID) {
+        coffeeConsumptionDataService.getByUserId(userId)
+    }
+
     private fun now(): LocalDateTime =
         LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS)
 }

@@ -18,7 +18,6 @@ class CoffeeBeanDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     @Autowired
     private lateinit var coffeeBeanDataService: CoffeeBeanDataService
 
-    /** Stores two live beans, merges the bean named [name] into the other one, and returns the merged bean. */
     private fun storeMergedBean(name: String): CoffeeBean {
         val target = coffeeBeanDataService.upsert(CoffeeBean(name = "$name Blend"))
         val merged = coffeeBeanDataService.upsert(CoffeeBean(name = name))

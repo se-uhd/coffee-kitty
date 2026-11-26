@@ -8,23 +8,19 @@ plugins {
 dependencies {
     implementation(project(":domain"))
     implementation(project(":api"))
-    // No source in this module imports the data module, and the data module does not declare a
-    // `@ConfigurationProperties` class yet. The data module is still a compile dependency, because IntelliJ resolves
-    // the keys of such a class in application.yaml only from compile dependencies.
+    // ADR-014
     implementation(project(":data"))
 
     implementation(libs.spring.boot.starter.webmvc)
-    // BootstrapAdminLoader logs through kotlin-logging, which wraps SLF4J in a Kotlin API.
     implementation(libs.kotlin.logging)
 
-    // No source imports the PostgreSQL driver. The driver is still a compile dependency, because IntelliJ resolves
-    // the driver-class-name in application.yaml only from compile dependencies.
+    // ADR-014
     implementation(libs.postgresql)
 
-    // TestFixtures and DatabaseCleaner, for the tests and for the dev application in src/test (see DevApplication.kt).
+    // ADR-005
     testImplementation(testFixtures(project(":domain")))
     testImplementation(testFixtures(project(":data")))
-    // The tests parse the responses with a JSON mapper of their own, which needs the Kotlin module (see Json.kt).
+    // ADR-007
     testImplementation(libs.jackson3.module.kotlin)
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.junit.platform.suite)
@@ -35,15 +31,13 @@ dependencies {
 }
 
 springBoot {
-    // Writes META-INF/build-info.properties. Spring Boot reads the file into a BuildProperties bean, and
-    // OpenApiConfig takes the API version from that bean. The file leaves out the build time. A build time would
-    // change the file on every build, and Gradle would then rerun the tests even when no code changed.
+    // External: https://docs.spring.io/spring-boot/gradle-plugin/integrating-with-actuator.html With the build time,
+    // bootBuildInfo is never up-to-date, and Gradle reruns the tests on every build.
     buildInfo {
         excludes.add("time")
     }
 }
 
-// Disables the plain jar, because the project needs only the executable jar that bootJar builds.
 tasks.named("jar") {
     enabled = false
 }

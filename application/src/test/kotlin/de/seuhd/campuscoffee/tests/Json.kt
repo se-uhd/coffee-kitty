@@ -69,7 +69,9 @@ val STRICT_JSON_MAPPER: JsonMapper =
         .build()
 
 /**
- * Parses a timestamp of a response, such as `2026-11-16T10:00:00.123456`. The API serves every timestamp in UTC
- * without an offset. The function fails for a timestamp with an offset or a zone, such as a trailing `Z`.
+ * Parses a timestamp of a response. The API serves every timestamp in UTC without an offset, and the function fails
+ * for a timestamp with an offset or a zone, such as a trailing `Z`.
+ *
+ * @param timestamp the timestamp of a response, such as `2026-11-16T10:00:00.123456`
  */
 fun parseUtc(timestamp: String): LocalDateTime = LocalDateTime.parse(timestamp)

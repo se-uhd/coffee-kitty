@@ -26,16 +26,14 @@ interface UserService {
     fun getById(id: UUID): User
 
     /**
-     * Creates [user] and the user's consumption with a coffee count of zero. [actingUser] has to be an admin. The
-     * service ignores any id and timestamps on [user] and stores the email address trimmed and in lowercase. It checks
-     * the login name, the email address, and the first and the last name against the limits in the companion object of
-     * [User]. It also refuses a blank name and a name with a control character.
+     * Creates [user] and the user's consumption with a coffee count of zero. The service ignores any id and timestamps
+     * on [user], stores the email address trimmed and in lowercase, and checks the constraints on [User].
      *
      * @param user the user to create
      * @param actingUser the user who sends the request
      * @return the stored user with the id and the timestamps that the data module assigned
      * @throws ForbiddenException if [actingUser] is not an admin
-     * @throws ValidationException if the login name, the email address, or a name breaks one of these rules
+     * @throws ValidationException if a value of [user] breaks a constraint on [User]
      * @throws DuplicationException if another user has the login name or the email address
      */
     fun create(

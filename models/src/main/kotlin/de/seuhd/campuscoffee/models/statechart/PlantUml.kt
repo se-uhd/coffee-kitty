@@ -16,13 +16,9 @@ private const val UP = "\u2191"
 private val EMBEDDED_SOURCE = Regex("""<\?plantuml-src (\S+)\?>""")
 
 /**
- * Writes [chart] as a PlantUML state diagram. Smetana, the port of Graphviz dot in PlantUML, lays out the diagram, so
- * the build needs no Graphviz. An arrow to a state that the breadth-first search reached earlier points up, and every
- * other arrow points down. The layout treats an upward arrow as a downward arrow in the opposite direction, so the
- * arrows form no cycle and keep their directions. Each line of a label starts
- * with an arrow character that points in the direction of its arrow, so that a reader can tell apart the labels of two
- * arrows between the same states. A chart with panels draws each panel as a composite state with every state and the
- * arrows of the panel. A legend names the rules of the marked states.
+ * Writes [chart] as a PlantUML state diagram. An arrow to a state that the breadth-first search reached earlier points
+ * up, which the layout treats as a downward arrow in the opposite direction, so the arrows form no cycle. Each panel
+ * is a composite state, and hidden edges for the arrows of the other panels keep the states in the same order.
  *
  * @param chart the chart
  * @param rules the sentence of the reader for each rule, by its name
@@ -52,10 +48,6 @@ fun toPlantUml(
         appendLine("@enduml")
     }
 
-/**
- * Writes every state of [chart], the arrows from the start, and [arrows], with ids that start with [idPrefix]. For each
- * arrow of another panel, it writes a hidden edge, so that each panel shows the states in the same order.
- */
 private fun StringBuilder.writeDiagram(
     chart: Chart,
     arrows: List<Arrow>,
@@ -81,7 +73,6 @@ private fun StringBuilder.writeDiagram(
     others.forEach { (upper, lower) -> appendLine("$indent${ids.getValue(upper)} -[hidden]-> ${ids.getValue(lower)}") }
 }
 
-/** Returns the states of [arrow] with the upper one first, in the order of [rank]. */
 private fun downward(
     arrow: Arrow,
     rank: Map<List<String>, Int>
@@ -102,7 +93,6 @@ private class StateIds(
     fun next() = "${prefix}p${numbers.next()}"
 }
 
-/** Writes the states below the parents [prefix], and a composite state for each parent one level further down. */
 private fun StringBuilder.writeStates(
     states: List<ChartState>,
     ids: Map<List<String>, String>,
@@ -127,7 +117,6 @@ private fun StringBuilder.writeStates(
     }
 }
 
-/** Writes a legend with the rule that each marked state breaks, when a state breaks a rule. */
 private fun StringBuilder.writeLegend(
     chart: Chart,
     rules: Map<String, String>
@@ -144,7 +133,6 @@ private fun StringBuilder.writeLegend(
     appendLine("endlegend")
 }
 
-/** Replaces the characters that would end a name, a label, or a table cell of PlantUML. */
 private fun text(value: String): String = value.replace('"', '\'').replace('|', '/').replace("\n", " ")
 
 /**
@@ -177,5 +165,4 @@ fun isCurrent(
         else -> embeddedSource(file.readText()) == checkNotNull(embeddedSource(content)) { "The SVG embeds no source." }
     }
 
-/** Returns the PlantUML source that [svg] embeds, in the encoded form of PlantUML, or null when it embeds none. */
 private fun embeddedSource(svg: String): String? = EMBEDDED_SOURCE.find(svg)?.groupValues?.get(1)

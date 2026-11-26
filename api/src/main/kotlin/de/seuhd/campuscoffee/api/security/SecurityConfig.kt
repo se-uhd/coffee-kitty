@@ -18,29 +18,22 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import tools.jackson.databind.json.JsonMapper
 
 /**
- * The Spring Security configuration of Coffee Kitty. The coffee app of SE@UHD has a class with the same name.
- * [ActingUserAuthenticationFilter] runs before the controllers and resolves the acting user from the header
- * `X-Acting-User`. [securityFilterChain] requires authentication for the endpoint of every controller function of
- * Coffee Kitty, unless the function has the annotation [OpenEndpoint]. A request to such an endpoint without an acting
- * user gets its 401 before Spring MVC reads the request body. An endpoint is therefore open to every client only if a
- * developer marked its function, and a new endpoint without the annotation needs an acting user.
- *
- * The filter authenticates each request separately, so the API stores no sessions and sets no cookies. The
- * configuration turns off sessions, CSRF protection, the login form, HTTP Basic, and the logout endpoint.
+ * The Spring Security configuration of Coffee Kitty. [securityFilterChain] requires an acting user for the endpoint of
+ * every controller function without the annotation [OpenEndpoint] (ADR-011), so that a request without an acting user
+ * gets its 401 before Spring MVC reads the request body. [ActingUserAuthenticationFilter] authenticates each request
+ * separately, so the configuration turns off sessions, CSRF protection, the login form, HTTP Basic, and the logout
+ * endpoint. The coffee app of SE@UHD has a class with the same name.
  */
 @Configuration
 class SecurityConfig {
     /**
-     * Returns the filter chain for every request. The endpoints of the controller functions without [OpenEndpoint]
-     * require an acting user, such as creating a user, correcting a coffee count, and listing the corrections of a
-     * user. A path that no controller of Coffee Kitty serves stays open, so that an unknown path gets the 404 of Spring
-     * MVC and the dev profile can serve Swagger UI.
+     * Returns the filter chain for every request. A path that no controller of Coffee Kitty serves stays open, so that
+     * an unknown path gets the 404 of Spring MVC and the dev profile can serve Swagger UI (ADR-011).
      *
      * @param http        the builder of the filter chain
      * @param userService the port with which [ActingUserAuthenticationFilter] looks up the acting user
      * @param entryPoint  the entry point that responds with 401 to a request without a known acting user
-     * @param exceptionResolver the resolver of Spring MVC, which turns an exception of the lookup into the error
-     *   response of `GlobalExceptionHandler`
+     * @param exceptionResolver the resolver that turns an exception of the lookup into an `ErrorResponse`
      * @param handlerMapping the mapping of Spring MVC from endpoints to controller functions
      */
     @Bean
@@ -68,16 +61,7 @@ class SecurityConfig {
             ).build()
     }
 
-    /**
-     * Returns the HTTP method and the path pattern of every controller function of Coffee Kitty without
-     * [OpenEndpoint], such as `PUT` and `/api/users/{userId}/consumption`. The paths contain the prefix that
-     * `ApiWebConfig` adds. For a `GET` endpoint, the result also contains `HEAD`, because Spring MVC answers a `HEAD`
-     * request with the controller function of the `GET` endpoint.
-     *
-     * @throws IllegalStateException if Spring MVC has no controller function of Coffee Kitty, or if such a function
-     *   has no HTTP method. This function would then protect no endpoint or not every method, so the app does not
-     *   start.
-     */
+    // ADR-011
     private fun actingUserEndpoints(handlerMapping: RequestMappingHandlerMapping): List<Pair<HttpMethod, String>> {
         val controllerFunctions =
             handlerMapping.handlerMethods.filterValues {
@@ -97,12 +81,9 @@ class SecurityConfig {
     }
 
     /**
-     * Responds with 400 Bad Request and an `ErrorResponse` when the firewall of Spring Security rejects a request.
-     * Coffee Kitty uses the default firewall, `StrictHttpFirewall`. It rejects, among others, a path with `;`, `//`,
-     * `..`, or an encoded slash. Security rules and Spring MVC can read such a path differently, and a client could
-     * then reach a controller that a rule protects. Coffee Kitty uses no matrix variables and no session ids in URLs
-     * and needs none of these paths. As in [RequestRejectedExceptionHandler], the message does not quote the request,
-     * and the log line contains only the HTTP method of the request and the exception type.
+     * Responds with 400 Bad Request and an `ErrorResponse` when the firewall of Spring Security rejects a request, such
+     * as a path with `;`, `//`, `..`, or an encoded slash, which security rules and Spring MVC can read differently. As
+     * in [RequestRejectedExceptionHandler], the message does not quote the request.
      *
      * @param jsonMapper the JSON mapper of Spring MVC
      */

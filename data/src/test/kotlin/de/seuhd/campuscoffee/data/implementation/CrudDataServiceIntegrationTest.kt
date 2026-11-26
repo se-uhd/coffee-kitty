@@ -54,23 +54,18 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
             lastName = "Last"
         )
 
-    /**
-     * Stores a user with [loginName] and a consumption with a coffee count of zero, and returns the id of the user.
-     */
     private fun storeUserWithConsumption(loginName: String): UUID {
         val user = userDataService.upsert(user(loginName))
         coffeeConsumptionDataService.upsert(CoffeeConsumption(user = user, count = 0))
         return requireNotNull(user.id)
     }
 
-    /** Returns a correction of the coffee count of [user] by [admin] from 3 to 1 with [note]. */
     private fun correction(
         user: User,
         admin: User,
         note: String = "Double tap"
     ): CountCorrection = CountCorrection(user = user, admin = admin, countBefore = 3, countAfter = 1, note = note)
 
-    /** Stores an admin with [loginName] and returns the stored admin. */
     private fun storeAdmin(loginName: String): User = userDataService.upsert(user(loginName).copy(role = Role.ADMIN))
 
     @Test
@@ -347,7 +342,6 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
         val admin = storeAdmin("zora")
         countCorrectionDataService.insert(correction(user, admin))
 
-        // the foreign key admin_id has the default NO ACTION, because a correction does not belong to its admin
         assertThatThrownBy { userDataService.delete(requireNotNull(admin.id)) }
             .isInstanceOf(DataConstraintException::class.java)
         assertThat(countCorrectionDataService.getAllByUserId(requireNotNull(user.id))).hasSize(1)

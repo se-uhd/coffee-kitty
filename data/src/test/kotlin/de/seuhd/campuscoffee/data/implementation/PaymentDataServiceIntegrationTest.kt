@@ -26,11 +26,9 @@ class PaymentDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     @Autowired
     private lateinit var userDataService: UserDataService
 
-    /** Returns a user with [loginName] that is not stored yet. */
     private fun user(loginName: String): User =
         User(loginName = loginName, emailAddress = "$loginName@se.de", firstName = "First", lastName = "Last")
 
-    /** Stores a user with [loginName] and returns the stored user. */
     private fun storeUser(loginName: String): User = userDataService.upsert(user(loginName))
 
     @Test
@@ -112,7 +110,6 @@ class PaymentDataServiceIntegrationTest : AbstractDataIntegrationTest() {
 
     @Test
     fun `upsert throws IllegalArgumentException for a deposit of a user without an id`() {
-        // without the check, the entity mapper would map the user to null, and upsert would store a kitty adjustment
         assertThatThrownBy { paymentDataService.upsert(Payment(user = user("gustav"), amountCents = 500)) }
             .isInstanceOf(IllegalArgumentException::class.java)
         assertThat(paymentDataService.getAll()).isEmpty()
@@ -123,7 +120,6 @@ class PaymentDataServiceIntegrationTest : AbstractDataIntegrationTest() {
         val user = storeUser("frida")
         paymentDataService.upsert(Payment(user = user, amountCents = 500))
 
-        // the foreign key user_id has the default NO ACTION, because a deposit is money in the kitty
         assertThatThrownBy { userDataService.delete(requireNotNull(user.id)) }
             .isInstanceOf(DataConstraintException::class.java)
         assertThat(paymentDataService.getAll()).hasSize(1)

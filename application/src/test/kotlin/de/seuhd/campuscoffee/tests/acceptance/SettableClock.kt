@@ -17,7 +17,6 @@ class SettableClock : Clock() {
     @Volatile
     private var instant: Instant = DATE.atStartOfDay().toInstant(ZoneOffset.UTC)
 
-    /** Sets the clock to [time] on [DATE], in UTC. */
     fun setTime(time: LocalTime) {
         instant = DATE.atTime(time).toInstant(ZoneOffset.UTC)
     }

@@ -8,10 +8,9 @@ trim_trailing_whitespace = true
 
 [*.{kt,kts}]
 indent_style = space
-# The Kotlin coding conventions require four spaces (https://kotlinlang.org/docs/coding-conventions.html).
+# External: https://kotlinlang.org/docs/coding-conventions.html The Kotlin coding conventions use four spaces.
 indent_size = 4
-# 120 is the default right margin of IntelliJ IDEA. ktlint and detekt fail the build at a longer line. Without this
-# line, the code style ktlint_official would allow 140 characters.
+# ADR-010
 max_line_length = 120
 ktlint_code_style = ktlint_official
 ij_kotlin_allow_trailing_comma = false

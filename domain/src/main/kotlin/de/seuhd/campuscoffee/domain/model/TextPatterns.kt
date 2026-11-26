@@ -6,10 +6,8 @@ package de.seuhd.campuscoffee.domain.model
  */
 object TextPatterns {
     /**
-     * Matches a text that is not blank, that is, a text with at least one character that is not whitespace. The
-     * whitespace characters are those of `isBlank` in Kotlin: the Unicode separators, which include the no-break
-     * space, and the control characters for tabs, line breaks, and separators. The domain models use this pattern
-     * instead of `@NotBlank`, which accepts a text of no-break spaces.
+     * Matches a text with at least one character that is not whitespace in the sense of `isBlank` in Kotlin. The
+     * domain models use this pattern instead of `@NotBlank`, which accepts a text of no-break spaces.
      */
     const val NOT_BLANK = "(?s).*[^\\p{Z}\\t\\n\\x0B\\f\\r\\x1C-\\x1F].*"
 

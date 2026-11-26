@@ -120,8 +120,6 @@ class ConsumptionSystemTests : AbstractSystemTest() {
             executor.shutdownNow()
         }
         assertThat(consumption().count).isEqualTo(CONCURRENT_REQUESTS)
-        // Each remaining coffee is within its grace period. The user can undo each of these coffees, and the next undo
-        // returns 409.
         repeat(CONCURRENT_REQUESTS) { assertThat(consumptionRequests.undo(userId).status).isEqualTo(200) }
         assertThat(consumptionRequests.undo(userId).status).isEqualTo(409)
         assertThat(consumption().count).isEqualTo(0)

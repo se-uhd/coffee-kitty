@@ -21,6 +21,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false # no step pushes back to the repository
+          fetch-depth: 0 # the check of the commit messages reads the commits since the base branch
+
+      # Fail when a commit message breaks the format of doc/adr/013-limits-for-text.md. A pull request checks its
+      # commits; a push to main checks the pushed commits, or every commit when the old head is unknown after a rewrite.
+      - name: Check commit messages
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
+        run: |
+          scripts/test-check-commit-message.sh
+          if git rev-parse -q --verify "$BASE^{commit}" >/dev/null; then range="$BASE..HEAD"; else range=HEAD; fi
+          scripts/check-commit-message.sh --range "$range"
 
       # Install the versions of Java, Gradle, and TLC that mise.toml pins.
       - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9

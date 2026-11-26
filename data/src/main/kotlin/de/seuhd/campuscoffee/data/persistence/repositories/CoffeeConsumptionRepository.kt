@@ -21,10 +21,8 @@ interface CoffeeConsumptionRepository : JpaRepository<CoffeeConsumptionEntity, U
 
     /**
      * Returns the consumption of the user with [userId], or null, and locks its row until the transaction ends.
-     * `@Lock(PESSIMISTIC_WRITE)` sets the lock, and Hibernate sends it to PostgreSQL as `SELECT ... FOR NO KEY UPDATE`.
-     * A concurrent call for the same user waits until the transaction ends and then reads the stored count. The word
-     * `ForUpdate` in the method name does not change the query, because Spring Data ignores the words between `find`
-     * and `By`.
+     * Hibernate sends the lock to PostgreSQL as `SELECT ... FOR NO KEY UPDATE`. The word `ForUpdate` does not change
+     * the query, because Spring Data ignores the words between `find` and `By`.
      *
      * @param userId the id of the user
      */

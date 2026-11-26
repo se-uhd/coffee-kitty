@@ -40,15 +40,8 @@ import kotlin.random.Random
 
 /**
  * Replays the model `src/main/tla/Consumption.tla` on [CoffeeConsumptionServiceImpl], with the larger bound of
- * `ConsumptionReplay.cfg`. The test maps each stored coffee time to "recent" when its grace period is open and to "old"
- * otherwise, and compares the result with the state of the model:
- *
- * - For each step of the state graph, the test builds the state before the step with several sets of coffee times
- *   ([Timing]) and two ranges of counts ([Counts]), calls the function of the action, and expects the state after the
- *   step. In the upper range, the largest count of the model is the largest count that the service stores.
- * - Random walks start at the initial state, let the service build its own coffee times, and move the clock by random
- *   amounts between the steps.
- * - Two tests check that the functions of [CoffeeConsumptionService] and the actions of the model map onto each other.
+ * `ConsumptionReplay.cfg`, as the section Link the model to the code of `.claude/skills/statechart/SKILL.md` describes.
+ * The test maps each stored coffee time to "recent" when its grace period is open and to "old" otherwise.
  */
 class ConsumptionConformanceTest {
     private val grace: Duration = Duration.ofMinutes(5)
@@ -165,19 +158,13 @@ class ConsumptionConformanceTest {
     private fun describe(state: ModelState) =
         "count ${state["count"].int}, times ${state["times"].items.joinToString(", ", "[", "]") { it.string }}"
 
-    /** Returns one step for each state and each action of a service function that changes the consumption. */
     private fun changingSteps() =
         graph.steps
             .filter { it.action in ConsumptionMapping.FUNCTIONS && it.from != it.to }
             .distinctBy { it.from to it.action }
 
-    /**
-     * Returns the ranges of counts in which the test can replay [action]. The service refuses a coffee only at the
-     * largest count that it stores, so the refusal of the model has no counterpart in the lower range.
-     */
     private fun countsFor(action: String) = if (action == "RefuseCoffee") listOf(Counts.HIGH) else Counts.entries
 
-    /** Returns the count of the service for the count [modelCount] of the model in the range [counts]. */
     private fun concreteCount(
         modelCount: Long,
         counts: Counts
@@ -194,7 +181,6 @@ class ConsumptionConformanceTest {
             "count $count, note of ${note.length} characters, delta $delta, ${if (byAdmin) "admin" else "user"}"
     }
 
-    /** Returns the inputs from the classes that the model allows for the action of a step from [from] to [to]. */
     private fun inputs(
         action: String,
         from: ModelState,
@@ -214,7 +200,10 @@ class ConsumptionConformanceTest {
 
     /** The ranges of counts with which the test builds a state of the model. */
     private enum class Counts {
-        /** The counts of the model. */
+        /**
+         * The counts of the model. The service refuses a coffee only at the largest count that it stores, so the test
+         * replays `RefuseCoffee` only in [HIGH].
+         */
         LOW,
 
         /** The counts of the model moved up, so that the largest count of the model is `Int.MAX_VALUE`. */
@@ -286,12 +275,10 @@ class ConsumptionConformanceTest {
             }
         }
 
-        /** Corrects the count with the count and the note of [input], as an admin or as the user. */
         private fun correct(input: Input) {
             service.correctCount(userId, input.count, input.note, if (input.byAdmin) admin else user)
         }
 
-        /** Expects that [call] with [input] fails with the exception [T]. */
         private inline fun <reified T : Throwable> refuse(
             input: Input,
             noinline call: () -> Unit
@@ -303,14 +290,17 @@ class ConsumptionConformanceTest {
         fun reads(): List<String> =
             mockingDetails(consumptions).invocations.map { it.method.name }.filter { it.startsWith("getByUserId") }
 
-        /** Moves the clock to 1 µs after the grace period of the oldest coffee whose grace period is open. */
         private fun endOldestGracePeriod() {
             val oldestOpen =
                 stored.coffeeTimes.firstOrNull { gracePeriod.isOpen(it) } ?: fail("No grace period is open.")
             clock.now = oldestOpen.plus(grace).plusNanos(MICROSECOND)
         }
 
-        /** Moves the clock by a random amount, at least 1 µs when possible, that ends no grace period. */
+        /**
+         * Moves the clock by a random amount, at least 1 µs when possible, that ends no grace period.
+         *
+         * @param random the random generator of the walk
+         */
         fun passTime(random: Random) {
             val oldestOpen = stored.coffeeTimes.firstOrNull { gracePeriod.isOpen(it) }
             val max = oldestOpen?.let { Duration.between(clock.now, it.plus(grace)).toNanos() } ?: (grace.toNanos() * 2)
@@ -327,7 +317,6 @@ class ConsumptionConformanceTest {
         }
     }
 
-    /** Returns a consumption in [state] with the times of [timing] and the counts of [counts], and the clock time. */
     private fun concretize(
         state: ModelState,
         timing: Timing,
@@ -364,10 +353,6 @@ class ConsumptionConformanceTest {
         return consumption to now
     }
 
-    /**
-     * Returns [old] times with grace periods that ended minutes before [now] and [recent] times 10 seconds apart up to
-     * [now].
-     */
     private fun spaced(
         old: Int,
         recent: Int,
@@ -376,7 +361,6 @@ class ConsumptionConformanceTest {
         List(old) { now.minus(grace).minusMinutes((old - it).toLong()) } +
             List(recent) { now.minusSeconds(SPACING_SECONDS * (recent - 1 - it)) }
 
-    /** Returns times around [end], the time of a coffee with a grace period that ends at the clock time. */
     private fun atBoundary(
         old: Int,
         recent: Int,

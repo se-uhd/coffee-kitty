@@ -40,22 +40,16 @@ class UserServiceTest {
             lastName = "M"
         )
 
-    /** Returns a user with [loginName] and [emailAddress] and without an id or timestamps. */
     private fun newUser(
         loginName: String = "fresh",
         emailAddress: String = "fresh@se.de"
     ) = User(loginName = loginName, emailAddress = emailAddress, firstName = "Fresh", lastName = "User")
 
-    /**
-     * Stubs `upsert` on both mocks to return its argument. The mock of [UserDataService] returns the user with the id
-     * [createdId].
-     */
     private fun stubUpserts() {
         whenever(userDataService.upsert(any())).thenAnswer { (it.arguments[0] as User).copy(id = createdId) }
         whenever(coffeeConsumptionDataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
     }
 
-    /** Asserts that the service stored neither a user nor a consumption. */
     private fun verifyNothingStored() {
         verify(userDataService, never()).upsert(any())
         verify(coffeeConsumptionDataService, never()).upsert(any())

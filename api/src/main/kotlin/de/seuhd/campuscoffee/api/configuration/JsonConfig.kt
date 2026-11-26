@@ -15,14 +15,9 @@ import tools.jackson.databind.type.LogicalType
 @Configuration
 class JsonConfig {
     /**
-     * Returns the customizer that makes Jackson reject a JSON number or a JSON boolean for a `String` field. The
-     * request then gets a 400 with the error code `BadRequest`. By default, Jackson converts such a value to text, and
-     * a request with `"loginName": 12345` would create a user with the login name "12345". Jackson still reads a JSON
-     * string and `null` for a `String` field.
-     *
-     * The setting is in the coercion configuration of the target type in Jackson. Spring Boot has no property under
-     * `spring.jackson` for this configuration, but it applies every [JsonMapperBuilderCustomizer] bean to the builder
-     * of its JSON mapper.
+     * Makes Jackson reject a JSON number or a JSON boolean for a `String` field, so that the request gets a 400 with
+     * the error code `BadRequest`. By default, Jackson converts such a value to text, and `"loginName": 12345` would
+     * create the login name "12345". Spring Boot has no property under `spring.jackson` for this coercion setting.
      */
     @Bean
     fun strictStringCustomizer(): JsonMapperBuilderCustomizer =

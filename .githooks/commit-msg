@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Checks the message of each commit against doc/adr/013-limits-for-text.md. Enable it with
+# `git config core.hooksPath .githooks`.
+exec "$(git rev-parse --show-toplevel)/scripts/check-commit-message.sh" "$1"

@@ -60,22 +60,19 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
 - Business requirement (parent), decided by the group lead: "From now on, an admin can correct a wrong coffee count at
   any time and has to add a note with the reason for the correction."
 - Input, from the team assistant: "Notes have at most 500 characters."
-- Depends on FR-3: After the grace period of FR-3, a correction is the only way to lower a coffee count, and a
-  correction changes which coffee an undo applies to. This requirement resolves the TBD of FR-3 on who is allowed to
-  correct a coffee count after the grace period.
+- Depends on FR-3: After the grace period of FR-3, only a correction lowers a coffee count, and a correction changes
+  which coffee an undo applies to. This requirement resolves the TBD of FR-3 on who may correct a coffee count then.
 - Depends on FR-13 and FR-14: FR-13 specifies the coffees that a user adds, and FR-14 specifies which users are admins.
-- FR-9, FR-12, and FR-18 depend on this requirement. The undo status (FR-9) follows the undo after a correction. A
-  correction removes the ratings of the coffees that it removes (FR-12). FR-18 specifies the balance after a correction.
-- Verified by: correction.feature for the first, third, fourth, fifth, sixth, and seventh success criterion,
-  `CorrectionSystemTests` for the other criteria, and `FailureSystemTests` for the correction that Coffee Kitty cannot
-  store.
+- FR-9, FR-12, and FR-18 depend on this requirement: The undo status (FR-9) follows the undo after a correction, a
+  correction removes the ratings of the coffees that it removes (FR-12), and FR-18 specifies the balance after it.
+- Verified by: correction.feature for the first and the third to seventh success criterion, `CorrectionSystemTests`
+  for the other criteria, and `FailureSystemTests` for the correction that Coffee Kitty cannot store.
 - The rule that a correction to a lower coffee count removes the most recent coffees follows the coffee app of SE@UHD.
 - TBD (resolved): What is the maximum length of a note? 500 characters. Decided by: team assistant.
 - TBD (open): Who is allowed to read the corrections of a user, including the notes? Until the group lead answers this
   question, this requirement lets only an admin read the corrections. Contact person: group lead.
 - TBD (open): Is an admin allowed to correct a coffee count to its current value? Until the group lead answers this
-  question, this requirement accepts a correction to the current value, and Coffee Kitty stores the correction. Contact
-  person: group lead.
+  question, this requirement accepts and stores such a correction. Contact person: group lead.
 - TBD (open): Is there an upper limit for a corrected coffee count? Until the group lead answers this question, Coffee
   Kitty sets no limit of its own. The largest coffee count that Coffee Kitty can store is 2,147,483,647, the largest
   value of the PostgreSQL type `integer` (FR-13). Contact person: group lead.

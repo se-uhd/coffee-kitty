@@ -64,7 +64,6 @@ fun buildChart(
     return Chart(view.title, states, initial, arrows, inside.toMap(), hidden, view.panels.keys.toList())
 }
 
-/** Returns the title of the panel of [view] that draws the arrows of [action], or null for a view without panels. */
 private fun panelOf(
     view: ChartView,
     action: String
@@ -77,7 +76,6 @@ private fun panelOf(
     return panels.single()
 }
 
-/** Returns the chart state of [path] with the rules that the model states behind it break. */
 private fun chartState(
     path: List<String>,
     graph: StateGraph,
@@ -96,7 +94,6 @@ private fun chartState(
     return ChartState(path, mark, rulesOf.values.flatten().toSortedSet())
 }
 
-/** Returns [all] paths in the order of a breadth-first search from [initial], then the paths that it does not reach. */
 private fun searchOrder(
     initial: List<List<String>>,
     edges: List<Pair<List<String>, List<String>>>,

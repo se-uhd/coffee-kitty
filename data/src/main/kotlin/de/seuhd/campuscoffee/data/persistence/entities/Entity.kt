@@ -39,6 +39,5 @@ abstract class Entity : PersistableEntity() {
         updatedAt = utcNowInMicros()
     }
 
-    /** Returns the current UTC time, truncated to microseconds. */
     private fun utcNowInMicros(): LocalDateTime = LocalDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS)
 }

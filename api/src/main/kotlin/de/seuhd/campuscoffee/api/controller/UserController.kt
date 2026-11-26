@@ -62,14 +62,9 @@ class UserController(
     ): ResponseEntity<UserDto> = ResponseEntity.ok(userDtoMapper.toDto(userService.getById(id)))
 
     /**
-     * Creates a user and returns 201 Created with the URL of the new user in the `Location` header. In the same
-     * transaction, the domain creates the consumption of the user with a coffee count of zero. Only an admin may create
-     * a user. The header `X-Acting-User` contains the login name of the acting user (see [CurrentUserProvider]).
-     * The response is 401 Unauthorized without a known acting user and 403 Forbidden if the acting user is not an
-     * admin.
-     *
-     * `ResponseEntity.created` sets the status of the response. The annotation `@ResponseStatus` is for springdoc,
-     * which reads it and documents the status 201 instead of 200 in the OpenAPI definition.
+     * Creates a user and the user's consumption and returns 201 Created with the URL of the new user in the `Location`
+     * header, or 403 Forbidden if the acting user is not an admin. `ResponseEntity.created` sets the status, and
+     * `@ResponseStatus` makes springdoc document 201 instead of 200 in the OpenAPI definition.
      *
      * @param dto the fields of the user to create
      */
@@ -91,12 +86,6 @@ class UserController(
         return ResponseEntity.created(locationOf(created.persistedId)).body(userDtoMapper.toDto(created))
     }
 
-    /**
-     * Returns the URL for the `Location` header of a new user: the URL of the current request without its query string,
-     * followed by `/` and [id]. `UserSystemTests` checks that the URL does not contain the query string.
-     *
-     * @param id the id of the new user
-     */
     private fun locationOf(id: UUID): URI =
         ServletUriComponentsBuilder
             .fromCurrentRequestUri()

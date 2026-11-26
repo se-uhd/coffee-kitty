@@ -83,7 +83,6 @@ private class TlaValueParser(
         return value
     }
 
-    /** Reads the value that starts at the current position. */
     private fun value(): TlaValue {
         skipSpace()
         return when {
@@ -96,7 +95,6 @@ private class TlaValueParser(
         }
     }
 
-    /** Reads the values between [open] and [close], which commas separate. */
     private fun list(
         open: String,
         close: String
@@ -114,7 +112,6 @@ private class TlaValueParser(
         return items
     }
 
-    /** Reads a record `[name |-> value, ...]`. */
     private fun record(): TlaValue {
         expect("[")
         val fields = linkedMapOf<String, TlaValue>()
@@ -130,7 +127,6 @@ private class TlaValueParser(
         return TlaValue.RecordValue(fields)
     }
 
-    /** Reads a function `(key :> value @@ ...)`. */
     private fun function(): TlaValue {
         expect("(")
         val pairs = mutableListOf<Pair<TlaValue, TlaValue>>()
@@ -145,7 +141,6 @@ private class TlaValueParser(
         return TlaValue.FunctionValue(pairs)
     }
 
-    /** Reads a string in double quotes, in which a backslash escapes the next character. */
     private fun string(): String {
         expect("\"")
         val out = StringBuilder()
@@ -162,7 +157,6 @@ private class TlaValueParser(
         return out.toString()
     }
 
-    /** Reads an integer, `TRUE`, `FALSE`, or a model value. */
     private fun word(): TlaValue {
         val start = pos
         accept("-")
@@ -175,7 +169,6 @@ private class TlaValueParser(
         }
     }
 
-    /** Reads a name of letters, digits, and underscores. */
     private fun name(): String {
         val start = pos
         while (pos < text.length && (text[pos].isLetterOrDigit() || text[pos] == '_')) pos++
@@ -183,15 +176,12 @@ private class TlaValueParser(
         return text.substring(start, pos)
     }
 
-    /** Skips whitespace. */
     private fun skipSpace() {
         while (pos < text.length && text[pos].isWhitespace()) pos++
     }
 
-    /** Skips [token] and returns true when the text continues with it. */
     private fun accept(token: String): Boolean = text.startsWith(token, pos).also { if (it) pos += token.length }
 
-    /** Skips [token], or fails when the text does not continue with it. */
     private fun expect(token: String) {
         require(accept(token)) { "Expected $token at position $pos of $text" }
     }

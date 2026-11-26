@@ -45,7 +45,6 @@ fun parseDot(dot: String): StateGraph {
     return StateGraph(states, initial, steps.distinct())
 }
 
-/** Replaces `\n` in a DOT label by a line break, and a backslash before another character by that character. */
 private fun unescapeDot(label: String): String {
     val out = StringBuilder()
     var i = 0

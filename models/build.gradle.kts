@@ -1,3 +1,4 @@
+// ADR-012
 plugins {
     id("de.seuhd.campuscoffee.java-conventions")
     id("de.seuhd.campuscoffee.kotlin-conventions")
@@ -6,7 +7,6 @@ plugins {
 dependencies {
     implementation(libs.plantuml.mit)
     implementation(libs.alloy)
-    // The tests check the models against the domain module.
     testImplementation(project(":domain"))
     testImplementation(testFixtures(project(":domain")))
 }
@@ -15,8 +15,6 @@ val models = layout.projectDirectory.dir("src/main/tla")
 val charts = rootProject.layout.projectDirectory.dir("doc/statecharts")
 val work = layout.buildDirectory.dir("statecharts")
 
-// Both tasks run TLC from the tla2tools.jar that mise installs (mise.toml). .claude/skills/statechart/SKILL.md explains
-// the models, the views, and the charts.
 fun JavaExec.runStatechart(mode: String) {
     group = "verification"
     classpath = sourceSets["main"].runtimeClasspath
@@ -47,8 +45,6 @@ val checkStatecharts =
 val alloyModels = layout.projectDirectory.dir("src/main/alloy")
 val classDiagramDir = rootProject.layout.projectDirectory.dir("doc/class-diagrams")
 
-// Both tasks run the Alloy Analyzer, which logs each run with slf4j-simple at the level INFO unless the level is raised.
-// models/README.md explains the diagram.
 fun JavaExec.runClassDiagram(mode: String) {
     group = "verification"
     classpath = sourceSets["main"].runtimeClasspath
@@ -70,7 +66,8 @@ val checkClassDiagrams =
         description = "Fails when a class diagram in doc/class-diagrams differs from its Alloy model."
         runClassDiagram("check")
         inputs.dir(classDiagramDir)
-        // The check writes an empty file when it passes, so that Gradle skips it until a model or a diagram changes.
+        // External: https://docs.gradle.org/current/userguide/incremental_build.html Gradle skips only a task with
+        // outputs, so the check writes an empty file when it passes.
         val checked = layout.buildDirectory.file("class-diagrams/checked")
         outputs.file(checked)
         doLast { checked.get().asFile.writeText("") }
@@ -81,7 +78,6 @@ tasks.named("check") {
     dependsOn(checkStatecharts, checkClassDiagrams)
 }
 
-// The tests read the models, which are not on the test classpath.
 tasks.named<Test>("test") {
     inputs.dir(models)
     inputs.dir(alloyModels)

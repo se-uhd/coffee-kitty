@@ -3,7 +3,6 @@ package de.seuhd.campuscoffee.models.statechart
 import de.seuhd.campuscoffee.models.statechart.views.ConsumptionView
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
-import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.system.exitProcess
@@ -30,8 +29,7 @@ private class Directories(
  * Checks each model of [VIEWS] with TLC and writes its report. The mode `write` writes the chart of each model as
  * PlantUML source and as SVG. The mode `check` fails when a rule breaks or when a chart differs from its model.
  *
- * @param args the mode (`write` or `check`), the directory of the models, the directory of the charts, and the
- *   directory for the files of TLC
+ * @param args the mode (`write` or `check`) and the directories of the models, the charts, and the files of TLC
  */
 fun main(args: Array<String>) {
     require(args.size == ARGUMENTS && args[0] in setOf("write", "check")) {
@@ -49,7 +47,6 @@ fun main(args: Array<String>) {
     }
 }
 
-/** Checks the model [name], writes its report, and writes or compares its chart. Returns each problem as a sentence. */
 private fun process(
     mode: String,
     name: String,

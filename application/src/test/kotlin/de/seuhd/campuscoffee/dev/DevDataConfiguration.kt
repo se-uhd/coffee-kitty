@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Bean
  */
 @TestConfiguration(proxyBeanMethods = false)
 class DevDataConfiguration {
-    /** Returns the fixture loader, which cleans the database with [databaseCleaner] and creates the user fixtures. */
     @Bean
     fun devFixtureLoader(
         databaseCleaner: DatabaseCleaner,

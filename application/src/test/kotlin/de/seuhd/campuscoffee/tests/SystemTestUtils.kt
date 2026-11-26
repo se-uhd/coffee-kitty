@@ -35,17 +35,13 @@ object SystemTestUtils {
     fun clientFor(port: Int): RestTestClient =
         clients.computeIfAbsent(port) { RestTestClient.bindToServer().baseUrl("http://localhost:$it").build() }
 
-    // One PostgreSQL container for all system and acceptance tests in the test JVM. The container starts on first
-    // use, and Testcontainers stops it when the JVM shuts down. The tests therefore never close the container,
-    // although PostgreSQLContainer is AutoCloseable.
+    // External: https://java.testcontainers.org/test_framework_integration/manual_lifecycle_control/ Testcontainers
+    // stops a singleton container at the end of the test run, so the tests never close it.
     @Suppress("resource")
     private val postgresContainer: PostgreSQLContainer by lazy {
         PostgreSQLContainer(DockerImageName.parse("postgres:18-alpine")).apply { start() }
     }
 
-    /**
-     * Configures the Spring datasource with the URL, the username, and the password of the shared PostgreSQL container.
-     */
     fun configurePostgresContainer(registry: DynamicPropertyRegistry) {
         registry.add("spring.datasource.url", postgresContainer::getJdbcUrl)
         registry.add("spring.datasource.username", postgresContainer::getUsername)

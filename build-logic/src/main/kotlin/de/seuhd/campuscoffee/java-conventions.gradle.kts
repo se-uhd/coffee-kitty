@@ -4,9 +4,7 @@ import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.process.CommandLineArgumentProvider
 
-// Java configuration of the modules: the Java toolchain, the Spring Boot BOM, the test dependencies, and the test JVM.
-// The Java toolchain and the Kotlin target in kotlin-conventions both read the `java` version from
-// gradle/libs.versions.toml. mise.toml pins the same major version by hand.
+// ADR-001
 plugins {
     `java-library`
     id("io.spring.dependency-management")
@@ -16,15 +14,10 @@ val libs = the<VersionCatalogsExtension>().named("libs")
 val javaVersion = libs.findVersion("java").get().requiredVersion
 val springBootVersion = libs.findVersion("spring-boot").get().requiredVersion
 
-// project.group and project.version come from `group` and `version` in the root gradle.properties (see the comment
-// there).
-
-// Keep kotlin-stdlib and kotlin-reflect at the version of the Kotlin Gradle plugin (`kotlin` in
-// gradle/libs.versions.toml). Without this line, the Spring Boot BOM would downgrade both libraries to the older Kotlin
-// version that it manages.
+// External: https://docs.spring.io/dependency-management-plugin/docs/current/reference/html/ A project property with
+// the name of a version property of the Spring Boot BOM, such as junit-jupiter.version for every org.junit artifact,
+// overrides the version that the BOM manages.
 extra["kotlin.version"] = libs.findVersion("kotlin").get().requiredVersion
-// The Spring Boot BOM sets the version of every org.junit artifact from junit-jupiter.version. Set this property to the
-// `junit` version from gradle/libs.versions.toml.
 extra["junit-jupiter.version"] = libs.findVersion("junit").get().requiredVersion
 
 java {
@@ -33,9 +26,6 @@ java {
     }
 }
 
-// A project property with the name of a BOM property overrides the version that the BOM manages. The `extra` entries
-// above set two such properties, kotlin.version and junit-jupiter.version. The root gradle.properties can set more such
-// properties in `<name>.version` lines.
 dependencyManagement {
     imports {
         mavenBom("org.springframework.boot:spring-boot-dependencies:$springBootVersion")
@@ -43,17 +33,11 @@ dependencyManagement {
 }
 
 dependencies {
-    // Test dependencies of every module. spring-boot-starter-test adds JUnit 6, Mockito, and AssertJ, and
-    // mockito-kotlin adds Kotlin helpers for Mockito. Gradle needs the JUnit Platform launcher on the test runtime
-    // classpath. The Spring Boot BOM manages the version of the launcher but does not add the dependency. Production
-    // dependencies, such as spring-boot-starter-webmvc, are in the build scripts of the modules that use them.
     testImplementation(libs.findLibrary("spring-boot-starter-test").get())
     testImplementation(libs.findLibrary("mockito-kotlin").get())
     testRuntimeOnly(libs.findLibrary("junit-platform-launcher").get())
 }
 
-// The Mockito agent is the mockito-core jar. Resolve this jar without its dependencies in a separate configuration, and
-// pass the jar to the test JVM as -javaagent (see below).
 val mockitoAgent =
     configurations.create("mockitoAgent") {
         isCanBeConsumed = false
@@ -65,27 +49,19 @@ dependencies {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
-    // For a failed test, Gradle prints the assertion message, e.g., "expected: 200 but was: 404", and the stack trace
-    // with the class and method of each line. IntelliJ IDEA links these lines to the source. The default format prints
-    // only "AssertionFailedError at CucumberConsumptionSteps.kt:92", which IntelliJ cannot link.
     testLogging {
+        // ADR-014
         exceptionFormat = TestExceptionFormat.FULL
     }
     jvmArgs(
-        // Run the tests in a time zone other than UTC. A test then fails when the production code uses the time zone of
-        // the JVM for a time that must be in UTC. On GitHub Actions, which runs in UTC, the test would otherwise pass.
         "-Duser.timezone=Asia/Tokyo",
-        // Turn off class data sharing. With class data sharing on, the JVM prints "Sharing is only supported for boot
-        // loader classes" when the Mockito agent appends to the boot class path.
+        // ADR-014
         "-Xshare:off",
-        // Silence the JDK 25 warnings about the deprecated sun.misc.Unsafe (JEP 498) and about restricted native
-        // access, for example when Testcontainers loads JNA. A forked test JVM does not inherit these flags from the
-        // Gradle daemon (see gradle.properties).
+        // External: https://openjdk.org/jeps/498 JDK 25 warns about calls to sun.misc.Unsafe, and about native access
+        // (JEP 472) such as when Testcontainers loads JNA. A forked test JVM does not inherit the flags of the daemon.
         "--sun-misc-unsafe-memory-access=allow",
         "--enable-native-access=ALL-UNNAMED"
     )
-    // The provider uses the local val `agentJar`, which wraps the configuration `mockitoAgent` in files(...). A
-    // reference to `mockitoAgent` itself would keep the configuration cache from storing the task.
     val agentJar = files(mockitoAgent)
     jvmArgumentProviders.add(
         CommandLineArgumentProvider {

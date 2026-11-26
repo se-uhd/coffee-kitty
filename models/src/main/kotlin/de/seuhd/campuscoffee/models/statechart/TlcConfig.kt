@@ -1,14 +1,5 @@
 package de.seuhd.campuscoffee.models.statechart
 
-import java.nio.file.Path
-import kotlin.io.path.copyTo
-import kotlin.io.path.createDirectories
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
-import kotlin.io.path.nameWithoutExtension
-import kotlin.io.path.readText
-import kotlin.io.path.writeText
-
 /**
  * A TLC configuration file, split into its INVARIANTs and the other tokens.
  *
@@ -57,15 +48,13 @@ class TlcConfig(
                 "ALIAS"
             )
 
-        /**
-         * The keywords that the command does not support. With a CONSTRAINT, TLC leaves out the steps from the states
-         * at the bound, which would then count as deadlocks, and a PROPERTY needs the check of a temporal formula.
-         */
         private val UNSUPPORTED =
             setOf("CONSTRAINT", "CONSTRAINTS", "ACTION_CONSTRAINT", "ACTION_CONSTRAINTS", "PROPERTY", "PROPERTIES")
 
         /**
-         * Parses a TLC configuration file. A `\*` starts a comment that ends at the end of the line.
+         * Parses a TLC configuration file. The command does not support a CONSTRAINT, with which TLC leaves out the
+         * steps from the states at the bound, so that these states would count as deadlocks, or a PROPERTY, which needs
+         * the check of a temporal formula.
          *
          * @param text the content of the file
          * @return the INVARIANTs and the other tokens of the file

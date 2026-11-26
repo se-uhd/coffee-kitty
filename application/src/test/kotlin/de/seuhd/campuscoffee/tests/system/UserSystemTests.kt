@@ -27,9 +27,6 @@ import java.util.UUID
  * leaves the header `X-Acting-User` out.
  */
 class UserSystemTests : AbstractSystemTest() {
-    /**
-     * Returns the request body for a new user with [loginName], [emailAddress], [firstName], and the last name `User`.
-     */
     private fun newUser(
         loginName: String = "new_user",
         emailAddress: String = "new.user@se.uni-heidelberg.de",
@@ -292,8 +289,7 @@ class UserSystemTests : AbstractSystemTest() {
 
     @Test
     fun `creating a user without a required field and without the acting user header returns 401 Unauthorized`() {
-        // With an acting user, the body without an email address returns 400. Without the rule of SecurityConfig for
-        // this endpoint, Spring MVC would read the body first, and this request would return 400 as well.
+        // ADR-003
         val response = userRequests.create(newUser() - "emailAddress", actingUser = null)
 
         assertThat(response.status).isEqualTo(401)

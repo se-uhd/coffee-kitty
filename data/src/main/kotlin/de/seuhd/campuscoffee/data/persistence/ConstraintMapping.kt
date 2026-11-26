@@ -55,7 +55,6 @@ class ConstraintMapping<D : DomainModel<*>>(
                     CoffeeConsumption::class.java,
                     "user id"
                 ) { it.user.id.toString() },
-                // is_singleton is true in every row of coffee_prices, and a second price repeats this value
                 ConstraintMapping(CoffeePriceEntity.SINGLETON_UNIQUE_CONSTRAINT, CoffeePrice::class.java, "singleton") {
                     "true"
                 },
@@ -73,11 +72,9 @@ class ConstraintMapping<D : DomainModel<*>>(
         fun forConstraint(constraintName: String): ConstraintMapping<*>? = BY_NAME[constraintName.lowercase()]
 
         /**
-         * Returns the name of the violated constraint from the first Hibernate [ConstraintViolationException] in the
-         * cause chain of [exception]. Returns null if the chain does not contain a [ConstraintViolationException] or
-         * if Hibernate did not extract a name. The PostgreSQL dialect of Hibernate extracts the name from the English
-         * text of the error message. If the server writes its messages in another language, this method returns null,
-         * and the violation becomes a 500.
+         * Returns the name of the violated constraint from the first [ConstraintViolationException] in the cause chain
+         * of [exception], or null. Hibernate reads the name from the English text of the PostgreSQL error message, so
+         * the result is null for a server with messages in another language, and the client gets a 500.
          *
          * @param exception the data integrity violation to inspect
          */

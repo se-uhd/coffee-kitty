@@ -22,9 +22,7 @@ import org.junit.platform.suite.api.Suite
     key = Constants.GLUE_PROPERTY_NAME,
     value = "de.seuhd.campuscoffee.tests.acceptance"
 )
-// Turns off the glue hint of Cucumber 8, which only logs a suggestion. The hint calls getDeclaringClass() on every
-// scanned class. That call throws IncompatibleClassChangeError for a class that Kotlin generates for an inlined
-// reified call, such as returnResult<T>().
+// ADR-014
 @ConfigurationParameter(
     key = Constants.GLUE_HINT_ENABLED_PROPERTY_NAME,
     value = "false"

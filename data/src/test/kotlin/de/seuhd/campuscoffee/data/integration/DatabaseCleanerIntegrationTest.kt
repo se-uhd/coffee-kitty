@@ -72,14 +72,12 @@ class DatabaseCleanerIntegrationTest : AbstractDataIntegrationTest() {
     @Autowired
     private lateinit var jdbcTemplate: JdbcTemplate
 
-    /** Returns the number of rows of each table in the current schema, by the name of the table. */
     private fun rowCounts(): Map<String, Long?> =
         jdbcTemplate
             .queryForList("SELECT tablename FROM pg_tables WHERE schemaname = current_schema()", String::class.java)
             .filterNotNull()
             .associateWith { jdbcTemplate.queryForObject("SELECT count(*) FROM \"$it\"", Long::class.java) }
 
-    /** Stores at least one row in every table of the app, including a merged bean and an expense of the admin. */
     private fun storeARowInEveryTable() {
         val admin = userDataService.upsert(TestFixtures.admin())
         coffeeConsumptionDataService.upsert(TestFixtures.consumptionWithRecentCoffee(admin))

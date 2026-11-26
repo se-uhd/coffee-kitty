@@ -5,13 +5,9 @@ import io.swagger.v3.oas.annotations.media.Schema
 
 /**
  * The request body of `PUT /api/users/{userId}/consumption`, with which an admin corrects the coffee count of a user to
- * [total] and explains the correction in [note] (FR-8). The coffee app of SE@UHD has a DTO with the same name and the
- * fields `total` and `note`, in which the note is optional.
- * The class checks only the structure of the body. Neither property is nullable, so Jackson rejects a body without a
- * [total] or without a [note], and the request gets a 400 with the error code `BadRequest`. The domain checks the
- * values in `CoffeeConsumptionService.correctCount`. It rejects a [total] that is negative and a [note] that is blank,
- * is longer than [CountCorrection.MAX_NOTE_LENGTH] characters, or contains the NUL character. It throws a
- * `ValidationException` (400). The `@Schema` annotations only document these limits in the OpenAPI definition. The
+ * [total] and explains the correction in [note] (FR-8). The coffee app of SE@UHD has a DTO with the same name and
+ * fields, in which the note is optional. Neither property is nullable, so Jackson rejects a body without one of them
+ * (ADR-008). The domain checks the values, and the `@Schema` annotations only document their limits (ADR-009). The
  * [total] has no upper limit except the largest value of an `Int`, and Jackson rejects a higher number.
  */
 data class ConsumptionCorrectionDto(

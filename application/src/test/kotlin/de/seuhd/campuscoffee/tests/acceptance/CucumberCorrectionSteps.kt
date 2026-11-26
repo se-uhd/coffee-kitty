@@ -28,11 +28,9 @@ class CucumberCorrectionSteps(
 
     private var lastStatus: Int = 0
 
-    /** Converts "without a note" into null and "with the note "..."" into the text of the note. */
     @ParameterType("without a note|with the note \"([^\"]*)\"")
     fun note(text: String?): String? = text
 
-    /** Converts a row of a table of corrections into a [Correction]. */
     @DataTableType
     fun correction(row: Map<String, String>): Correction =
         Correction(
@@ -90,9 +88,6 @@ class CucumberCorrectionSteps(
         assertThat(corrections(loginName)).isEmpty()
     }
 
-    /**
-     * Returns the corrections of the coffee count of the user with [loginName], newest first, as an admin reads them.
-     */
     private fun corrections(loginName: String): List<Correction> =
         requests
             .retrieveCorrections(requests.userId(loginName))

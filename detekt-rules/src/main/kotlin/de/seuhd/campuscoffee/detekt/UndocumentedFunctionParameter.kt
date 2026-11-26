@@ -10,9 +10,8 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.isPublic
 
 /**
- * Reports each value parameter of a public function without an `@param` tag in the KDoc of the function. An `@property`
- * tag does not count. The rule skips local functions and overrides. It also skips functions without a KDoc, because
- * [UndocumentedFunction] reports a missing KDoc.
+ * Reports each value parameter of a public function with KDoc that the KDoc does not name in an `@param` tag. An
+ * `@property` tag does not count. The rule skips functions without KDoc, local functions, and overrides.
  */
 class UndocumentedFunctionParameter(
     config: Config

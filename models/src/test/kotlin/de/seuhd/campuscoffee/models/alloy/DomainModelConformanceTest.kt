@@ -33,16 +33,11 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 
 /**
- * Checks the Alloy model `src/main/alloy/DomainModel.als` against the domain model of the domain module:
- *
- * - Each check of the Alloy model finds no counterexample, and each run finds an instance. For a counterexample, the
- *   test names the parts of the assertion that it breaks.
- * - The assertion [NO_NUL_ASSERTION] names the predicate of each text property, so that the rule covers each new text
- *   property.
- * - The sigs and the classes match, and so do the fields and the properties, with their types and multiplicities.
- * - For each property of the value sig Text or Number, the predicate `valid<Sig><Field>` of the Alloy model and
- *   [DomainValidator] accept the same values. The test turns each value class into a concrete value at the limits of the rules, such as a
- *   note of [CountCorrection.MAX_NOTE_LENGTH] characters and one with a character more.
+ * Checks the Alloy model `src/main/alloy/DomainModel.als` against the domain model of the domain module. For a
+ * counterexample, the test names the parts of the assertion that it breaks. A new text property fails the test until
+ * [NO_NUL_ASSERTION] names its predicate. For each property of the value sig Text or Number, the test turns each value
+ * class into a concrete value at the limits of the rules, such as a note of [CountCorrection.MAX_NOTE_LENGTH]
+ * characters and one with a character more, and expects that `valid<Sig><Field>` and [DomainValidator] agree.
  */
 class DomainModelConformanceTest {
     private val validator = DomainValidator(Validation.buildDefaultValidatorFactory().validator)
@@ -119,7 +114,6 @@ class DomainModelConformanceTest {
                 }
             }
 
-    /** Asserts that the class of [sig] has a property for each field, of the type and the multiplicity of the field. */
     private fun assertMatches(sig: Sig) {
         val kClass = Class.forName("$MODEL_PACKAGE.${sig.name}").kotlin
         val properties = kClass.memberProperties.filter { it.name !in METADATA }.associateBy { it.name }
@@ -166,7 +160,6 @@ class DomainModelConformanceTest {
         assertThat(properties.keys).describedAs("the properties of %s", sig.name).isEqualTo(matched)
     }
 
-    /** Returns the Kotlin type of a field with the target sig [target], for [property]. */
     private fun kotlinType(
         target: String,
         property: KProperty1<*, *>
@@ -180,17 +173,12 @@ class DomainModelConformanceTest {
             else -> Class.forName("$MODEL_PACKAGE.$target").kotlin
         }
 
-    /** Returns whether [DomainValidator] accepts [model]. */
     private fun accepts(model: Any): Boolean =
         runCatching { validator.requireValid(model) }.exceptionOrNull().let { failure ->
             if (failure != null && failure !is ValidationException) throw failure
             failure == null
         }
 
-    /**
-     * Returns an object of the class of the sig [sig] with typical values: the short text or the middle number of each
-     * required property, a typical object for each required reference, the defaults of the class, and [overrides].
-     */
     private fun typical(
         sig: String,
         overrides: Map<String, Any?>
@@ -217,7 +205,6 @@ class DomainModelConformanceTest {
         return constructor.callBy(arguments)!!
     }
 
-    /** Returns the concrete value of the value class [valueClass] for the property [field] of [sig], if it has one. */
     private fun concreteValue(
         sig: String,
         field: String,
@@ -263,19 +250,16 @@ class DomainModelConformanceTest {
             }
     }
 
-    /** Returns the name of the predicate that states which values [field] of [sig] accepts. */
     private fun predicate(
         sig: Sig,
         field: Sig.Field
     ) = "valid${sig.name}${field.label.replaceFirstChar(Char::uppercase)}"
 
-    /** Returns the formula of the assertion [label]. */
     private fun assertion(label: String): Expr =
         MODEL.world.allAssertions
             .single { it.label.removePrefix("this/") == label }
             .expr
 
-    /** Returns the parts of the assertion [label] that the counterexample [solution] breaks, or none without one. */
     private fun brokenParts(
         label: String,
         solution: A4Solution
@@ -286,13 +270,11 @@ class DomainModelConformanceTest {
             emptyList()
         }
 
-    /** Returns the formulas that [formula] joins with `and`, or [formula] itself. */
     private fun conjuncts(formula: Expr): List<Expr> {
         val body = formula.deNOP()
         return if (body is ExprList && body.op == ExprList.Op.AND) body.args.flatMap(::conjuncts) else listOf(body)
     }
 
-    /** Returns the classes and enums of the package of the domain model. */
     private fun domainClasses(): List<KClass<*>> {
         val path = MODEL_PACKAGE.replace('.', '/')
         val url = DomainModel::class.java.classLoader.getResource(path) ?: fail("The classpath has no $path.")

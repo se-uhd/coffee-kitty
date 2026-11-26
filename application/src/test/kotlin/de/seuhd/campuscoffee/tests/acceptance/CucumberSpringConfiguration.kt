@@ -52,6 +52,8 @@ class CucumberSpringConfiguration(
          * Returns the requests for the server of this context. The bean is lazy, because the port is available only
          * after the embedded web server has started. Cucumber creates the step classes, which need the bean, for each
          * scenario and therefore after the start.
+         *
+         * @param port the port of the embedded web server
          */
         @Bean
         @Lazy

@@ -6,17 +6,11 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 /**
- * The domain model of a bean, one named kind of coffee beans that the group buys and that users rate. Each bean
- * purchase and each rating refers to a bean.
- *
- * A live bean has [active] true and a null [mergedIntoId], and its [name] is unique among the live beans, ignoring
- * case. An admin can merge a bean into another bean, for example to remove a duplicate with a misspelled name. The
- * merged bean stays as a record, because its ratings and bean purchases still refer to it. Its [active] is false, and
- * its [mergedIntoId] is the id of the remaining bean. A live bean can have the name of a merged bean.
- *
- * The [name] is not blank and has at most [MAX_NAME_LENGTH] characters, which the Bean Validation constraints on [name]
- * state. A domain service checks them with `DomainValidator` before it stores a bean. The data module assigns [id],
- * [createdAt], and [updatedAt]. They are null on a bean that is not stored yet.
+ * The domain model of a bean, one named kind of coffee beans that the group buys and that users rate. A live bean has
+ * [active] true and a null [mergedIntoId], and its [name] is unique among the live beans, ignoring case. An admin can
+ * merge a bean into another bean, for example to remove a duplicate with a misspelled name. The merged bean stays as a
+ * record with [active] false and the id of the remaining bean in [mergedIntoId], because its ratings and bean
+ * purchases still refer to it. A live bean can have the name of a merged bean.
  */
 data class CoffeeBean(
     override val id: UUID? = null,

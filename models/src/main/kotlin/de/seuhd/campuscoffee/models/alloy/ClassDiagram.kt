@@ -49,11 +49,9 @@ fun main(args: Array<String>) {
 }
 
 /**
- * Returns the PlantUML source of the class diagram of the Alloy model [name] with the source [text]. Each class sig
- * becomes a class, each enum sig an enum, each field with a value sig or an enum an attribute, and each field with a
- * class sig an arrow. The head of an arrow has the multiplicity of the field. The tail has the number of objects that
- * can refer to one object, which the Alloy Analyzer finds in runs within [REFERRER_SCOPE], so that the multiplicity
- * follows the facts of the model. A legend lists the facts and whether each assertion holds.
+ * Returns the PlantUML source of the class diagram of the Alloy model [name], as the section Class diagram of
+ * `models/README.md` describes it. The Alloy Analyzer finds the multiplicity at the tail of an arrow within
+ * [REFERRER_SCOPE].
  *
  * @param name the name of the model, such as `DomainModel`
  * @param text the source of the model
@@ -92,7 +90,6 @@ fun toClassDiagram(
     }
 }
 
-/** Appends the class of [sig] with an attribute for each field that does not refer to one of the [classNames]. */
 private fun StringBuilder.appendClass(
     sig: Sig,
     classNames: Set<String>
@@ -110,7 +107,6 @@ private fun StringBuilder.appendClass(
     appendLine("}")
 }
 
-/** Appends a legend with each fact of [model] and whether each assertion holds. */
 private fun StringBuilder.appendRules(model: AlloyModel) {
     val facts = model.world.allFacts.map { it.a.removePrefix("this/") }
     val checks = model.world.allCommands.filter { it.check }
@@ -125,7 +121,6 @@ private fun StringBuilder.appendRules(model: AlloyModel) {
     appendLine("endlegend")
 }
 
-/** Returns the UML multiplicity of the Alloy multiplicity [keyword]. */
 private fun uml(keyword: String): String =
     when (keyword) {
         "one" -> "1"

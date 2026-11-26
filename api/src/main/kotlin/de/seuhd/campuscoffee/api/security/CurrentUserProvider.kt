@@ -6,23 +6,17 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 
 /**
- * Returns the acting user of the current request. A controller passes this [User] to the domain, which checks whether
- * the role of the user allows the action. `UserService.create`, for example, requires an admin. A controller function
- * that calls [currentUser] must not have the annotation [OpenEndpoint], because an open endpoint has no acting user.
- *
- * [ActingUserAuthenticationFilter] resolves the acting user from the request header [ACTING_USER_HEADER] before
- * any controller runs. The filter stores the user as the principal of the request in the `SecurityContext` of
- * Spring Security, where [currentUser] reads it. Coffee Kitty has no authentication yet, and any client can act as any
- * user, including an admin. The coffee app of SE@UHD has a class with the same name and the same [currentUser]. In that
- * app, [currentUser] returns the user that the authentication filters stored.
+ * Returns the acting user of the current request, which [ActingUserAuthenticationFilter] stores as the principal in the
+ * `SecurityContext` of Spring Security. A controller passes this [User] to the domain, which checks the role (ADR-003).
+ * A controller function that calls [currentUser] must not have the annotation [OpenEndpoint], because an open endpoint
+ * has no acting user. The coffee app of SE@UHD has a class with the same name and the same [currentUser].
  */
 @Component
 class CurrentUserProvider {
     /**
      * Returns the acting user of the current request.
      *
-     * @throws AuthenticationCredentialsNotFoundException if the request has no acting user.
-     *   [AuthenticationExceptionHandler] turns this exception into a 401 Unauthorized.
+     * @throws AuthenticationCredentialsNotFoundException if the request has no acting user, and the client gets a 401
      */
     fun currentUser(): User =
         SecurityContextHolder.getContext().authentication?.principal as? User

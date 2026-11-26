@@ -20,11 +20,9 @@ class Tlc(
     private val jar: Path
 ) {
     /**
-     * Checks the model [spec] with the configuration [config]. A first run writes the complete state graph without a
-     * rule. Then TLC checks each INVARIANT in a run of its own, because TLC reports only the first rule that a state
-     * breaks. Unless the configuration turns the check off, each state of the graph without a step out breaks
-     * [BrokenRule.DEADLOCK]. Each run works on a copy of the TLA+ modules next to [spec], because TLC reads the
-     * configuration only from the directory of the module and writes trace files there.
+     * Checks the model [spec] with the configuration [config] in one run for the state graph and one run for each
+     * INVARIANT. Each run works on a copy of the TLA+ modules next to [spec], because TLC reads the configuration only
+     * from the directory of the module and writes trace files there.
      *
      * @param spec the TLA+ module of the model
      * @param config the TLC configuration of the model
@@ -51,7 +49,6 @@ class Tlc(
         return CheckResult(graph, tlcConfig.invariants, broken + listOfNotNull(deadlock))
     }
 
-    /** Creates [dir] with a copy of the TLA+ modules next to [spec] and the configuration [config]. */
     private fun prepare(
         spec: Path,
         dir: Path,
@@ -63,15 +60,12 @@ class Tlc(
         return dir
     }
 
-    /**
-     * Runs TLC once in [dir] without a check for deadlocks, writes its output to `tlc.out`, and returns the output.
-     * Fails when TLC does not finish or prints an error other than a broken rule.
-     */
     private fun run(
         spec: Path,
         dir: Path,
         dump: Boolean
     ): String {
+        // External: https://lamport.azurewebsites.net/tla/current-tools.pdf -deadlock turns off the deadlock check.
         val command =
             listOf(java, "-XX:+UseParallelGC", "-cp", jar.toString(), "tlc2.TLC", "-workers", "1", "-continue") +
                 listOf("-deadlock", "-config", "${spec.nameWithoutExtension}.cfg", "-metadir", "states") +
@@ -169,7 +163,6 @@ fun parseViolations(output: String): List<BrokenRule> {
     }
 }
 
-/** Reads the states of the path that starts at line [start], and returns them with the index of the next line. */
 private fun readPath(
     lines: List<String>,
     start: Int

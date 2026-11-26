@@ -1,0 +1,39 @@
+# The limits of the Markdown files (doc/adr/013-limits-for-text.md). The task markdownLimits fails for a Markdown file
+# that no entry lists. The first entry that matches a file applies. Each entry names the source of its limits, which
+# the message of a violation repeats.
+lineLength: 120
+files:
+  - path: CLAUDE.md
+    maxLines: 200
+    includeUnscopedRules: true
+    source: "Claude Code memory docs: target under 200 lines per CLAUDE.md file"
+  - glob: ".claude/rules/*.md"
+    maxLines: 100
+    source: "decision of 2026-11-26 in ADR 013"
+  - glob: ".claude/skills/*/SKILL.md"
+    maxLines: 500
+    source: "Anthropic, skill authoring best practices: keep SKILL.md under 500 lines"
+  - path: AGENTS.md
+    maxLines: 10
+    source: "AGENTS.md only points to CLAUDE.md"
+  - path: README.md
+    maxLines: 200
+    maxSectionLines: 60
+    source: "decision of 2026-11-26 in ADR 013"
+  - path: CHANGELOG.md
+    changelog: true
+    maxBulletLines: 2
+    source: "Keep a Changelog 1.1.0 and the decision of 2026-11-26 in ADR 013"
+  - path: GLOSSARY.md
+    source: "decision of 2026-11-26 in ADR 013"
+  - path: models/README.md
+    maxLines: 80
+    source: "decision of 2026-11-26 in ADR 013"
+  - path: doc/adr/010-thresholds-of-the-build.md
+    source: "ADR 013: the record of the measurements of the build has no line limit"
+  - glob: "doc/adr/*.md"
+    maxLines: 100
+    source: "Michael Nygard, Documenting Architecture Decisions: one or two pages"
+  - glob: "requirements/FR-*.md"
+    maxLines: 80
+    source: "decision of 2026-11-26 in ADR 013"

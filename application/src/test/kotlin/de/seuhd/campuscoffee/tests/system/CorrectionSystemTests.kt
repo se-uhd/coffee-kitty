@@ -67,8 +67,7 @@ class CorrectionSystemTests : AbstractSystemTest() {
 
     @Test
     fun `correcting a coffee count without a total and without the acting user header returns 401 Unauthorized`() {
-        // With an acting user, the body without a total returns 400. Without the rule of SecurityConfig for this
-        // endpoint, Spring MVC would read the body first, and this request would return 400 as well.
+        // ADR-003
         val response = consumptionRequests.correctCount(userId(), mapOf("note" to note), actingUser = null)
 
         assertThat(response.status).isEqualTo(401)
@@ -244,7 +243,6 @@ class CorrectionSystemTests : AbstractSystemTest() {
 
     @Test
     fun `listing the corrections for a non-UUID user id without the acting user header returns 401 Unauthorized`() {
-        // Spring Security responds with 401 before Spring MVC can respond to the text not-a-uuid with 400
         val response = consumptionRequests.retrieveCorrections("not-a-uuid", actingUser = null)
 
         assertThat(response.status).isEqualTo(401)

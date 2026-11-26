@@ -29,8 +29,7 @@ interface UserInternalService {
      * @param admin the admin to create
      * @return the stored admin, or null if an admin already exists
      * @throws ValidationException if the login name, the email address, or a name breaks a rule of `UserService.create`
-     * @throws DuplicationException if another user has the email address, or if a concurrent transaction stores a user
-     *   with the login name
+     * @throws DuplicationException if another user has the email address or a concurrent request stores the login name
      */
     fun createInitialAdmin(admin: User): User?
 }

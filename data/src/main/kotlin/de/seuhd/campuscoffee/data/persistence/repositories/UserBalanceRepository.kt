@@ -12,11 +12,9 @@ import java.util.UUID
  */
 interface UserBalanceRepository : JpaRepository<UserBalanceEntity, UUID> {
     /**
-     * Returns the balance of the user with [userId], or null, and locks its row until the transaction ends, as
-     * `CoffeeConsumptionRepository.findForUpdateByUserId` locks a consumption. A concurrent call for the same user
-     * waits until the transaction ends and then reads the stored balance. A call outside a transaction throws an
-     * exception, because a lock needs a transaction. The lock does not cover a missing row. Two transactions can both
-     * find no row and both insert one, and the second insert then violates the primary key.
+     * Returns the balance of the user with [userId], or null, and locks its row until the transaction ends. The lock
+     * does not cover a missing row: Two transactions can both find no row and both insert one, and the second insert
+     * then violates the primary key.
      *
      * @param userId the id of the user
      */

@@ -33,8 +33,9 @@ becomes wrong when the code changes, as an outdated comment does.
 ## Decision(s)
 
 The build checks the models against the code (the third option). The subproject `models` holds `Consumption.tla`, a
-model of the coffee count of a user, `ConsumptionConcurrency.tla`, a model of concurrent requests, and `DomainModel.als`,
-a model of the classes in `domain/.../model/` and the rules for their values. `gradle check` fails in these cases:
+model of the coffee count of a user, `ConsumptionConcurrency.tla`, a model of concurrent requests, and
+`DomainModel.als`, a model of the classes in `domain/.../model/` and the rules for their values. `gradle check` fails in
+these cases:
 
 * A rule of a TLA+ model or an assertion of the Alloy model breaks.
 * A diagram in `doc/statecharts/` or `doc/class-diagrams/` differs from its model.

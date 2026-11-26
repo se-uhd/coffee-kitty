@@ -66,7 +66,6 @@ class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest()
         bean = requireNotNull(coffeeBeanRepository.findByIdOrNull(requireNotNull(storedBean.id)))
     }
 
-    /** Returns a bean purchase of [buyer] for 1299 cents, of which the kitty pays [kittyAmountCents]. */
     private fun beanPurchase(kittyAmountCents: Int = 0): ExpenseEntity =
         ExpenseEntity().apply {
             buyer = this@ExpenseAndBalanceRepositoryIntegrationTest.buyer
@@ -78,7 +77,6 @@ class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest()
             this.kittyAmountCents = kittyAmountCents
         }
 
-    /** Returns an expense of [buyer] with the type `OTHER` for 350 cents with [note] and without a bean or a weight. */
     private fun otherExpense(note: String? = "Filters"): ExpenseEntity =
         ExpenseEntity().apply {
             buyer = this@ExpenseAndBalanceRepositoryIntegrationTest.buyer
@@ -110,12 +108,6 @@ class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest()
         assertThat(stored.first().note).isEqualTo("Filters")
     }
 
-    /**
-     * Asserts that the database refuses to store each of [expenses], each under a new id. The function checks every
-     * expense and reports the description of each expense that the database stored.
-     *
-     * @param expenses the expenses, each with a description for the failure message
-     */
     private fun assertRefused(vararg expenses: Pair<String, ExpenseEntity>) {
         assertSoftly { softly ->
             for ((description, expense) in expenses) {
@@ -187,7 +179,6 @@ class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest()
     fun `deleting the buyer of an expense throws DataConstraintException`() {
         expenseRepository.saveAndFlush(otherExpense().apply { id = randomId() })
 
-        // the foreign key buyer_user_id has the default NO ACTION, because an expense must not disappear with its buyer
         assertThatThrownBy { userDataService.delete(requireNotNull(buyer.id)) }
             .isInstanceOf(DataConstraintException::class.java)
         assertThat(expenseRepository.count()).isEqualTo(1)
@@ -197,7 +188,6 @@ class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest()
     fun `deleting a purchased bean throws DataConstraintException`() {
         expenseRepository.saveAndFlush(beanPurchase().apply { id = randomId() })
 
-        // the foreign key bean_id has the default NO ACTION, as buyer_user_id has
         assertThatThrownBy { coffeeBeanDataService.delete(requireNotNull(bean.id)) }
             .isInstanceOf(DataConstraintException::class.java)
         assertThat(expenseRepository.count()).isEqualTo(1)

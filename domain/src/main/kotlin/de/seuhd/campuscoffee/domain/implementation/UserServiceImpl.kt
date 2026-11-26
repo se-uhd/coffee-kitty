@@ -55,10 +55,6 @@ class UserServiceImpl(
 
     @Transactional
     override fun create(user: User): User {
-        // store the email address trimmed and in lowercase, because the UNIQUE constraint is case-sensitive and would
-        // otherwise accept both Jane@x and jane@x
-        // drop any id, because upsert would update the stored user with that id, and drop the timestamps, which the
-        // data module sets
         val newUser =
             user.copy(
                 id = null,
@@ -68,7 +64,6 @@ class UserServiceImpl(
             )
         domainValidator.requireValid(newUser)
         val created = userDataService.upsert(newUser)
-        // create the consumption after the user, because coffee_consumptions.user_id must reference a stored user
         coffeeConsumptionDataService.upsert(CoffeeConsumption(user = created, count = 0))
         return created
     }

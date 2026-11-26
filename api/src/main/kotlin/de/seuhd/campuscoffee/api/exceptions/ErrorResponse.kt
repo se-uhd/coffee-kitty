@@ -7,8 +7,7 @@ import java.time.LocalDateTime
 /**
  * The JSON body of an error response.
  *
- * @param errorCode     the class name of a domain exception (e.g., `NotFoundException`) or, for any other error, the
- *   reason phrase of the status without spaces (e.g., `BadRequest`)
+ * @param errorCode     the class name of a domain exception or, for any other error, the reason phrase without spaces
  * @param message       the error message for the client, such as the message of a domain exception
  * @param statusCode    the HTTP status code (e.g., 400, 404, or 500)
  * @param statusMessage the reason phrase of the status (e.g., "Bad Request" or "Not Found")

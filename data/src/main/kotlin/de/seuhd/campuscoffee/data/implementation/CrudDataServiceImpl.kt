@@ -49,11 +49,9 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
      * lifecycle callbacks of [Entity] set the timestamps. The method maps the result from the flushed entity and does
      * not reload the row, because inside the transaction a reload would return the same managed instance.
      *
-     * @throws NotFoundException if no row has the id of the object, or if the object references a row that does not
-     *   exist (see `EntityReferenceResolver`)
+     * @throws NotFoundException if no row has the id of the object or the object references a row that does not exist
      * @throws DuplicationException if the object violates a unique constraint that `ConstraintMapping.REGISTRY` lists
-     * @throws DataConstraintException if the object violates any other constraint, or if a column cannot store one of
-     *   its values
+     * @throws DataConstraintException if the object violates another constraint or a column cannot store a value
      */
     @Transactional
     override fun upsert(domain: DOMAIN): DOMAIN {
@@ -104,13 +102,8 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
     ): DOMAIN =
         queryFunction()?.let { mapper.fromEntity(it) } ?: throw NotFoundException(domainClass, fieldName, fieldValue)
 
-    /** Loads the managed entity with [id], or throws a [NotFoundException] if no row has that id. */
     private fun loadOrThrow(id: ID): ENTITY = repository.findByIdOrNull(id) ?: throw NotFoundException(domainClass, id)
 
-    /**
-     * Returns the [DuplicationException] for the unique constraint that [exception] reports. Returns null if Hibernate
-     * did not extract a constraint name or if `ConstraintMapping.REGISTRY` does not list the constraint.
-     */
     private fun duplicationOrNull(
         exception: DataIntegrityViolationException,
         domain: DOMAIN
@@ -120,11 +113,8 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
             ?.let { ConstraintMapping.forConstraint(it) }
             ?.duplicationFor(domain)
 
-    /**
-     * Returns the [DataConstraintException] for [exception]. Its reason names the violated constraint if the database
-     * reported a name. PostgreSQL reports a value that its column cannot store, such as a text with the NUL character,
-     * as a data exception (SQL state class 22) and not as a violated constraint, so the reason names the SQL state.
-     */
+    // External: https://www.postgresql.org/docs/current/errcodes-appendix.html PostgreSQL reports a value that its
+    // column cannot store, such as a text with the NUL character, as a data exception and not as a violated constraint.
     private fun constraintException(exception: DataIntegrityViolationException): DataConstraintException {
         val name = ConstraintMapping.constraintNameOf(exception)
         val state = generateSequence<Throwable>(exception) { it.cause }.filterIsInstance<SQLException>().firstOrNull()
@@ -140,7 +130,6 @@ abstract class CrudDataServiceImpl<DOMAIN : DomainModel<ID>, ENTITY : Entity, RE
     }
 
     private companion object {
-        /** The sort order of [getAll] by creation time and then by id. */
         private val CREATION_ORDER = Sort.by("createdAt", "id")
 
         /** The first two characters of the SQL state of a data exception, such as 22021 for the NUL character. */

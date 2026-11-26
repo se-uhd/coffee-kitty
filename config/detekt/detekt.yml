@@ -1,17 +1,61 @@
-# detekt configuration of the project. kotlin-conventions and detekt-rules-conventions set buildUponDefaultConfig, which
-# applies this file on top of the default configuration of detekt. The rules of the custom KDoc rule set in
-# detekt-rules/src/main/kotlin/de/seuhd/campuscoffee/detekt/ are inactive by default, and this file enables them.
-campus-coffee-kdoc:
+# The rules that this project adds to the default configuration of detekt. The task detektComments of the root project
+# applies only these rules to the tests and the build scripts (doc/adr/013-limits-for-text.md).
+campus-coffee-comments:
   active: true
-  # Every non-local class, interface, object (except a companion object), and enum class needs KDoc.
-  UndocumentedNonLocalClass:
+  UndocumentedContract:
     active: true
-  # Every non-local, non-override function needs KDoc, regardless of visibility.
-  UndocumentedFunction:
-    active: true
-  # The KDoc of a public, non-override function needs an @param for every parameter.
   UndocumentedFunctionParameter:
     active: true
-  # Each non-private property in the primary constructor of an enum class needs an @property or @param tag.
-  UndocumentedEnumConstructorProperty:
+  KDocLength:
     active: true
+  LineComment:
+    active: true
+comments:
+  active: true
+  DocumentationOverPrivateFunction:
+    active: true
+  DocumentationOverPrivateProperty:
+    active: true
+style:
+  active: true
+  ForbiddenComment:
+    active: true
+    comments:
+      - value: 'TODO:|FIXME:|STOPSHIP:'
+        reason: 'Fix it in this change or open an issue.'
+      - value: '[—←-⇿‘’“”… ]'
+        reason: 'Type the ASCII form: a hyphen or colon for a dash, -> for an arrow, straight quotes, three periods.'
+      - value: '\w -- \w'
+        reason: 'An ASCII dash is still a dash. Use a period, a comma, or a colon.'
+      - value: '(?i)\b(utiliz|leverag|facilitat|foster|streamlin|encompass|delv|navigat)\w*|\b(meticulous|intricate|multifaceted|nuanced|transformative|landscape)\b'
+        reason: 'Use the plain word, such as use, enable, include, or complex.'
+      - value: '(?i)\b(quietly|remarkably|arguably|crucially|notably|importantly|interestingly|it''?s\s+worth\s+(noting|mentioning)|it\s+is\s+(worth|important\s+to)\s+(note|noting|mention)|keep\s+in\s+mind|bear\s+in\s+mind|as\s+can\s+be\s+seen|here''?s\s+(the|what|why|how)|let''?s\s+(break|unpack|explore|dive|walk)|in\s+summary|in\s+conclusion|to\s+sum\s+up)\b'
+        reason: 'Delete the lead-in and state the point.'
+      - value: '(^|[.!?]\s)Note\s+that\b'
+        reason: 'Delete "Note that" and state the point.'
+      - value: '(?i)\b(in\s+order\s+to|due\s+to\s+the\s+fact\s+that|has\s+the\s+ability\s+to|the\s+majority\s+of|end\s+result|at\s+this\s+point\s+in\s+time)\b'
+        reason: 'Write to, because, can, most, result, or now.'
+      - value: '(?i)\b(need\s+(not|only)|famously|notoriously|as\s+is\s+well\s+known|worked\s+examples?|earns?\s+its\s+(keep|place)|pulls?\s+its\s+weight)\b'
+        reason: 'Write "does not have to" or "only has to", and cite a source instead of an appeal to familiarity.'
+      - value: '(?i)\b(serves|stands)\s+as\b'
+        reason: 'Write is or are.'
+      - value: '(?i)\b(lives\s+(in|at|on)|load-bearing|orchestrat\w*|shepherd\w*)\b'
+        reason: 'Write is in, important, coordinate, or guide.'
+      - value: '(?i)\b(seamless\w*|effortless\w*|powerful|cutting-edge|state-of-the-art|best-in-class|world-class)\b'
+        reason: 'State what the code does instead of praising it.'
+      - value: '(?i)\bnot\s+(just|merely)\b'
+        reason: 'State the claim directly.'
+      - value: '(?i)\b(as\s+(mentioned|noted|described|discussed|explained)\s+(above|below|earlier)|see\s+(above|below)|more\s+on\s+this)\b'
+        reason: 'Name the symbol or the file. A position goes stale when code moves.'
+      - value: '\b(we|We|we''re|We''re|our|Our|us|let''s|Let''s)\b'
+        reason: 'Write impersonal comments.'
+      - value: '(?i)\b(analys(e|ed|ing)|(behaviour|colour|favour)\w*|centre[sd]?|defence|licence[sd]?|modell(ed|ing)|labell(ed|ing)|catalogue|(organ|initial|serial|normal|optim|recogn|custom|priorit|synchron|author|categor)is(e|ed|es|ing|ation))\b'
+        reason: 'Use American spelling.'
+      - value: '(?i)\bdata\s+(are|were|show|indicate|suggest)\b'
+        reason: 'Treat data as singular: the data is, the data shows.'
+      - value: '(?i)e\.g\.,[^)\n]*\betc\b'
+        reason: 'e.g. already marks examples. Drop etc.'
+      - value: '(?i)\b(workaround|for\s+now|temporar(y|ily)|hack\w*|quick\s+fix|just\s+in\s+case|larger\s+change|do\s+not\s+(remove|change|touch))\b'
+        reason: 'Fix the root cause, or encode the constraint as a type, a test, or a check.'
+      - value: '\bIMPORTANT\b'
+        reason: 'Fix the root cause, or encode the constraint as a type, a test, or a check.'

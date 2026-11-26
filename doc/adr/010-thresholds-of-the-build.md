@@ -34,8 +34,8 @@ names another date. No measurement ran on the CI runner.
 
 ## Decision(s)
 
-Every threshold has a measurement on Coffee Kitty (the second option). A comment at the threshold states the result and
-the date, and this ADR has the numbers.
+Every threshold has a measurement on Coffee Kitty (the second option). This ADR has the numbers and the dates of the
+measurements, and a comment at each threshold points to it, such as `// ADR-010` in a Kotlin build script.
 
 ### Duplicates: 70 tokens (`build.gradle.kts`)
 
@@ -59,10 +59,19 @@ extracted.
 
 ### Mutation testing: 90% (`pitest-conventions.gradle.kts`)
 
+Only the domain module applies PIT, because its unit tests run without Spring and PostgreSQL. PIT changes only the
+classes in `domain/.../implementation/`, which hold the business logic. The models are data classes without logic, and
+the system tests of the application module execute them. PIT does not remove a call to `kotlin.jvm.internal`
+(`avoidCallsTo`), such as a null check that the Kotlin compiler generates for a platform type. No test can detect such
+a mutant, because the value is never null.
+
 The unit tests detect 31 of the 32 mutants in `domain/.../implementation/` (96.9%). The surviving
 mutant is a condition in the inlined code of `any` in `createInitialAdmin`, which does not change the behavior. The
 mutation score and the test strength have the same value, because the tests execute every mutant. With 32 mutants, each
 mutant is 3.1 points, so a minimum of 90% lets the task pass with up to three undetected mutants and fail at the fourth.
+The task fails when the mutation score or the test strength is below 90%. The mutation score also counts the mutants in
+code that no unit test executes, so a domain function without a unit test lowers it. The test strength counts only the
+mutants that a test executes and cannot detect such a function.
 
 Two settings from the coffee app of SE@UHD are gone, because they showed no effect in 15 runs:
 
@@ -72,16 +81,19 @@ Two settings from the coffee app of SE@UHD are gone, because they showed no effe
 
 ### Coverage: 90% of the lines and 80% of the branches (`coverage/build.gradle.kts`)
 
-With the exclusions of the gate, the tests cover 695 of 715 lines (97.2%) and 142 of 166 branches (85.5%). 8 of the 24
-missed branches belong to the three functions of the undo status, which have no tests until 2026-12-08. With these
-tests, the tests cover 150 of 166 branches (90.4%).
+With the exclusions of the gate, the tests covered 695 of 715 lines (97.2%) and 142 of 166 branches (85.5%) in the
+first measurement. 8 of the 24 missed branches belong to the three functions of the undo status, which have no tests
+until 2026-12-08. With these tests, the tests cover 150 of 166 branches (90.4%). A second measurement on 2026-11-25,
+after the commits that declared the constraints on the domain models of the later features and required an acting user
+for every endpoint, gave 700 of 721 lines (97.1%) and 148 of 174 branches (85.1%).
 
-The minimums are on purpose 7.2 and 5.5 points below the measured values. A minimum close to the measured value makes
+The minimums are on purpose about 7 and 5 points below the measured values. A minimum close to the measured value makes
 developers write tests only to reach the number. Such tests check implementation details and are more than the code
 needs, which the testing strategy of the project rules out. The minimums were 95% and 85% from 2026-11-24 to 2026-11-25.
 A commit of 2026-11-24 raised them, because the ratio had not detected that the undo status had no test. The second rule
 of the gate, which requires a test for every function of a domain service and of a controller, detects that case, so the
-higher minimums added only the pressure described above.
+higher minimums added only the pressure described above. The second rule leaves out the functions that Kotlin generates
+for a lambda, such as the lambda of `KotlinLogging.logger {}`, which only names the logger and never runs.
 
 ### Memory of the Gradle daemon: 2g of heap and 768m of metaspace (`gradle.properties`)
 
@@ -105,6 +117,12 @@ warning, and the metaspace grew by about 16 MB per build.
 
 120 is the default right margin of IntelliJ IDEA. Without the setting, the code style `ktlint_official` allows 140.
 
+### Length of a logged text: 500 characters (`GlobalExceptionHandler`)
+
+The limit has to leave every text of a legitimate request whole. The longest path of the API has 71 characters, and the
+longest message is the message of Jackson for a body of `CreateUserDto` with an unknown field, which has about 400
+characters. Only a client causes a longer text, for example with a long path (ADR-015).
+
 ### Wait times of tests
 
 In 34 full builds, a whole concurrency test in `ConsumptionSystemTests` took at most 0.6 seconds, against a limit of 30
@@ -114,11 +132,15 @@ lock. Only a step that hangs reaches the limit of 10 seconds.
 
 ## Consequences
 
-* Each threshold can be checked: Repeat the measurement, and compare the result with the comment.
-* Before someone changes a threshold or adds one, they measure and record the result and the date at the threshold. A
+* Each threshold can be checked: Repeat the measurement, and compare the result with this ADR.
+* Before someone changes a threshold or adds one, they measure and record the result and the date in this ADR. A
   changed decision gets a new ADR.
 * The coverage minimums do not rise with the coverage. A function without a test fails the second rule of the gate,
   not the ratio.
 * The measurements are from one fast machine. Before someone lowers the heap, they measure the build on the CI runner.
 * PIT runs with its default timeout. If a slower machine reports a mutant as timed out, raise the constant and record
   the measurement.
+* Raise both minimums of PIT when the number of mutants grows.
+* Until 2026-12-08, the second rule of the coverage gate leaves out the three functions of the undo status (FR-9), and
+  PIT leaves out its two domain functions. Their tests are the reference solution of assignment 7, which the repository
+  does not contain before that date. Delete both exclusions when the tests are on the main branch.

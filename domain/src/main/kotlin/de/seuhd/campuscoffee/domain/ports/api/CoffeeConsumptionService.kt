@@ -26,9 +26,8 @@ interface CoffeeConsumptionService {
 
     /**
      * Adds [delta] to the coffee count of the user with [userId] and returns the updated consumption. The domain
-     * accepts only a delta of `+1`, which adds one coffee. With the delta parameter, an extension can accept a delta
-     * of `-1` to remove a coffee without changing the format of the request body. In the coffee app of SE@UHD, an admin
-     * removes a coffee with a delta of `-1`. In that app, such a delta gets 409 Conflict at a coffee count of zero.
+     * accepts only `+1`. An extension can accept `-1` to remove a coffee without a change to the request body, as an
+     * admin does in the coffee app of SE@UHD, where `-1` at a coffee count of zero gets 409 Conflict.
      *
      * @param userId the id of the user
      * @param delta  the change to the coffee count, which must be `+1`
@@ -47,17 +46,15 @@ interface CoffeeConsumptionService {
      * coffee before is the most recent coffee.
      *
      * @param userId the id of the user
-     * @throws ConflictException if the user has no coffee to undo or the grace period of the most recent coffee has
-     *   passed
+     * @throws ConflictException if the user has no coffee or the grace period of the most recent coffee has passed
      * @throws NotFoundException if no user has [userId]
      */
     fun undo(userId: UUID): CoffeeConsumption
 
     /**
-     * Returns the time until which the user with [userId] can undo their most recent coffee, or null if the user cannot
-     * undo a coffee at the current time (FR-9). The result is a time exactly when [undo] at the current time succeeds.
-     * The time is then the end of the grace period of the coffee that this undo removes. The function reads the
-     * consumption without a lock and does not change it.
+     * Returns the time until which the user with [userId] can undo their most recent coffee, or null if [undo] at the
+     * current time fails (FR-9). The time is the end of the grace period of the coffee that [undo] would remove. The
+     * function reads the consumption without a lock and does not change it.
      *
      * @param userId the id of the user
      * @throws NotFoundException if no user has [userId]
@@ -65,11 +62,9 @@ interface CoffeeConsumptionService {
     fun undoableUntil(userId: UUID): LocalDateTime?
 
     /**
-     * Corrects the coffee count of the user with [userId] to [total] and stores the correction with [note] (FR-8).
-     * [actingUser] has to be an admin and can correct a coffee count at any time, even after the grace period. A
-     * [total] below the coffee count removes the newest coffees of the user, and an undo then applies to the newest
-     * coffee that remains. A [total] above the coffee count adds coffees that the user cannot undo. The coffee app of
-     * SE@UHD has a function with the same name.
+     * Corrects the coffee count of the user with [userId] to [total] and stores the correction with [note] (FR-8),
+     * also after the grace period. A lower [total] removes the newest coffees, and an undo then applies to the newest
+     * coffee that remains. A higher [total] adds coffees that the user cannot undo.
      *
      * @param userId     the id of the user whose coffee count the admin corrects
      * @param total      the corrected coffee count, which must not be negative
@@ -77,8 +72,7 @@ interface CoffeeConsumptionService {
      * @param actingUser the user who sends the request
      * @return the consumption with the corrected coffee count
      * @throws ForbiddenException if [actingUser] is not an admin
-     * @throws ValidationException if [total] is negative, if [note] is blank, or if [note] has more than
-     *   [CountCorrection.MAX_NOTE_LENGTH] characters or the NUL character
+     * @throws ValidationException if [total] is negative or [note] breaks a constraint on [CountCorrection]
      * @throws NotFoundException if no user has [userId]
      */
     fun correctCount(

@@ -36,7 +36,6 @@ class CoffeeRatingDataServiceIntegrationTest : AbstractDataIntegrationTest() {
 
     private lateinit var bean: CoffeeBean
 
-    /** Returns a user with [loginName] that is not stored yet. */
     private fun user(loginName: String): User =
         User(loginName = loginName, emailAddress = "$loginName@se.de", firstName = "First", lastName = "Last")
 
@@ -137,7 +136,6 @@ class CoffeeRatingDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     fun `deleting a rated bean throws DataConstraintException`() {
         coffeeRatingDataService.upsert(CoffeeRating(user = user, bean = bean, value = 4))
 
-        // the foreign key bean_id has the default NO ACTION
         assertThatThrownBy { coffeeBeanDataService.delete(requireNotNull(bean.id)) }
             .isInstanceOf(DataConstraintException::class.java)
         assertThat(coffeeRatingDataService.getAll()).hasSize(1)

@@ -24,23 +24,9 @@ class ApiWebConfig : WebMvcConfigurer {
     }
 
     /**
-     * Removes every XML and every YAML message converter and adds the charset UTF-8 to the media types of every JSON
-     * message converter.
-     *
-     * Without an XML message converter, a client cannot get an XML response by sending `Accept: application/xml`.
-     * Spring registers a JAXB message converter for XML, because Hibernate puts JAXB on the runtime classpath. This
-     * method removes the JAXB message converter and any XML message converter that a later dependency adds.
-     *
-     * Spring also registers a YAML message converter, because springdoc puts the YAML module of Jackson on the
-     * runtime classpath. With this converter, a client would get a YAML response by sending
-     * `Accept: application/yaml`, and a request with a YAML body would get a 500. Without the converter, a request with
-     * a YAML body gets a 415 Unsupported Media Type, and a request with that `Accept` header gets a 406 Not Acceptable.
-     * `ErrorResponseSystemTests` checks both statuses.
-     *
-     * Spring sends JSON as `application/json` without a `charset` parameter, because RFC 8259 requires UTF-8 for JSON
-     * and does not define a charset parameter. Without the charset, a client that assumes ISO-8859-1
-     * decodes `Müller` as `MÃ¼ller`. With the charset on the JSON message converters, every JSON response has the
-     * content type `application/json;charset=UTF-8`, which `UserSystemTests` checks.
+     * Removes the XML and YAML message converters, which Spring registers because Hibernate and springdoc put JAXB and
+     * the YAML module of Jackson on the classpath. Adds the charset UTF-8 to the JSON media types, although RFC 8259
+     * does not define a charset parameter, because a client that assumes ISO-8859-1 decodes `Müller` as `MÃ¼ller`.
      */
     override fun configureMessageConverters(builder: HttpMessageConverters.ServerBuilder) {
         builder.configureMessageConvertersList { converters ->

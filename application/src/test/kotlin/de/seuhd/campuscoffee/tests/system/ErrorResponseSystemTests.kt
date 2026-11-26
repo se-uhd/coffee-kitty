@@ -27,10 +27,6 @@ import java.util.UUID
  * spaces, such as `NotFound`.
  */
 class ErrorResponseSystemTests : AbstractSystemTest() {
-    /**
-     * Sends a GET request to [path]. A test calls this function when the path itself is under test. No function of
-     * [UserRequests] sends a request to an unknown path or to a path that the firewall rejects.
-     */
     private fun get(path: String): Response<ErrorJson> =
         client
             .get()
@@ -62,8 +58,7 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
 
     @Test
     fun `a HEAD request for the corrections without the acting user header returns 401 Unauthorized`() {
-        // Spring MVC answers a HEAD request with the controller function of the GET endpoint, so the endpoint needs
-        // an acting user for both methods.
+        // ADR-011
         client
             .head()
             .uri("/api/users/{userId}/consumption/corrections", userFixture("maxmustermann").persistedId)

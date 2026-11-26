@@ -6,14 +6,11 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 /**
- * The domain model of a person whose coffees the app counts. Instances are immutable. The Bean Validation constraints
- * on the properties are the limits for a new user, and the constants in the companion object hold their values and
- * messages. `UserServiceImpl.create` checks the constraints with `DomainValidator` for every new user, including the
- * user fixtures and the bootstrap admin. The api module checks only that a request contains every field.
- * `CreateUserDto` repeats the limits in `@Schema` annotations to document them in the OpenAPI definition.
- *
- * The data module assigns [id], [createdAt], and [updatedAt]. They are null on a user that is not stored yet. [role]
- * determines which actions the user may perform, and it is [Role.USER] by default.
+ * The domain model of a person whose coffees the app counts. The Bean Validation constraints on the properties are the
+ * limits for a new user, and the constants in the companion object hold their values and messages.
+ * `UserServiceImpl.create` checks the constraints with `DomainValidator` for every new user, including the user
+ * fixtures and the bootstrap admin. `CreateUserDto` repeats the limits in `@Schema` annotations to document them in the
+ * OpenAPI definition (ADR-009).
  */
 data class User(
     override val id: UUID? = null,
@@ -51,11 +48,9 @@ data class User(
         const val LOGIN_NAME_PATTERN = "\\w+"
 
         /**
-         * The regular expression that a whole email address must match. The address must have exactly one at sign with
-         * at least one character on each side, and it must not contain whitespace. An address that matches therefore
-         * has at least three characters, which the CHECK constraint on `users.email_address` requires as well. A second
-         * constraint rejects the control characters, as in a name: RFC 5321, section 4.1.2, allows no ASCII control
-         * character in an address.
+         * The regular expression that a whole email address must match: exactly one at sign, at least one character
+         * on each side, and no whitespace. Like the CHECK constraint on `users.email_address`, it requires three or
+         * more characters. Another constraint rejects control characters, which RFC 5321, section 4.1.2, forbids.
          */
         const val EMAIL_ADDRESS_PATTERN = "[^@\\s]+@[^@\\s]+"
 
@@ -67,10 +62,9 @@ data class User(
         const val MAX_EMAIL_LENGTH = 254
 
         /**
-         * The maximum length of a first or a last name. No stakeholder set this limit, which is an open TBD in FR-14.
-         * Until the answer, the limit is the width of the columns `users.first_name` and `users.last_name`, so that
-         * no request can store a text of any length. `@Size` counts UTF-16 code units, so a character outside the
-         * Basic Multilingual Plane counts as two.
+         * The maximum length of a first or a last name. No stakeholder set it (an open TBD in FR-14), so it is the
+         * width of the columns `users.first_name` and `users.last_name`. `@Size` counts UTF-16 code units, so a
+         * character outside the Basic Multilingual Plane counts as two.
          */
         const val MAX_NAME_LENGTH = 255
 

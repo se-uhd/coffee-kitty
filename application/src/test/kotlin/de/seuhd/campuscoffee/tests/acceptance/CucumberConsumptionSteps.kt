@@ -9,15 +9,11 @@ import org.assertj.core.api.Assertions.assertThat
 import java.time.LocalTime
 
 /**
- * The step definitions for the acceptance scenarios in `consumption.feature`.
- * Before each scenario, [CucumberSpringConfiguration.beforeEach] cleans the database and creates the user fixtures of
- * `TestFixtures`, such as `maxmustermann`, each with a coffee count of zero. A login name in a step must be the login
- * name of a user fixture.
- *
- * The steps send their requests through [ConsumptionRequests]. The first Given step stores the login name of the user
- * of the scenario. Each When step stores the status code for the Then steps. A step with a time sets the
- * [SettableClock] to that time before its request. The step with a coffee count and the time of the last coffee adds
- * the other coffees one hour before that time.
+ * The step definitions for the acceptance scenarios in `consumption.feature`. Before each scenario,
+ * [CucumberSpringConfiguration.beforeEach] creates the user fixtures of `TestFixtures` with a coffee count of zero, so
+ * a login name in a step must be the login name of a user fixture. A step with a time sets the [SettableClock] to that
+ * time before its request. The step with a coffee count and the time of the last coffee adds the other coffees one
+ * hour before that time.
  */
 class CucumberConsumptionSteps(
     private val clock: SettableClock,
@@ -26,7 +22,6 @@ class CucumberConsumptionSteps(
     private lateinit var loginName: String
     private var lastStatus: Int = 0
 
-    /** Converts a time such as 10:05:00 in a step into a [LocalTime] for the parameter type `{time}`. */
     @ParameterType("\\d{2}:\\d{2}:\\d{2}")
     fun time(value: String): LocalTime = LocalTime.parse(value)
 

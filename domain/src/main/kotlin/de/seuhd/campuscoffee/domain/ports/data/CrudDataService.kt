@@ -32,11 +32,9 @@ interface CrudDataService<DOMAIN : DomainModel<ID>, ID> {
      *
      * @param domain the object to store
      * @return the stored object with its id and timestamps
-     * @throws NotFoundException if no stored object has the id of [domain], or if [domain] references an object that
-     *   is not stored
+     * @throws NotFoundException if the id of [domain] or an object that [domain] references is not stored
      * @throws DuplicationException if [domain] repeats a unique value of another object, such as a taken login name
-     * @throws DataConstraintException if [domain] violates another constraint of the database, such as a CHECK
-     *   constraint, or if a column cannot store one of its values, such as a text with the NUL character
+     * @throws DataConstraintException if [domain] violates another constraint or a column cannot store a value
      */
     fun upsert(domain: DOMAIN): DOMAIN
 

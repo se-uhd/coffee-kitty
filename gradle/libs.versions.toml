@@ -49,6 +49,8 @@ pitest-junit5 = "1.2.3"
 pitest-plugin = "1.19.0"
 # PMD contains the copy-paste detector (CPD), which finds duplicate code.
 pmd = "7.29.0"
+# SnakeYAML reads config/markdown/limits.yml in the task markdownLimits of build-logic.
+snakeyaml = "2.7"
 
 [libraries]
 # Libraries that a BOM manages, declared without a version
@@ -108,6 +110,7 @@ pitest-gradle-plugin = { module = "info.solidsoft.gradle.pitest:gradle-pitest-pl
 # ktlint Gradle plugin.
 ktlint-cli = { module = "com.pinterest.ktlint:ktlint-cli", version.ref = "ktlint-tool" }
 detekt-gradle-plugin = { module = "dev.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
 # The catalog declares these libraries only so that Dependabot checks the `jacoco`, `pitest-tool`, and `pitest-junit5`
 # versions, which the build passes to the JaCoCo and PIT plugins. No module depends on these libraries.
 jacoco-agent = { module = "org.jacoco:org.jacoco.agent", version.ref = "jacoco" }
@@ -126,13 +129,7 @@ detekt-test-utils = { module = "dev.detekt:detekt-test-utils", version.ref = "de
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
-# Only the root build.gradle.kts uses this entry, to declare the Kotlin Gradle plugin with `apply false` (see the
-# comment there). The version is the `kotlin` entry above.
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-# Only the coverage subproject uses this entry. The subproject imports the Spring Boot BOM to resolve the modules that
-# it aggregates.
-dependency-management = { id = "io.spring.dependency-management", version.ref = "dependency-management" }
-# The ktlint plugin of the root build.gradle.kts and of build-logic/build.gradle.kts. The entry also lets Dependabot
-# check the `ktlint-plugin` version on the Gradle Plugin Portal. Dependabot looks up the ktlint-gradle-plugin library
-# above only on Maven Central, which does not publish the plugin.
+# The ktlint plugin of build-logic/build.gradle.kts. The root build and the subprojects take ktlint, Kotlin, and the
+# Spring dependency management from the classpath of build-logic. The entry also lets Dependabot check the
+# `ktlint-plugin` version on the Gradle Plugin Portal, which publishes the plugin, unlike Maven Central.
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint-plugin" }

@@ -1,9 +1,8 @@
 # Changelog
 
-All notable changes to this project are documented here.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
-to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+This file lists the notable changes of each release of Coffee Kitty in the format of
+[Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/). The version numbers follow
+[Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
@@ -11,206 +10,200 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - The requirement FR-19 (record an expense for a user) in `requirements/`: An admin records an expense for a user, and
   the daily limit of FR-6 does not refuse it. Coffee Kitty does not implement it yet.
-- The subproject `models`: TLC checks a TLA+ model of the coffee count of a user, which covers adding and undoing
-  coffees and the corrections of an admin, and a model of concurrent requests. `doc/statecharts/` holds a chart of the
-  first model. `gradle check` fails when a rule of a TLA+ model breaks, a chart is out of date, or a replay test finds a
-  step of a model that `CoffeeConsumptionServiceImpl` does not take. ADR 012 records the decision.
-- An Alloy model of the domain model (`models/src/main/alloy/DomainModel.als`). `gradle check` fails when a class or a
-  property of `domain/.../model/` differs from the model, when a value rule differs from the rule of the model, or when
-  the model breaks one of its assertions, such as the rule that no text property accepts the NUL character.
-- A class diagram of the Alloy model in `doc/class-diagrams/`, which `gradle :models:classDiagrams` writes. The Alloy
-  Analyzer finds how many objects can refer to one object, so the multiplicities at the tails of the arrows follow the
-  facts of the model, such as one consumption for each user.
-  `gradle check` fails when the diagram differs from the model. `models/README.md` describes the models and the
-  diagrams and notes object diagrams of counterexamples as a possible extension.
+- The subproject `models`, in which TLC checks a TLA+ model of the coffee count of a user and a model of concurrent
+  requests (ADR 012). `doc/statecharts/` holds a chart of the first model.
+- `gradle check` fails when a rule of a TLA+ model breaks, a chart in `doc/statecharts/` is out of date, or a replay
+  test finds a step of a model that `CoffeeConsumptionServiceImpl` does not take.
+- An Alloy model of the domain model (`models/src/main/alloy/DomainModel.als`). `gradle check` fails when a class, a
+  property, or a value rule of `domain/.../model/` differs from the model or the model breaks an assertion.
+- A class diagram of the Alloy model in `doc/class-diagrams/`, which `gradle :models:classDiagrams` writes with the
+  multiplicities that the Alloy Analyzer finds. `gradle check` fails when the diagram differs from the model.
+- `models/README.md` describes the models and the diagrams.
+- Rules for comments, enforced by detekt (ADR 013): KDoc is required only on contracts and has at most 6 lines on a
+  type and 3 elsewhere, and other comments are only `// ADR-NNN` or `// External: <link> <reason>`.
+- `gradle detektComments` applies the comment rules to the tests and the build scripts.
+- `config/markdown/limits.yml` with a limit for each Markdown file, which `gradle markdownLimits` checks (ADR 013).
+- `scripts/check-commit-message.sh` checks Conventional Commits with a body of 1 to 5 bullets (ADR 013). CI runs it, and
+  `git config core.hooksPath .githooks` enables it as a Git hook.
+- Claude Code hooks in `.claude/settings.json` check a commit message and the Markdown limits right after an edit.
+- Path-scoped rules for agents in `.claude/rules/`, which Claude Code loads for the files that they name.
+- ADR 014 records the reasons of the build settings, and ADR 015 what the server log records about a request.
 
 ### Changed
 
-- Every endpoint needs an acting user, unless its controller function has the new annotation `OpenEndpoint` (ADR 011).
-  Until now, an endpoint was open unless its function had the annotation `ActingUserRequired`, which no longer exists,
-  so a forgotten annotation gave an open endpoint. The status codes of the existing endpoints stay the same. A `HEAD`
-  request needs an acting user wherever the `GET` request needs one.
-- FR-6 specifies a daily limit for the expenses that a user who is not an admin records: at most 5 expenses and 50.00 €
-  on one day, with a configurable amount of at most 100.00 €. It replaces the limit of 100.00 € for a single expense of
-  such a user, and it resolves the TBD on a daily limit. GLOSSARY.md defines the term daily limit.
+- Every endpoint needs an acting user unless its controller function has the new annotation `OpenEndpoint` (ADR 011).
+  The status codes of the existing endpoints stay the same.
+- A `HEAD` request needs an acting user wherever the `GET` request needs one.
+- FR-6 resolves its TBD on a daily limit: A user who is not an admin records at most 5 expenses and 50.00 € on one day,
+  configurable up to 100.00 €.
+- The daily limit replaces the limit of 100.00 € for a single expense of such a user. GLOSSARY.md defines the term daily
+  limit.
 - The upper limit of 1,000.00 € for a single amount is a rule (MUST) in FR-4, FR-6, and FR-17. Until now, these
   requirements stated it as a plausibility check (SHOULD). `CoffeePrice.amountCents` has the constraint for it.
+- CLAUDE.md has 162 instead of 639 lines. The guidance for single directories moved into `.claude/rules/`.
+- The README has 199 instead of 366 lines and points to Swagger UI for the REST API.
+- The code keeps KDoc only where ADR 013 requires it or the code cannot say it, and no other comments.
+- CHANGELOG.md follows Keep a Changelog 1.1.0 with bullets of at most 2 lines.
+- FR-6 and FR-8 are shorter. What they require is unchanged.
+- The history of `main` follows Conventional Commits. The tags `backup-2026-11-26-*` keep the old commits.
+
+### Removed
+
+- The annotation `ActingUserRequired` (ADR 011).
+- The detekt rules `UndocumentedFunction`, `UndocumentedNonLocalClass`, and `UndocumentedEnumConstructorProperty`,
+  which required KDoc on every function and type.
 
 ### Fixed
 
-- `POST /api/users` refuses an email address with a control character with 400 Bad Request, as FR-14 now requires.
-  Until now, a request with the NUL character in the address returned 500, because PostgreSQL cannot store it, and an
-  address with another control character that is not whitespace, such as U+0001, was stored. The OpenAPI definition
-  states the rules on control characters for the names, the email address, and the note of a correction.
+- `POST /api/users` returns 400 Bad Request for an email address with a control character (FR-14). Until now, the NUL
+  character caused a 500, and other control characters that are not whitespace, such as U+0001, were stored.
+- The OpenAPI definition states the rules on control characters for the names, the email address, and the note of a
+  correction.
 - The message of a `DataConstraintException` for a value that its column cannot store, such as a text with the NUL
-  character, names the SQL state. Until now, it said that the object violates "the constraint (unnamed)", although
-  PostgreSQL reported no violated constraint.
+  character, names the SQL state instead of "the constraint (unnamed)".
 
 ## [0.3.1] - 2026-11-25
 
 ### Fixed
 
-- The domain models of the later features declare the rules for their values as Bean Validation constraints:
-  `Payment.note`, `CoffeeBean.name`, `CoffeeRating.value`, and `CoffeePrice.amountCents`. `CLAUDE.md` stated that these
-  models were complete, but they had no constraints, so a domain service that followed the steps of "Adding a New
-  Entity" checked nothing and a note of 501 characters returned 500. `ModelConstraintsTest` checks the constraints.
+- The domain models of the later features declare Bean Validation constraints on `Payment.note`, `CoffeeBean.name`,
+  `CoffeeRating.value`, and `CoffeePrice.amountCents`. `ModelConstraintsTest` checks them.
 
 ## [0.3.0] - 2026-11-25
 
 ### Added
 
-- An admin can correct the coffee count of a user at any time and has to add a note with the reason for the correction
-  (FR-8 in `requirements/FR-8-correct-coffee-count.md`). `PUT /api/users/{userId}/consumption` with
-  `{ "total", "note" }` sets the coffee count and returns 403 Forbidden when the acting user is not an admin. It returns
-  400 Bad Request for a negative total or a note that is missing, blank, or longer than 500
-  characters. A lower count removes the newest coffees, and an undo then applies to the newest coffee that remains. The
-  migration V5 creates the table `count_corrections`, which stores each correction with the count before and after, the
-  note, and the admin. `GET /api/users/{userId}/consumption/corrections` lists the corrections of a user, newest first,
-  and returns 403 Forbidden when the acting user is not an admin.
-- The database has the tables of later features, which no endpoint uses yet. The migration V6 creates the table
-  `coffee_prices` (the price per cup, at most one row). The migrations V7 to V9 create the tables `payments` (deposits
-  and kitty adjustments), `coffee_beans` (beans with a unique name among the live beans), and `coffee_ratings` (scores
-  from 1 to 5). The domain module has the new domain models `CoffeePrice`, `Payment`, `CoffeeBean`, and `CoffeeRating`.
-  The data module implements the new data ports `CoffeePriceDataService`, `PaymentDataService`, `CoffeeBeanDataService`,
-  and `CoffeeRatingDataService`, which store them. The migrations V10 and V11 create the tables `expenses`,
-  `user_balance`, and `kitty_balance`, which have only a JPA entity and a repository so far. The section "Tables Without
-  an Endpoint" in `CLAUDE.md` lists what each feature still needs, and GLOSSARY.md defines the new terms.
+- An admin can correct the coffee count of a user at any time with `PUT /api/users/{userId}/consumption` and a note
+  (FR-8). The migration V5 creates the table `count_corrections`, which stores each correction.
+- `GET /api/users/{userId}/consumption/corrections` lists the corrections of a user, newest first. Both endpoints of
+  FR-8 return 403 Forbidden when the acting user is not an admin.
+- The migrations V6 to V11 create the tables of later features, which no endpoint uses yet: `coffee_prices`, `payments`,
+  `coffee_beans`, `coffee_ratings`, `expenses`, `user_balance`, and `kitty_balance`.
+- The domain models `CoffeePrice`, `Payment`, `CoffeeBean`, and `CoffeeRating`, each with a data port and a data
+  adapter. The tables `expenses`, `user_balance`, and `kitty_balance` have only a JPA entity and a repository so far.
+- The section "Tables Without an Endpoint" in `CLAUDE.md` lists what each later feature still needs, and GLOSSARY.md
+  defines the new terms.
 - The requirements FR-4 (record a deposit), FR-10 (raise the kitty balance), and FR-6 (record own expenses) in
-  `requirements/`. Coffee Kitty does not implement them yet. FR-10 had the ID FR-4b and FR-11 the ID FR-5b until now. A
-  requirement ID has no suffix, and each requirement lists the requirements that it depends on and those that depend on
-  it.
-- The requirements for functions that had none. Coffee Kitty implements FR-13 (add a coffee) and FR-14 (create a user).
-  It does not implement FR-15 (report a balance), FR-16 (report the kitty balance), FR-17 (set the price per cup), and
-  FR-18 (charge or credit a correction) yet. FR-18 resolves the TBD of FR-11 on the balance after a correction.
-- The requirements FR-5 (pay for a coffee) and FR-11 (credit an undone coffee) in `requirements/`. FR-11 specifies that
-  an undo raises the balance by the amount by which the coffee lowered it, even when the price per cup changed in
-  between. The migration V12 adds the column `coffee_times.price_cents` for this amount. Until now, the table stored
-  only the time of a coffee. Coffee Kitty does not implement FR-5 and FR-11 yet, and no JPA entity maps the column.
+  `requirements/`, which Coffee Kitty does not implement yet.
+- Each requirement lists the requirements that it depends on and those that depend on it. A requirement ID has no
+  suffix, so FR-4b and FR-5b are now FR-10 and FR-11.
+- The requirements FR-13 (add a coffee) and FR-14 (create a user) for functions that Coffee Kitty already implements.
+- The requirements FR-15 (report a balance), FR-16 (report the kitty balance), and FR-17 (set the price per cup), which
+  Coffee Kitty does not implement yet.
+- The requirement FR-18 (charge or credit a correction), which resolves the TBD of FR-11 on the balance after a
+  correction. Coffee Kitty does not implement it yet.
+- The requirements FR-5 (pay for a coffee) and FR-11 (credit an undone coffee) in `requirements/`, which Coffee Kitty
+  does not implement yet.
+- The migration V12 adds the column `coffee_times.price_cents`, which stores the amount that an undo of the coffee
+  credits to the balance (FR-11). No JPA entity maps the column yet.
 - The requirement FR-12 (rate a bean) in `requirements/`, which follows the coffee app of SE@UHD. Coffee Kitty does not
   implement it yet.
-- A client can read the undo status of a user (FR-9 in `requirements/FR-9-undo-status.md`).
-  `GET /api/users/{userId}/consumption/undo` returns `undoable` and `undoableUntil`, the end of the grace period of the
-  most recent coffee or null. `undoable` is true exactly when `POST` to the same path would undo a coffee at that time.
-  `GracePeriod.closesAt` returns the end of a grace period, and `ConsumptionRequests.retrieveUndoStatus` sends the
-  request for the system tests. GLOSSARY.md defines the term undo status.
-- `TestFixtures` has test fixtures beyond the user fixtures. `admin()` and `regularUser()` return one user fixture each,
-  and `FIXED_TIME` and `fixedClock()` set the time of a test. `consumptionWithoutCoffee`, `consumptionWithRecentCoffee`,
-  and `consumptionWithOldCoffee` return consumptions in three states. GLOSSARY.md defines the term test fixture.
-- Unit tests of the domain: `ConsumptionPropertiesTest`, `IdentifiableTest`, and `DomainExceptionsTest`.
-  `GracePeriodTest`, `CoffeeConsumptionServiceTest`, and `UserServiceTest` have further tests, such as an undo of the
-  only coffee and a login name of one character.
+- A client can read the undo status of a user with `GET /api/users/{userId}/consumption/undo`, which returns `undoable`
+  and `undoableUntil` (FR-9). GLOSSARY.md defines the term undo status.
+- `GracePeriod.closesAt` returns the end of a grace period, and `ConsumptionRequests.retrieveUndoStatus` sends the
+  request of FR-9 for the system tests.
+- `TestFixtures` has further test fixtures: `admin()`, `regularUser()`, `FIXED_TIME`, `fixedClock()`, and three
+  consumptions, such as `consumptionWithRecentCoffee`. GLOSSARY.md defines the term test fixture.
+- The unit tests `ConsumptionPropertiesTest`, `IdentifiableTest`, and `DomainExceptionsTest` of the domain, and further
+  tests in `GracePeriodTest`, `CoffeeConsumptionServiceTest`, and `UserServiceTest`.
 - `StartupTest` checks that the app creates no user on startup without a configured bootstrap admin.
-- Integration tests: `CoffeeConsumptionDataServiceIntegrationTest` checks that the database stores and deletes the
-  times of the coffees and rejects a negative coffee count. `CrudDataServiceIntegrationTest` checks that
-  `UserDataServiceImpl` returns the users ordered by login name and stores the role of a user.
-- System tests for an undo at a coffee count of zero and for an undo with a grace period of zero
-  (`UndoWithoutGracePeriodSystemTests`). Further system tests check login names of 1, 255, and 256 characters, an email
-  address with capital letters, and an admin whom another admin created. They also check the URL in the `Location`
-  header of a new user and a text as the delta. `FailureSystemTests` checks that a request returns 500 and stores
-  nothing when a data adapter throws an exception.
+- Integration tests of the data module: `CoffeeConsumptionDataServiceIntegrationTest` checks the times of the coffees
+  and a negative coffee count, and `CrudDataServiceIntegrationTest` the order and the roles of the users.
+- Further system tests, such as an undo at a coffee count of zero, an undo with a grace period of zero
+  (`UndoWithoutGracePeriodSystemTests`), and login names of 1, 255, and 256 characters.
+- `FailureSystemTests` checks that a request returns 500 and stores nothing when a data adapter throws an exception.
 - The undo status (FR-9) has no tests yet, because they are the reference solution of assignment 7. Until 2026-12-08,
-  the coverage gate and PIT leave out the functions `undoableUntil`, `GracePeriod.closesAt`, and
-  `ConsumptionController.undoStatus`.
+  the coverage gate and PIT leave out its functions, such as `GracePeriod.closesAt`.
 - `gradle build` creates a coverage report of all modules with JaCoCo. The build fails below 90% of the lines or 80% of
   the branches, and when the tests do not execute every function of a domain service or a controller.
-- `gradle :domain:pitest` runs mutation tests of the domain services with PIT and fails when the tests detect fewer
-  than 90% of all mutants. `gradle build` does not run it, and the CI workflow runs it after the build.
-- The system and acceptance tests check the JSON field names of the API. They send every request body as a map with the
-  field names and parse the responses into the classes of `Json.kt` with a mapper that fails on an unknown or a missing
-  field. Until now, they used the DTO classes of the api module and did not detect a renamed field.
-- Architecture tests for four more rules: The data module uses only the models, the exceptions, and the data ports of
-  the domain. A controller function that reads the acting user has the annotation `ActingUserRequired`. The system and
-  acceptance tests use no class of the api module. The production classes contain no test fixtures.
-- ADRs 002 to 004 in `doc/adr/` record the decisions on Spring in the domain, the role checks, and the read methods
-  without a transaction. ADRs 005 to 009 record the decisions on the test fixtures, the validation, the tests of the
-  JSON field names, the required fields of a request, and the value rules on the domain models. ADR 010 records the
-  measurement behind each threshold of the build.
+- `gradle :domain:pitest` runs mutation tests of the domain services with PIT and fails when the tests detect fewer than
+  90% of all mutants. `gradle build` does not run it, and the CI workflow runs it after the build.
+- The system and acceptance tests check the JSON field names of the API (ADR 007). They send each request body as a map
+  and parse each response into a class of `Json.kt` instead of a DTO.
+- Architecture tests check that the data module uses only the models, the exceptions, and the data ports of the domain
+  and that the production classes contain no test fixtures.
+- Architecture tests check that a controller function that reads the acting user has the annotation `ActingUserRequired`
+  and that the system and acceptance tests use no class of the api module.
+- ADRs 002 to 006 in `doc/adr/` record the decisions on Spring in the domain, the role checks, the read methods without
+  a transaction, the test fixtures, and the validation.
+- ADRs 007 to 009 record the decisions on the tests of the JSON field names, the required fields of a request, and the
+  value rules on the domain models. ADR 010 records the measurement behind each threshold of the build.
 - `gradle build` runs CPD, the copy-paste detector of PMD, on the production code and fails at a duplicate of 70 tokens.
 
 ### Changed
 
-- Breaking: The api module checks only the structure of a request body, and the domain checks every value. A 400 has the
-  error code `BadRequest` for a missing field, a value of the wrong JSON type, or an unknown field, and the error code
-  `ValidationException` for a value that breaks a rule. The error code therefore changes from `BadRequest` to
-  `ValidationException` for a login name that is too long or has an invalid character and for a blank first or last
-  name. The same change applies to a total of a correction that is negative and to a note that is
-  blank or longer than 500 characters. Until now, both modules checked these rules, and the email address had to pass
-  two different checks.
-- Breaking: A request DTO states a required field with a property that is not nullable, such as `val delta: Int`, and
-  Jackson rejects a body without the field. The api module no longer uses Bean Validation, so the DTOs have no
-  `@NotNull` and the controllers no `@Valid` (ADR 008). The message of a 400 for a missing field changes from
-  "emailAddress must not be null" to "The field emailAddress is missing or has a value that the server cannot read."
-  A 400 for a value of the wrong JSON type has the same message. Until now, its message was "Bad Request". A response
-  names only the first such field. Until now, it named every missing field.
-- The domain models declare the rules for their values as Bean Validation constraints, such as `@Size` on
-  `User.loginName`, and the domain services check a new object with the new `DomainValidator` before they store it
-  (ADR 009). Until now, the domain services checked each value with a hand-written condition. The messages and the
-  error code `ValidationException` stay the same. A correction with an invalid value for an unknown user now returns
-  404 instead of 400, because the domain reads the consumption before it checks the correction.
-- `gradle :domain:pitest` no longer removes the null checks that the Kotlin compiler generates, which no test can
-  detect. It runs with the default timeout and the default number of threads of PIT, because the settings from the
-  coffee app of SE@UHD showed no effect in a measurement.
-- Breaking: A corrected coffee count no longer has the upper limit of 1,000,000. No stakeholder set this value, and FR-8
-  leaves the limit open. The only limit is 2,147,483,647, the largest count that Coffee Kitty can store, and a request
-  to add a coffee at this count returns 409 Conflict.
-- Every limit in the code and in the build names its source: a requirement with the input of a stakeholder, a standard,
-  a technical limit, or a measurement. The limit of 254 characters for an email address cites RFC 5321. The limit of
-  255 characters for a first or last name is an open TBD in FR-14. Dependabot uses its default limit of open pull
-  requests.
+- Breaking: The api module checks only the structure of a request body, and the domain checks every value (ADR 006). A
+  value that breaks a rule gets a 400 with the error code `ValidationException`.
+- Breaking: The error code changes from `BadRequest` to `ValidationException` for an invalid login name, a blank first
+  or last name, a negative total of a correction, and a note that is blank or longer than 500 characters.
+- A request DTO states a required field with a property that is not nullable, such as `val delta: Int`, and Jackson
+  rejects a body without the field (ADR 008).
+- Breaking: A 400 for a missing field or a value of the wrong JSON type names only the first such field: "The field
+  emailAddress is missing or has a value that the server cannot read."
+- The domain models declare their value rules as Bean Validation constraints, such as `@Size` on `User.loginName`. A
+  domain service checks them with the new `DomainValidator` before it stores an object (ADR 009).
+- A correction with an invalid value for an unknown user returns 404 instead of 400.
+- `gradle :domain:pitest` no longer creates mutants that remove the null checks that the Kotlin compiler generates. It
+  runs with the default timeout and the default number of threads of PIT.
+- Every limit in the code and in the build names its source, such as a requirement, a standard, or a measurement.
+  Dependabot uses its default limit of open pull requests.
+- The limit of 254 characters for an email address cites RFC 5321, and the limit of 255 characters for a first or last
+  name is an open TBD in FR-14.
 - The requirements quote the input of the team assistant for each of their numbers and state the responses to refused
-  requests below the Statement. Each open TBD states what the requirement specifies until the contact person answers.
-  The sentences below a Statement use the key words MUST and MUST NOT for a rule, SHOULD for a plausibility check, and
-  MAY for an optional input. FR-8 states the time of a correction, the list of corrections, and the effect of a
-  correction to a higher coffee count, and resolves the TBD on the length of a note. FR-12 states that a coffee has at
-  most one rating. FR-4, FR-6, and FR-17 state the limits of an amount and of a weight as plausibility checks, which
-  protect against a typing error and are not rules on what the group pays, spends, or buys. A user can enter an amount
-  of at most 100.00 € and an admin an amount of at most 1,000.00 €. The glossary follows.
-- Breaking: A request body with an unknown field returns 400 with the error code `BadRequest`
-  (`spring.jackson.deserialization.fail-on-unknown-properties`). `POST /api/users` with an `id` returned 400 with the
-  error code `ValidationException` until now, and the server ignored the fields `createdAt` and `updatedAt` and any
-  misspelled field.
+  requests below the Statement.
+- Each open TBD states what the requirement specifies until the contact person answers. The sentences below a Statement
+  use MUST and MUST NOT for a rule, SHOULD for a plausibility check, and MAY for an optional input.
+- FR-8 states the time of a correction, the list of corrections, and the effect of a correction to a higher coffee
+  count, and resolves the TBD on the length of a note.
+- FR-12 states that a coffee has at most one rating.
+- FR-4, FR-6, and FR-17 state the limits of an amount and of a weight as plausibility checks, with at most 100.00 € for
+  a user and 1,000.00 € for an admin. GLOSSARY.md defines the term plausibility check.
+- Breaking: A request body with an unknown field returns 400 with the error code `BadRequest`. Until now,
+  `POST /api/users` returned `ValidationException` for an `id` and ignored any other unknown field.
 - `POST /api/users` reads the new `CreateUserDto`, and `UserDto` is only the response body. The OpenAPI definition marks
-  every field of a response body as required. Until now, it marked none. `Dto` and `DtoMapper` no longer exist.
-- The production jar contains neither the user fixtures nor code that deletes data. `TestFixtures` is in the test
-  fixtures of the domain module (`src/testFixtures`), and the new `DatabaseCleaner` in the test fixtures of the data
-  module replaces `DataResetService`. `DatabaseCleaner` truncates every table that the PostgreSQL catalog lists,
-  including `expenses`, `user_balance`, and `kitty_balance`, which the data reset left out. `CrudDataService.clear`,
-  `FixtureStartupLoader`, `FixturesProperties`, and the keys `campus-coffee.fixtures.load-on-startup` and
-  `campus-coffee.fixtures.reset-on-startup` no longer exist. `DatabaseCleaner` is a Spring bean, which the tests
-  inject, so that only the data module uses the `DataSource`.
-- `gradle :application:bootTestRun` starts the app with the user fixtures (the dev application). Until now,
-  `gradle :application:bootRun --args='--spring.profiles.active=dev'` started the app with the user fixtures. This
-  command now starts the app on the data of the previous run.
-- A data adapter throws the new `DataConstraintException` of the domain module for a violated CHECK constraint and for
-  a deletion that a foreign key prevents, instead of Spring's `DataIntegrityViolationException`. The client still gets
-  a 500.
+  every field of a response body as required. Until now, it marked none.
+- The production jar contains neither the user fixtures nor code that deletes data (ADR 005). `TestFixtures` is in the
+  test fixtures of the domain module (`src/testFixtures`).
+- The Spring bean `DatabaseCleaner` in the test fixtures of the data module replaces `DataResetService` and truncates
+  every table, including `expenses`, `user_balance`, and `kitty_balance`.
+- `gradle :application:bootTestRun` starts the dev application with the user fixtures.
+  `gradle :application:bootRun --args='--spring.profiles.active=dev'` now keeps the data of the previous run.
+- A data adapter throws the new `DataConstraintException` instead of `DataIntegrityViolationException` for a violated
+  CHECK constraint or a deletion that a foreign key prevents. The client still gets a 500.
 - `CountCorrectionDataService` has only `insert` and `getAllByUserId`, because a stored correction never changes.
-- `SecurityConfig` reads the routes that need an acting user from the controller functions with the new annotation
+- `SecurityConfig` reads the endpoints that need an acting user from the controller functions with the new annotation
   `ActingUserRequired` instead of a list of paths.
 - The unit tests of the api module are in `api/src/test`.
 - The message of a 409 for an undo after the grace period is "The grace period of the most recent coffee has passed."
-  The message for an invalid first or last name states the rules in parallel form. In the OpenAPI definition, the
-  description of the path parameter `userId` is "The id of the user."
+- The message for an invalid first or last name states the rules in parallel form. The OpenAPI definition describes the
+  path parameter `userId` as "The id of the user."
 - The data adapters are in the package `data.implementation`, as the domain services are in `domain.implementation`.
   Until now, the package was `data.implementations`.
 - GLOSSARY.md defines the term endpoint, and the documentation no longer uses the word route for it. The message of a
   missing object writes "id" in lowercase ("User with id ... does not exist.").
 - GLOSSARY.md calls a user of `TestFixtures` a user fixture instead of a fixture user, and the code and the
   documentation use this term.
-- The tests check observable behavior, such as a status, an error code, an exception type, or the stored state. They no
-  longer check implementation details, such as the wording of a message, an annotation, or a call between domain
-  classes. Tests that only repeated another test no longer exist.
-- The tests run in the time zone Asia/Tokyo, so that a test fails when the production code uses the time zone of the
-  JVM for a time in UTC.
-- The domain exceptions extend the sealed class `DomainException`, and `GlobalExceptionHandler` no longer has code for
-  cases that cannot occur.
+- The tests check observable behavior, such as a status or the stored state, and no longer check implementation details,
+  such as the wording of a message.
+- The tests run in the time zone Asia/Tokyo, so that a test fails when the production code uses the time zone of the JVM
+  for a time in UTC.
+- The domain exceptions extend the sealed class `DomainException`.
+
+### Removed
+
+- Bean Validation in the api module, such as `@NotNull` on the DTOs and `@Valid` in the controllers (ADR 008).
+- Breaking: The upper limit of 1,000,000 for a corrected coffee count (FR-8). The only limit is 2,147,483,647, the
+  largest count that Coffee Kitty can store, at which adding a coffee returns 409 Conflict.
+- The interfaces `Dto` and `DtoMapper` of the api module.
+- `CrudDataService.clear`, `FixtureStartupLoader`, `FixturesProperties`, and the keys
+  `campus-coffee.fixtures.load-on-startup` and `campus-coffee.fixtures.reset-on-startup`.
+- Tests that only repeated another test.
+- The code of `GlobalExceptionHandler` for cases that cannot occur.
 
 ### Fixed
 
 - Every error message is in English. Until now, `POST /api/users` with `Accept-Language: de` returned a message that
-  mixed German and English, because Spring took the locale from this header and Hibernate Validator translates its
-  default messages. The api module no longer uses Bean Validation, and every constraint on a domain model has a
-  message in English.
+  mixed German and English.
 - The message of a 401 for a blank `X-Acting-User` header is "The header X-Acting-User is missing or blank." Until now,
   the message was "The header X-Acting-User is missing."
 
@@ -219,130 +212,105 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 
 - A request with a wildcard in its `Content-Type`, such as `*/*` or `application/*`, gets a 415 with the error code
-  `UnsupportedMediaType`. Until now it got a 500, because Spring rejects such a header with an
-  `IllegalArgumentException` while it reads the request, and `GlobalExceptionHandler` mapped that exception like a
-  failed `require`.
+  `UnsupportedMediaType` instead of a 500.
 
 ## [0.2.2] - 2026-11-22
 
 ### Fixed
 
-- `POST /api/users/{userId}/consumption` rejects a delta that is a JSON string, such as `{"delta": "1"}`, with a 400
-  and the error code `BadRequest`. Until now Jackson read the string as the number 1, and the request added a coffee.
-  `application.yaml` sets `spring.jackson.mapper.allow-coercion-of-scalars` to false, so the same holds for every
-  number and boolean field of a request body.
-- `POST /api/users` rejects a JSON number for the role, such as `"role": 1`, and a JSON number or boolean for a `String`
-  field, such as `"loginName": 12345`, with a 400 and the error code `BadRequest`. Until now Jackson read the number 1
-  as the role `ADMIN`, which is the constant with the index 1. It stored a number or a boolean as its text, such as the
-  login name "12345". `application.yaml` sets `spring.jackson.datatype.enum.fail-on-numbers-for-enums` to true for every
-  enum field of a request body. The new `JsonConfig` rejects a number or a boolean for every `String` field, because
-  Spring Boot has no property for this setting.
-- The REST API reads and writes only JSON, as the README states. A request with a YAML body, such as `POST /api/users`
-  with `Content-Type: application/yaml`, gets a 415 with the error code `UnsupportedMediaType`, and a request with
-  `Accept: application/yaml` gets a 406. Until now such a body got a 500, and such an `Accept` header got a YAML
-  response. The reason was that springdoc puts the YAML module of Jackson on the classpath, and Spring registered a YAML
-  message converter for it. `ApiWebConfig` removes this message converter as it removes the XML message converters.
+- A request body with a JSON string for a number or boolean field gets a 400 with the error code `BadRequest`. Until
+  now, `{"delta": "1"}` in `POST /api/users/{userId}/consumption` added a coffee.
+- A request body with a JSON number for an enum field or with a number or boolean for a `String` field gets a 400 with
+  the error code `BadRequest`. Until now, `"role": 1` created an admin, and `"loginName": 12345` was stored as text.
+- The REST API reads and writes only JSON. A request with a YAML body gets a 415 with the error code
+  `UnsupportedMediaType` instead of a 500, and `Accept: application/yaml` gets a 406 instead of a YAML response.
 
 ## [0.2.1] - 2026-11-17
 
 ### Added
 
 - GLOSSARY.md defines the terms correction and note of FR-8.
-- `SecurityConfig` requires an acting user for the requests of FR-8, `PUT /api/users/{userId}/consumption` and
-  `GET /api/users/{userId}/consumption/corrections`, so that an implementation of FR-8 does not have to change the
-  security configuration. Until Coffee Kitty implements FR-8, a request with an acting user gets 405 or 404.
+- `SecurityConfig` requires an acting user for the endpoints of FR-8, `PUT /api/users/{userId}/consumption` and
+  `GET /api/users/{userId}/consumption/corrections`. Until Coffee Kitty implements FR-8, an acting user gets 405 or 404.
 
 ### Changed
 
-- The step definitions of FR-3 in `CucumberConsumptionSteps` send their requests through `ConsumptionRequests`
-  instead of building HTTP requests, and their Then steps check the stored coffee count.
-- The system tests send their requests through the new `UserRequests` and through new functions of
-  `ConsumptionRequests` instead of building HTTP requests. These functions return a `Response` with the status code,
-  the headers, and the body or the error response. Only the tests of an unknown path, of a path that the firewall
-  rejects, and of the OpenAPI definition build their own requests.
+- The step definitions of FR-3 in `CucumberConsumptionSteps` send their requests through `ConsumptionRequests` instead
+  of building HTTP requests, and their Then steps check the stored coffee count.
+- The system tests send their requests through the new `UserRequests` and new functions of `ConsumptionRequests`, which
+  return a `Response` with the status code, the headers, and the body or the error response.
 
 ### Fixed
 
-- FR-8 identifies the TBD of FR-3 on corrections by the question of the TBD instead of by a wrong position and contains
-  the decision of the group lead as its business requirement. The Rationale of FR-8 no longer specifies who reads the
-  notes, which a TBD of FR-8 leaves open.
+- FR-8 names the TBD of FR-3 on corrections by its question instead of a wrong position and states the decision of the
+  group lead as its business requirement.
+- The Rationale of FR-8 no longer specifies who reads the notes, which a TBD of FR-8 leaves open.
 
 ## [0.2.0] - 2026-11-17
 
 ### Added
 
-- A user can undo their most recent coffee within 5 minutes of adding it (FR-3 in `requirements/FR-3-undo-coffee.md`).
-  `POST /api/users/{userId}/consumption/undo` lowers the coffee count by one and returns 409 Conflict when the user has
-  no coffee to undo or when the grace period of the most recent coffee has ended. After an undo, the user can undo the
-  coffee before while its own grace period is open. The grace period includes its last instant, as in the coffee app of
-  SE@UHD, and `campus-coffee.consumption.grace-period` sets it (default 5 minutes). The migration V3 creates the table
-  `coffee_times`, which holds the time of each recent coffee that the user did not undo. Adding a coffee drops the times
-  of the coffees outside their grace period. Coffees added before this release have no time, and a user cannot undo
-  them.
-- Every user has a role, `USER` or `ADMIN` (migration V4), and the fixture user `jane_doe` is an admin. `POST
-  /api/users` may set the role of the new user, which defaults to `USER`.
-- Spring Security runs `ActingUserAuthenticationFilter` before the controllers. The filter resolves the acting user
-  from the header `X-Acting-User`, and `SecurityConfig` lists the routes that need one. A request without a known acting
-  user gets 401 Unauthorized before Spring MVC reads its body, and every 401 has the header `WWW-Authenticate` with the
-  challenge `X-Acting-User realm="Coffee Kitty"`, as RFC 9110 requires.
-- FR-8 in `requirements/FR-8-correct-coffee-count.md` specifies the correction of a coffee count by an admin, which
-  the group lead decided and which assignment 5 implements. FR-3 marks its open question about corrections as
-  resolved.
-- `ConsumptionRequests` in the tests sends the requests of the step definitions, so that a step names users by login
-  name and gets status codes and values back. Examples of these requests are adding a coffee and reading a coffee count.
-  Its functions for FR-8 send the correction and read the corrections, which Coffee Kitty does not implement
-  before assignment 5.
-- When no admin exists, `BootstrapAdminLoader` stores an admin on startup, after the fixture loader, from the keys under
-  `campus-coffee.bootstrap-admin`. The environment variables `BOOTSTRAP_ADMIN_LOGIN_NAME`,
-  `BOOTSTRAP_ADMIN_EMAIL_ADDRESS`, `BOOTSTRAP_ADMIN_FIRST_NAME`, and `BOOTSTRAP_ADMIN_LAST_NAME` set these keys. If a
-  user has the configured login name, the loader gives that user the role `ADMIN`.
+- A user can undo their most recent coffee with `POST /api/users/{userId}/consumption/undo` within its grace period
+  (FR-3). The key `campus-coffee.consumption.grace-period` sets the grace period, 5 minutes by default.
+- The migration V3 creates the table `coffee_times` with the time of each recent coffee. A user cannot undo a coffee
+  added before this release.
+- Every user has a role, `USER` or `ADMIN` (migration V4), and the user fixture `jane_doe` is an admin.
+  `POST /api/users` may set the role of the new user, which defaults to `USER`.
+- Spring Security resolves the acting user from the header `X-Acting-User` with `ActingUserAuthenticationFilter`, and
+  `SecurityConfig` lists the endpoints that need one.
+- A request without a known acting user gets 401 Unauthorized before Spring MVC reads its body. Every 401 has the header
+  `WWW-Authenticate: X-Acting-User realm="Coffee Kitty"` (RFC 9110).
+- FR-8 in `requirements/FR-8-correct-coffee-count.md` specifies the correction of a coffee count by an admin, which the
+  group lead decided and assignment 5 implements. FR-3 marks its TBD on corrections as resolved.
+- The step definitions send their requests, such as adding a coffee, through `ConsumptionRequests`, which takes login
+  names and returns status codes and values. It also sends the requests of FR-8, which assignment 5 implements.
+- When no admin exists, `BootstrapAdminLoader` stores the bootstrap admin on startup or gives the role `ADMIN` to the
+  user with the configured login name.
+- The environment variables `BOOTSTRAP_ADMIN_LOGIN_NAME`, `BOOTSTRAP_ADMIN_EMAIL_ADDRESS`, `BOOTSTRAP_ADMIN_FIRST_NAME`,
+  and `BOOTSTRAP_ADMIN_LAST_NAME` set the keys under `campus-coffee.bootstrap-admin`.
 
 ### Changed
 
-- Breaking: Only an admin may create a user with `POST /api/users`. Coffee Kitty has no authentication yet. A client
-  sends the login name of its acting user in the header `X-Acting-User`. The response is 401 Unauthorized without a
-  known acting user and 403 Forbidden when the acting user is not an admin. The migration V4 gives every existing user
-  the role `USER`, including `jane_doe` in a database that the `dev` profile does not reset. Configure the bootstrap
-  admin with the login name of an existing user, or of a new one, before creating users.
-- The default firewall of Spring Security rejects a path with `;`, `//`, `..`, or an encoded slash and a header value
-  with a control character. The firewall rejects such a request because security rules and Spring MVC can read it
-  differently. A rejected request gets 400 Bad Request with the message "The request could not be read." Coffee Kitty
-  0.1.0 handled `GET /api/users;x=1` like `GET /api/users` and responded to `GET /api//users` with 404 Not Found.
-- The README describes how the group buys coffee beans from the kitty and how a user who buys coffee with their own
-  money declares the purchase as an expense. It states that students first see the app in the lectures on agentic
-  software engineering and explains how to set up IntelliJ IDEA.
-- The README no longer tells readers to clone the repository, because they have already cloned it when they open the
-  README in IntelliJ IDEA. The setup instructions start with `mise trust` and continue with `mise install`, and every
-  command in the README has its own code block.
-- `gradle check` runs ktlint on the root `build.gradle.kts` and `settings.gradle.kts` and on the included build
-  `build-logic`, in addition to the subprojects. ktlint found four formatting violations in
-  `java-conventions.gradle.kts`, which this release fixes.
+- Breaking: Only an admin may create a user. `POST /api/users` returns 401 Unauthorized without a known acting user in
+  the header `X-Acting-User` and 403 Forbidden when the acting user is not an admin.
+- Breaking: The migration V4 gives every existing user the role `USER`, including `jane_doe` in a database that the
+  `dev` profile does not reset. Configure the bootstrap admin before you create users.
+- The firewall of Spring Security returns 400 Bad Request for a path with `;`, `//`, `..`, or an encoded slash and for a
+  header value with a control character.
+- The README describes how the group buys coffee beans, from the kitty or as the expense of a user, and how to set up
+  IntelliJ IDEA. It states that students first see the app in the lectures on agentic software engineering.
+- The setup instructions of the README start with `mise trust` and `mise install`, and every command in the README has
+  its own code block.
+- `gradle check` also runs ktlint on the root `build.gradle.kts` and `settings.gradle.kts` and on the included build
+  `build-logic`. This release fixes four violations that ktlint found in `java-conventions.gradle.kts`.
 - Coffee Kitty uses Gradle 9.9 instead of 9.8 (`mise.toml`), and `mise install` installs it. In IntelliJ IDEA, select
   the `gradle-9.9.x` directory as the local Gradle installation (README, section IntelliJ IDEA).
-- For a failed test, Gradle prints the assertion message, e.g., `expected: 200 but was: 404`, and the stack trace with
+- For a failed test, Gradle prints the assertion message, such as `expected: 200 but was: 404`, and the stack trace with
   the class and method of each line, which IntelliJ IDEA links to the source.
 - The workflow `.github/workflows/mise-outdated.yml` checks the pins in `mise.toml` every Monday, because Dependabot
   does not read `mise.toml`. The workflow opens an issue when a pin no longer covers the newest release of its tool.
 - When IntelliJ IDEA runs a single scenario of a feature file, Cucumber loads the step definitions from the package of
   `CucumberTests` (`application/src/test/resources/cucumber.properties`) and no longer scans every test class.
 
+### Removed
+
+- The instruction of the README to clone the repository.
+
 ### Fixed
 
-- A successful build no longer ends with the deprecation notice that detekt 2.0.0-alpha.6 causes. Until a detekt
-  release includes the fix from detekt/detekt#9577, `org.gradle.warning.mode=none` in `gradle.properties` hides all
-  Gradle deprecation warnings.
-- IntelliJ IDEA could not start the Gradle daemon when it ran Gradle on a JDK older than 23, because such a JDK rejects
-  the option `--sun-misc-unsafe-memory-access=allow` in `org.gradle.jvmargs`. `gradle/gradle-daemon-jvm.properties` now
-  requires JDK 25 for the daemon. When Gradle finds no JDK 25 on the machine, it downloads a JDK 25 from the URLs in
-  this file. The foojay toolchain resolver in `settings.gradle.kts` looked up these URLs.
+- A successful build no longer ends with the deprecation notice of detekt 2.0.0-alpha.6. Until a detekt release includes
+  the fix from detekt/detekt#9577, `org.gradle.warning.mode=none` hides all Gradle deprecation warnings.
+- IntelliJ IDEA could not start the Gradle daemon on a JDK older than 23. `gradle/gradle-daemon-jvm.properties` now
+  requires JDK 25 for the daemon, which Gradle downloads when the machine has none.
 
 ## [0.1.0] - 2026-10-31
 
 ### Added
 
-- A REST API that lists and creates users, adds a coffee to a user's coffee count, and stores the users and their
-  coffee counts in PostgreSQL. A multi-module Gradle build runs ktlint, detekt, and the tests.
+- A REST API that lists and creates users, adds a coffee to a user's coffee count, and stores the users and their coffee
+  counts in PostgreSQL. A multi-module Gradle build runs ktlint, detekt, and the tests.
 
+[Unreleased]: https://github.com/se-uhd/coffee-kitty/compare/v0.3.1...HEAD
 [0.3.1]: https://github.com/se-uhd/coffee-kitty/releases/tag/v0.3.1
 [0.3.0]: https://github.com/se-uhd/coffee-kitty/releases/tag/v0.3.0
 [0.2.3]: https://github.com/se-uhd/coffee-kitty/releases/tag/v0.2.3

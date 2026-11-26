@@ -8,13 +8,8 @@ import java.util.UUID
 
 /**
  * The domain model of a correction, in which an [admin] sets the coffee count of a [user] from [countBefore] to
- * [countAfter] and explains the correction in a [note] (FR-8 in `requirements/FR-8-correct-coffee-count.md`). Instances
- * are immutable, and Coffee Kitty never changes a stored correction. `CoffeeConsumptionService.correctCount` stores a
- * correction together with the corrected coffee count. Before that, it checks the correction against the Bean
- * Validation constraints on [countAfter] and [note] with `DomainValidator`. A coffee count has no upper limit of its
- * own: FR-8 leaves the limit open, so the only limit is the largest value of an `Int`.
- *
- * The data module assigns [id], [createdAt], and [updatedAt]. They are null on a correction that is not stored yet.
+ * [countAfter] and explains the correction in a [note] (FR-8). Coffee Kitty never changes a stored correction. A coffee
+ * count has no upper limit of its own: FR-8 leaves the limit open, so the only limit is the largest value of an `Int`.
  * [createdAt] is the time of the correction in UTC.
  */
 data class CountCorrection(

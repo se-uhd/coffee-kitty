@@ -2,11 +2,10 @@ plugins {
     base
     jacoco
     id("jacoco-report-aggregation")
-    alias(libs.plugins.dependency.management)
+    id("io.spring.dependency-management")
 }
 
-// The plugin jacoco-report-aggregation resolves the dependencies of the modules. The Spring Boot BOM sets the versions
-// of these dependencies.
+// ADR-014
 dependencyManagement {
     imports {
         mavenBom("org.springframework.boot:spring-boot-dependencies:${libs.versions.spring.boot.get()}")
@@ -38,19 +37,7 @@ val aggregateReport = tasks.named<JacocoReport>("testCodeCoverageReport") {
     }
 }
 
-// The coverageGate task leaves out the Application class and the generated mappers. It has two rules.
-//
-// The first rule checks the coverage of all modules together: at least 90% of the lines and 80% of the branches. The
-// minimums are on purpose several points below the measured coverage. A minimum close to the measured value makes
-// developers write tests only to reach the number, and such tests check implementation details. Measured on 2026-11-25
-// with the exclusions of the gate: The tests cover 700 of 721 lines (97.1%) and 148 of 174 branches (85.1%). Do not
-// raise the minimums when the coverage grows (doc/adr/010-thresholds-of-the-build.md). A ratio over all modules cannot
-// detect a single untested function: The undo status (FR-9) once had no test at all, and the ratio stayed above its
-// minimum.
-//
-// The second rule therefore requires that a test executes every function of a domain service and of a controller. It
-// leaves out the functions that Kotlin generates for a lambda, such as the lambda of `KotlinLogging.logger {}`, which
-// only names the logger and never runs.
+// ADR-010
 val gateExclusions = listOf("**/Application*", "**/*MapperImpl.*")
 
 val coverageGate = tasks.register<JacocoCoverageVerification>("coverageGate") {
@@ -82,9 +69,7 @@ val coverageGate = tasks.register<JacocoCoverageVerification>("coverageGate") {
                     "de.seuhd.campuscoffee.domain.implementation.*",
                     "de.seuhd.campuscoffee.api.controller.*"
                 )
-            // Until 2026-12-08, the rule leaves out the three functions of the undo status (FR-9). Their tests are the
-            // reference solution of assignment 7, which the repository does not contain before that date. Delete the
-            // three patterns when the tests are on the main branch.
+            // ADR-010
             excludes = listOf("*lambda*", "*.undoableUntil(*", "*.closesAt(*", "*.undoStatus(*")
             limit {
                 counter = "LINE"

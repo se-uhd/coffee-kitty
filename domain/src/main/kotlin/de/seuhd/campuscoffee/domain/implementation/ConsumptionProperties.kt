@@ -8,10 +8,7 @@ import java.time.Duration
  * the domain checks the grace period and cannot depend on the api module or the application module. With this class,
  * the IDE can resolve the key in `application.yaml`. The coffee app of SE@UHD has the same class.
  *
- * @property gracePeriod the time after a user adds a coffee in which the user can undo it with
- *   `POST /api/users/{userId}/consumption/undo`. A later undo gets the status 409 Conflict. Spring reads the value from
- *   `campus-coffee.consumption.grace-period`. The default is 5 minutes, as in `application.yaml`. The value must not be
- *   negative.
+ * @property gracePeriod the time after a coffee in which a user can undo it (`campus-coffee.consumption.grace-period`)
  */
 @ConfigurationProperties("campus-coffee.consumption")
 data class ConsumptionProperties(

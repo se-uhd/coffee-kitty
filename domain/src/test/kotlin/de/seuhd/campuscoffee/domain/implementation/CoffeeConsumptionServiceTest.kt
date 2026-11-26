@@ -62,14 +62,12 @@ class CoffeeConsumptionServiceTest {
         vararg coffeeTimes: LocalDateTime
     ) = CoffeeConsumption(id = UUID(0L, 500L), user = user, count = count, coffeeTimes = coffeeTimes.toList())
 
-    /** Stubs `getByUserIdForUpdate` to return [current] and `upsert` on both mocks to return its argument. */
     private fun stubCorrection(current: CoffeeConsumption) {
         whenever(dataService.getByUserIdForUpdate(userId)).thenReturn(current)
         whenever(dataService.upsert(any())).thenAnswer { it.arguments[0] as CoffeeConsumption }
         whenever(correctionDataService.insert(any())).thenAnswer { it.arguments[0] as CountCorrection }
     }
 
-    /** Asserts that the service stored neither a consumption nor a correction. */
     private fun verifyNothingStored() {
         verify(dataService, never()).upsert(any())
         verify(correctionDataService, never()).insert(any())
@@ -222,14 +220,11 @@ class CoffeeConsumptionServiceTest {
 
         service.correctCount(userId, 1, note, admin)
 
-        // an undo after the correction checks the time of the oldest coffee, which is the only one left
         verify(dataService).upsert(consumption(1, firstAt))
     }
 
     @Test
     fun `correctCount removes all times when it removes more coffees than there are times`() {
-        // a consumption with a count of 5 can have only two times, because applyDelta drops the times of the coffees
-        // outside their grace period
         stubCorrection(consumption(5, coffeeAddedAt.minusMinutes(1), coffeeAddedAt))
 
         service.correctCount(userId, 2, note, admin)
@@ -306,7 +301,6 @@ class CoffeeConsumptionServiceTest {
     fun `correctCount throws ValidationException for a note with a NUL character`() {
         stubCorrection(consumption(3))
 
-        // PostgreSQL cannot store NUL in a varchar column. Without the check, the request would get a 500.
         assertThrows<ValidationException> { service.correctCount(userId, 1, "Double\u0000tap", admin) }
         verifyNothingStored()
     }

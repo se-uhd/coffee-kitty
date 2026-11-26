@@ -31,10 +31,9 @@ class CoffeeConsumptionDataServiceImpl(
     override fun getByUserId(userId: UUID): CoffeeConsumption = toDomainOrThrow(repository.findByUserId(userId), userId)
 
     /**
-     * Returns the consumption of the user with [userId] and locks the consumption row until the transaction ends.
-     * With propagation `MANDATORY`, a call outside a transaction throws an `IllegalTransactionStateException`. With the
-     * default propagation `REQUIRED`, such a call would run in a transaction of its own. The lock would then end when
-     * this method returns, and the caller would store the new count without the lock.
+     * Returns the consumption of the user with [userId] and locks its row until the transaction ends. With `MANDATORY`,
+     * a call outside a transaction throws. With the default `REQUIRED`, the lock would end when this method returns,
+     * and the caller would store the new count without the lock.
      *
      * @throws NotFoundException if no user has [userId]
      */
@@ -42,11 +41,6 @@ class CoffeeConsumptionDataServiceImpl(
     override fun getByUserIdForUpdate(userId: UUID): CoffeeConsumption =
         toDomainOrThrow(repository.findForUpdateByUserId(userId), userId)
 
-    /**
-     * Maps [entity] to its domain object.
-     *
-     * @throws NotFoundException for the user with [userId] if [entity] is null
-     */
     private fun toDomainOrThrow(
         entity: CoffeeConsumptionEntity?,
         userId: UUID

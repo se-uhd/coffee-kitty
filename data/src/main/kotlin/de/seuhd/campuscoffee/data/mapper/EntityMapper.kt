@@ -27,10 +27,9 @@ interface EntityMapper<DOMAIN : DomainModel<*>, ENTITY : Entity> {
     fun toEntity(source: DOMAIN): ENTITY
 
     /**
-     * Copies the values of [source] into the existing [target]. Each subinterface must override this method and
-     * ignore `id`, `createdAt`, and `updatedAt` with `@Mapping(target = ..., ignore = true)` (see [UserEntityMapper]).
-     * The id identifies the stored row, and the lifecycle callbacks of [Entity] set the timestamps. Without the
-     * override, the update copies the id and the timestamps from the domain object.
+     * Copies the values of [source] into the existing [target]. Each subinterface overrides this method to ignore `id`,
+     * `createdAt`, and `updatedAt` (see [UserEntityMapper]), because without the override, the update copies the id and
+     * the timestamps from the domain object.
      *
      * @param source the domain object with the new values
      * @param target the JPA entity to update in place

@@ -20,7 +20,6 @@ import java.util.UUID
 class ConsumptionRequests(
     private val client: RestTestClient
 ) {
-    /** Returns the id of the user with [loginName]. */
     fun userId(loginName: String): UUID =
         UserRequests(client)
             .retrieveAll()

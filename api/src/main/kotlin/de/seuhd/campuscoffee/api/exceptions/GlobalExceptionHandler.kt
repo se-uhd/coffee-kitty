@@ -27,19 +27,10 @@ import java.time.ZoneOffset
 
 /**
  * The exception handler for all controllers. The body of every error response is an [ErrorResponse].
- *
- * [handleDomainException] maps each domain exception to a status and uses the class name of the exception as the
- * error code. The base class [ResponseEntityExceptionHandler] maps each standard Spring MVC exception to its status
- * code. Examples are the exceptions for an unsupported HTTP method, a body that Jackson cannot read, and an unknown
- * path. [handleExceptionInternal] builds the error response for the standard Spring MVC exceptions, and
- * [handleHttpMessageNotReadable] names the field at which Jackson cannot read a request body.
- * [handleGenericException] returns a 500 for every other exception.
- *
- * A failed `require` or `check` throws an `IllegalArgumentException` or an `IllegalStateException`. Such an exception
- * indicates a bug in the server code, and [handleGenericException] logs the exception with its stack trace at ERROR.
- * The log line for a domain exception does not contain a looked-up or duplicate value, such as a login name. The
- * handler passes every log message that can contain client input, such as the request path, through [loggableText].
- * The stack traces that the handler logs at ERROR do not pass through [loggableText].
+ * [handleDomainException] maps each domain exception to a status and uses the class name of the exception as the error
+ * code. The base class [ResponseEntityExceptionHandler] maps the standard Spring MVC exceptions to their statuses, and
+ * [handleGenericException] returns a 500 for every other exception. Every log message that can contain client input,
+ * such as the request path, passes through [loggableText], except the stack traces at ERROR.
  */
 @ControllerAdvice
 class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
@@ -63,14 +54,9 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     /**
-     * Returns a 500 for every exception that no other handler maps, such as an `IllegalArgumentException` from a failed
-     * `require`. Every such response has the fixed message "An unexpected error occurred." The log line at ERROR
-     * contains the method and path of the request and the exception with its stack trace.
-     *
-     * One `IllegalArgumentException` is an error of the client. Spring throws it for a request with a wildcard in the
-     * `Content-Type` header, that is, an asterisk as the type or as the subtype. At that point, Spring has not called a
-     * message converter yet. Such a request gets a 415 with the error code `UnsupportedMediaType`, like a request with
-     * any other media type that the API does not read. The handler logs the request at INFO.
+     * Returns a 500 with a fixed message for every exception that no other handler maps. Spring throws an
+     * `IllegalArgumentException` for an asterisk as the type or subtype in the `Content-Type` header before it calls a
+     * message converter, so the handler returns 415 for it, as for any other media type that the API does not read.
      *
      * @param exception the exception that no other handler maps
      * @param request   the current web request
@@ -111,15 +97,9 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     /**
-     * Builds the error response for an exception that [ResponseEntityExceptionHandler] maps to a status. Examples are
-     * the exceptions for a body that Jackson cannot read, an unsupported method or media type, and an unknown path.
-     * [handleHttpMessageNotReadable] builds the error response for a request body with an unreadable field. The error
-     * response has the reason phrase of the status as its message and the same phrase without spaces as its error code.
-     * It does not contain the message or the class name of the exception. The message of such an exception can quote
-     * client input, for example a value from a body that Jackson cannot read.
-     *
-     * The handler logs a 4xx at INFO with the class name of the exception, the status, and the method and path of the
-     * request. It logs the message of the exception at DEBUG. It logs a 5xx at ERROR with the stack trace.
+     * Builds the error response for an exception that [ResponseEntityExceptionHandler] maps to a status, with the
+     * reason phrase of the status as the message. The response leaves out the message of the exception, because it can
+     * quote client input, such as a value from a body that Jackson cannot read.
      */
     override fun handleExceptionInternal(
         exception: Exception,
@@ -138,11 +118,6 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         return respond(statusCode, errorBody(statusCode, request, reason), headers)
     }
 
-    /**
-     * Returns a response with [status], [body], and the content type `application/json;charset=UTF-8`. The client gets
-     * the JSON body even when its `Accept` header does not list JSON, because Spring skips content negotiation when
-     * the response already has a content type.
-     */
     private fun <T : Any> respond(
         status: HttpStatusCode,
         body: T,
@@ -154,9 +129,6 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             .contentType(JSON_UTF8)
             .body(body)
 
-    /**
-     * Builds the [ErrorResponse] for [status], [request], and [message], with the current UTC time as the timestamp.
-     */
     private fun errorBody(
         status: HttpStatusCode,
         request: WebRequest,
@@ -172,13 +144,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             path = request.servletRequest().requestURI
         )
 
-    /**
-     * Returns the name of the DTO property at which Jackson failed to read a request body, or null if [exception] has
-     * no such property. Jackson fails at a property when the field is missing or `null` although the property is not
-     * nullable, and when the value has the wrong JSON type or is not a constant of the enum. The name comes from the
-     * DTO and is not client input. For an unknown field, the name would be client input, so the function returns null
-     * for a [PropertyBindingException]. It also returns null for a body that is not valid JSON or not a JSON object.
-     */
+    // ADR-008
     private fun unreadableField(exception: HttpMessageNotReadableException): String? {
         val cause = exception.cause
         if (cause !is MismatchedInputException || cause is PropertyBindingException) {
@@ -187,14 +153,11 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         return cause.path.lastOrNull()?.propertyName
     }
 
-    /** Returns the method and path of [request] for a log line, without the query string. */
     private fun describe(request: WebRequest): String =
         request.servletRequest().let { "${it.method} ${loggableText(it.requestURI)}" }
 
-    /** Returns the servlet request of this request. Spring MVC passes a [ServletWebRequest] to an exception handler. */
     private fun WebRequest.servletRequest(): HttpServletRequest = (this as ServletWebRequest).request
 
-    /** Returns the status of the error response for [exception]. */
     private fun statusOf(exception: DomainException): HttpStatus =
         when (exception) {
             is NotFoundException -> HttpStatus.NOT_FOUND
@@ -203,41 +166,21 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             is ValidationException -> HttpStatus.BAD_REQUEST
         }
 
-    /**
-     * Returns [text] as a single log line. The function replaces every control character, such as CR and LF, and every
-     * Unicode line or paragraph separator with a space. A client therefore cannot forge a log entry with a line break.
-     * The function then cuts the result to [MAX_LOGGED_LENGTH] characters, because a client could otherwise fill the
-     * log with a long value.
-     */
+    // ADR-015
     private fun loggableText(text: String): String =
         text.replace(CONTROL_AND_LINE_SEPARATOR_CHARACTERS, " ").take(MAX_LOGGED_LENGTH)
 
     private companion object {
         private val log = KotlinLogging.logger {}
 
-        /** The content type of every error response, with the charset that ApiWebConfig adds to JSON responses. */
         private val JSON_UTF8 = MediaType(MediaType.APPLICATION_JSON, StandardCharsets.UTF_8)
 
-        /**
-         * Matches a character of the Unicode category Cc, the line separator U+2028, or the paragraph separator
-         * U+2029. The category Cc contains the C0 controls U+0000 to U+001F, DEL, and the C1 controls U+0080 to U+009F.
-         * CR and LF are C0 controls, and NEL is a C1 control.
-         */
         private val CONTROL_AND_LINE_SEPARATOR_CHARACTERS = Regex("[\\p{Cc}\\u2028\\u2029]")
 
-        /**
-         * The maximum length of a text that [loggableText] returns. The limit has to leave every text of a legitimate
-         * request whole. The longest path of the API has 71 characters, and the longest message is the message of
-         * Jackson for a body with an unknown field, which has about 400 characters for `CreateUserDto`. Only a client
-         * can cause a longer text, for example with a long path, and the function cuts it.
-         */
+        // ADR-010
         private const val MAX_LOGGED_LENGTH = 500
     }
 }
 
-/**
- * Returns whether the media type in the `Content-Type` header has an asterisk as its type or as its subtype. An
- * asterisk before a suffix, such as `+json`, also counts. A request without the header has no wildcard.
- */
 private fun WebRequest.hasWildcardContentType(): Boolean =
     '*' in getHeader(HttpHeaders.CONTENT_TYPE).orEmpty().substringBefore(';')

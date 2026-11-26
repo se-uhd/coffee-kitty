@@ -27,7 +27,7 @@ class ArchitectureTests {
     fun `each layer depends only on its permitted layers`() {
         val classes =
             ClassFileImporter()
-                .importPackages("de.seuhd.campuscoffee") // includes every subpackage
+                .importPackages("de.seuhd.campuscoffee")
 
         layeredArchitecture()
             .consideringAllDependencies()
@@ -47,38 +47,24 @@ class ArchitectureTests {
             .mayOnlyBeAccessedByLayers("application")
             .whereLayer("application")
             .mayNotBeAccessedByAnyLayer()
-            // Fails when a production or test class belongs to no layer, for example a class in a new top-level
-            // package. A developer must then add the package to a layer.
             .ensureAllClassesAreContainedInArchitecture()
             .check(classes)
     }
 
     @Test
     fun `the production packages have no cycles`() {
-        // Fails on a cycle between production packages, inside a module or across modules. Each package is a slice of
-        // its own. With one slice per module, the rule would miss a cycle inside a module, such as a cycle between
-        // data.implementation and data.mapper. The rule leaves out the test classes, because it checks the structure
-        // of the production code. RootInclusiveSliceAssignment includes the classes of the root package, such as
-        // Application and BootstrapAdminLoader.
         slices()
             .assignedFrom(RootInclusiveSliceAssignment)
             .should()
             .beFreeOfCycles()
-            .check(PRODUCTION_CLASSES)
+            .because(
+                "each package is a slice of its own, so that a cycle between two packages of one module, such as " +
+                    "data.implementation and data.mapper, fails too"
+            ).check(PRODUCTION_CLASSES)
     }
 
     @Test
     fun `production code depends on ports, never on Impl types`() {
-        // No production class may depend on a concrete *Impl class instead of the port that the *Impl class
-        // implements. The rule covers *Impl classes too, and a domain service implementation therefore cannot inject
-        // another domain service implementation. The rule exempts @Configuration classes, because they compose the
-        // beans. It also exempts a class nested in an *Impl class. Kotlin generates such a class for a reference to a
-        // method of the *Impl class, and the generated class depends on the *Impl class.
-        //
-        // The rule checks only dependencies on the concrete *Impl classes of this project. It ignores Kotlin runtime
-        // classes such as kotlin.jvm.internal.FunctionReferenceImpl, which is the supertype of every class that Kotlin
-        // generates for a function reference. It also ignores the abstract CrudDataServiceImpl, which every
-        // *DataServiceImpl extends.
         val isConcreteOwnImplementation =
             object : DescribedPredicate<JavaClass>("a concrete campus-coffee class named *Impl") {
                 override fun test(javaClass: JavaClass): Boolean =
@@ -98,14 +84,15 @@ class ArchitectureTests {
             .and(DescribedPredicate.not(isNestedInAnImplementation))
             .should()
             .dependOnClassesThat(isConcreteOwnImplementation)
-            .check(PRODUCTION_CLASSES)
+            .because(
+                "code depends on the port that an Impl class implements, @Configuration classes compose the beans, " +
+                    "and Kotlin generates the classes nested in an Impl class for its method references"
+            ).check(PRODUCTION_CLASSES)
     }
 
     @Test
     fun `api and application depend on neither the data ports nor the implementation classes of the domain`() {
-        // The layered rule lets api and application use every class of the domain module. Without this rule, a
-        // controller or a startup task could inject a data port. It would then bypass the checks in the domain
-        // services, such as the checks of the login name and the email address of a new user.
+        // ADR-001
         noClasses()
             .that()
             .resideInAnyPackage("de.seuhd.campuscoffee.api..", *APPLICATION_PRODUCTION_PACKAGES)
@@ -119,11 +106,6 @@ class ArchitectureTests {
 
     @Test
     fun `the data module uses only the models, the exceptions, and the data ports of the domain`() {
-        // The data module implements the data ports. The layered rule lets it use every class of the domain module.
-        // Without this rule, a data adapter could call an API port or an internal port, which are for the callers of
-        // the domain. It could also use a class in domain/.../implementation/, such as GracePeriod. The rule lists the
-        // packages that the data module may use. It therefore forbids a new package of the domain until a developer
-        // adds the package here.
         val allowedDomainPackages =
             resideInAnyPackage(
                 "de.seuhd.campuscoffee.domain.model..",
@@ -136,14 +118,15 @@ class ArchitectureTests {
             .should()
             .onlyDependOnClassesThat(
                 resideOutsideOfPackage("de.seuhd.campuscoffee.domain..").or(allowedDomainPackages)
+            ).because(
+                "a data adapter implements a data port and calls no API port, no internal port, and no class of " +
+                    "domain/.../implementation/, and a new package of the domain needs an entry here"
             ).check(PRODUCTION_CLASSES)
     }
 
     @Test
     fun `no api class depends on the internal ports`() {
-        // The internal port UserInternalService creates a user without an acting user. It is for the bootstrap admin
-        // loader, the test setup, and the dev application, which are in the application layer. A controller that used
-        // it would create users without the check of the role.
+        // ADR-003
         noClasses()
             .that()
             .resideInAPackage("de.seuhd.campuscoffee.api..")
@@ -155,9 +138,7 @@ class ArchitectureTests {
 
     @Test
     fun `a controller function that reads the acting user is not an open endpoint`() {
-        // SecurityConfig requires an acting user for every controller function without the annotation OpenEndpoint. A
-        // function with the annotation that reads the acting user would fail for a request without the header. The
-        // rule names the classes of the api module as text, because the tests must not depend on that module.
+        // ADR-011
         val readsTheActingUser =
             object : DescribedPredicate<JavaMethod>("call CurrentUserProvider.currentUser") {
                 override fun test(method: JavaMethod): Boolean =
@@ -178,10 +159,7 @@ class ArchitectureTests {
 
     @Test
     fun `the system and acceptance tests use no class of the api module`() {
-        // These tests are clients of the REST API. They send request bodies as maps with the JSON field names and read
-        // responses into the classes of Json.kt. If a test used a DTO, a renamed field would change the request of the
-        // test and the response of the server together, and the test would still pass. The same holds for a constant
-        // of the api module, such as the name of a header.
+        // ADR-007
         noClasses()
             .that()
             .resideInAPackage("de.seuhd.campuscoffee.tests..")
@@ -193,9 +171,7 @@ class ArchitectureTests {
 
     @Test
     fun `the production classes contain no test fixtures`() {
-        // TestFixtures and DatabaseCleaner are in the test fixtures of the domain and data modules. If the import of
-        // PRODUCTION_CLASSES included them, the rules for production code would also check the test fixtures, and this
-        // test would fail.
+        // ADR-005
         noClasses()
             .should()
             .resideInAnyPackage("de.seuhd.campuscoffee.domain.tests..", "de.seuhd.campuscoffee.data.tests..")
@@ -204,8 +180,6 @@ class ArchitectureTests {
 
     @Test
     fun `the port packages contain only interfaces with names that end in Service or DataService`() {
-        // Every port is an interface named *Service, and every data port is named *DataService. A concrete class
-        // does not belong in ports/.
         classes()
             .that()
             .resideInAPackage("de.seuhd.campuscoffee.domain.ports..")
@@ -227,20 +201,11 @@ class ArchitectureTests {
     }
 
     private companion object {
-        // The production packages of the application module: the root package with Application and
-        // BootstrapAdminLoader, and `configuration` with BootstrapAdminProperties. The controllers and their
-        // configuration are in the api layer.
         val APPLICATION_PRODUCTION_PACKAGES = arrayOf("de.seuhd.campuscoffee", "de.seuhd.campuscoffee.configuration..")
 
-        // The application layer consists of these production packages, the test classes under `tests`, and the dev
-        // application under `dev`, which is in the test sources as well. No other layer may access the application
-        // layer.
         val APPLICATION_PACKAGES =
             APPLICATION_PRODUCTION_PACKAGES + "de.seuhd.campuscoffee.tests.." + "de.seuhd.campuscoffee.dev.."
 
-        // The production classes of every module. The rules share one import, which runs on first use. The import
-        // leaves out the test classes of this module and the test fixtures of the domain and data modules. Gradle puts
-        // the test fixtures on the test classpath as jars named `<module>-<version>-test-fixtures.jar`.
         val PRODUCTION_CLASSES: JavaClasses by lazy {
             ClassFileImporter()
                 .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)

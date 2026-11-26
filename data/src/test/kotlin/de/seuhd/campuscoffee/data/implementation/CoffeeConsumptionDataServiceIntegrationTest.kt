@@ -30,7 +30,6 @@ class CoffeeConsumptionDataServiceIntegrationTest : AbstractDataIntegrationTest(
     @Autowired
     private lateinit var jdbcTemplate: JdbcTemplate
 
-    /** The stored user fixture of the current test. */
     private lateinit var user: User
 
     @BeforeEach
@@ -38,7 +37,6 @@ class CoffeeConsumptionDataServiceIntegrationTest : AbstractDataIntegrationTest(
         user = userDataService.upsert(TestFixtures.regularUser())
     }
 
-    /** Returns the number of rows in the table `coffee_times`. */
     private fun countCoffeeTimeRows(): Int? =
         jdbcTemplate.queryForObject("SELECT count(*) FROM coffee_times", Int::class.java)
 
@@ -84,7 +82,6 @@ class CoffeeConsumptionDataServiceIntegrationTest : AbstractDataIntegrationTest(
     fun `setting a negative price for a coffee time throws DataIntegrityViolationException`() {
         coffeeConsumptionDataService.upsert(TestFixtures.consumptionWithRecentCoffee(user))
 
-        // no entity maps the column price_cents yet, so the test writes it with SQL
         assertThatThrownBy { jdbcTemplate.update("UPDATE coffee_times SET price_cents = -1") }
             .isInstanceOf(DataIntegrityViolationException::class.java)
     }

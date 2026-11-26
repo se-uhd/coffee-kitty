@@ -18,6 +18,8 @@ updates:
   # bundles the updates of all actions.
   - package-ecosystem: github-actions
     directory: /
+    commit-message:
+      prefix: "ci" # Conventional Commits (doc/adr/013-limits-for-text.md)
     schedule:
       interval: weekly
     cooldown:
@@ -30,6 +32,9 @@ updates:
   # catalog.
   - package-ecosystem: gradle
     directory: /
+    commit-message:
+      prefix: "build"
+      include: "scope" # build(deps): ...
     schedule:
       interval: weekly
     cooldown:
