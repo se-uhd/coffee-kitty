@@ -55,6 +55,9 @@ Graphviz.
   `listOf("The coffee count is above 0", "A user can undo a coffee")`. A label states the property that defines the
   state, with the terms of `GLOSSARY.md`, not the names of variables. Model states with the same label become one chart
   state.
+- `title` names the flow and its requirements in the words of the stakeholder, such as "Coffee count of a user (FR-3,
+  FR-8, FR-13)". The caption names the TLA+ model as the source of the chart, so that a reader knows that TLC derived
+  every state and step and that a test checks the model against the code.
 - `step()` maps a step to the label of its arrow, or returns null to hide the step. A label names the actor in the third
   person, such as "a user adds a coffee" or "an admin corrects the coffee count of a user". The reader of the chart is a
   stakeholder or a reviewer, not a user in the model, so a label never says "you". A label says "a user", not "the

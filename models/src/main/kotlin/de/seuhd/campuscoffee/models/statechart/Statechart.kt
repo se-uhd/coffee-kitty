@@ -58,7 +58,7 @@ private fun process(
     work.toFile().deleteRecursively()
     val result = tlc.check(directories.models.resolve("$name.tla"), directories.models.resolve("$name.cfg"), work)
     val chart = buildChart(view, result.graph, result.broken)
-    val source = toPlantUml(chart, view.rules)
+    val source = toPlantUml(chart, view.rules, name)
     val reportFile = work.resolve("report.txt")
     reportFile.writeText(report(name, view, result, chart))
     println(reportFile.readText())

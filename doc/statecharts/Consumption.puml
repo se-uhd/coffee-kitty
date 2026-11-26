@@ -27,5 +27,5 @@ state "An admin corrects the coffee count of a user" as q1 {
   q1s1 --> q1s2 : ↓ an admin corrects the coffee count of a user
   q1s2 -up-> q1s0 : ↑ an admin corrects the coffee count of a user
 }
-caption ↓ and ↑ before a label show whether its arrow points down or up.
+caption TLC derived the states and steps from the TLA+ model Consumption.tla.\n↓ and ↑ before a label show whether its arrow points down or up.
 @enduml

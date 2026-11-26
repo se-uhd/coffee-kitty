@@ -53,15 +53,22 @@ class ChartTest {
 
     @Test
     fun `toPlantUml draws an arrow back to an earlier state upwards, with an up arrow before its label`() {
-        val source = toPlantUml(buildChart(view, graph, emptyList()), view.rules)
+        val source = toPlantUml(buildChart(view, graph, emptyList()), view.rules, "Toy")
 
         assertThat(source).contains("s2 -up-> s1 : \u2191 a user presses Down")
         assertThat(source).contains("s1 --> s2 : \u2193 a user presses Up")
     }
 
     @Test
+    fun `toPlantUml names the TLA+ model in the caption`() {
+        val source = toPlantUml(buildChart(view, graph, emptyList()), view.rules, "Toy")
+
+        assertThat(source).contains("caption TLC derived the states and steps from the TLA+ model Toy.tla.")
+    }
+
+    @Test
     fun `toPlantUml nests the states of a parent in a composite state`() {
-        val source = toPlantUml(buildChart(view, graph, emptyList()), view.rules)
+        val source = toPlantUml(buildChart(view, graph, emptyList()), view.rules, "Toy")
 
         val composite = "state \"Positive\" as p0 {\n  state \"count 1\" as s1\n  state \"count 2\" as s2\n}"
         assertThat(source).contains(composite)
@@ -70,7 +77,7 @@ class ChartTest {
     @Test
     fun `toPlantUml draws every state in each panel, with the start and the arrows of the actions of the panel`() {
         val panels = mapOf("Steps up" to setOf("Up"), "Steps down" to setOf("Down"))
-        val source = toPlantUml(buildChart(viewWith(panels), graph, emptyList()), view.rules)
+        val source = toPlantUml(buildChart(viewWith(panels), graph, emptyList()), view.rules, "Toy")
 
         assertThat(
             source

@@ -22,11 +22,13 @@ private val EMBEDDED_SOURCE = Regex("""<\?plantuml-src (\S+)\?>""")
  *
  * @param chart the chart
  * @param rules the sentence of the reader for each rule, by its name
+ * @param model the name of the TLA+ model, such as `Consumption`, which the caption names as the source of the chart
  * @return the PlantUML source
  */
 fun toPlantUml(
     chart: Chart,
-    rules: Map<String, String>
+    rules: Map<String, String>,
+    model: String
 ): String =
     buildString {
         appendLine("@startuml")
@@ -41,9 +43,9 @@ fun toPlantUml(
             writeDiagram(chart, chart.arrows.filter { it.panel == panel }, "q$index", "  ")
             appendLine("}")
         }
-        if (chart.arrows.isNotEmpty()) {
-            appendLine("caption $DOWN and $UP before a label show whether its arrow points down or up.")
-        }
+        val source = "TLC derived the states and steps from the TLA+ model $model.tla."
+        val arrows = "\\n$DOWN and $UP before a label show whether its arrow points down or up."
+        appendLine("caption $source${if (chart.arrows.isEmpty()) "" else arrows}")
         writeLegend(chart, rules)
         appendLine("@enduml")
     }
