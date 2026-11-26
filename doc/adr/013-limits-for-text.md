@@ -62,8 +62,7 @@ The build checks all text with fixed limits (the third option), and the existing
 * The body has 1 to 5 bullets of at most 2 lines of 72 characters, followed by the trailers. The bullets state the
   reason for the change, and an ADR records a longer argument.
 * The hook in `.githooks/` checks a new commit, and CI checks the commits of a pull request and of a push to `main`.
-  The history of `main` was rewritten on 2026-11-26 so that every commit follows the format. The tags `backup-*`
-  keep the old commits.
+  The history of `main` was rewritten on 2026-11-26 so that every commit follows the format.
 
 ## Consequences
 

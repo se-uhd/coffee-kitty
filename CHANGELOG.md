@@ -46,7 +46,7 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
 - CHANGELOG.md follows Keep a Changelog 1.1.0 with bullets of at most 2 lines.
 - FR-6 and FR-8 are shorter. What they require is unchanged.
 - GLOSSARY.md defines each term after ISO 704, in tables with the identifiers and the source of each term.
-- The history of `main` follows Conventional Commits. The tags `backup-2026-11-26-*` keep the old commits.
+- The history of `main` follows Conventional Commits.
 
 ### Removed
 
