@@ -1,4 +1,5 @@
 ---
+description: "the test levels, the requests of the system tests, the test fixtures, and the test names."
 paths:
   - "**/src/test/**"
   - "**/src/testFixtures/**"

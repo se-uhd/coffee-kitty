@@ -1,4 +1,5 @@
 ---
+description: "the TLA+ and Alloy models, with `models/README.md` and `.claude/skills/statechart/SKILL.md`."
 paths:
   - "models/**"
   - "doc/statecharts/**"

@@ -14,8 +14,8 @@ files:
     maxLines: 500
     source: "Anthropic, skill authoring best practices: keep SKILL.md under 500 lines"
   - path: AGENTS.md
-    maxLines: 10
-    source: "AGENTS.md only points to CLAUDE.md"
+    maxLines: 20
+    source: "AGENTS.md points to CLAUDE.md and lists the rule files that gradle ruleIndex generates"
   - path: README.md
     maxLines: 200
     maxSectionLines: 60
@@ -31,8 +31,23 @@ files:
     maxLines: 80
     source: "decision of 2026-11-26 in ADR 013"
   - path: doc/adr/010-thresholds-of-the-build.md
-    source: "ADR 013: the record of the measurements of the build has no line limit"
-  - glob: "doc/adr/*.md"
+    adr:
+      template: doc/adr/template.md
+      minOptions: 2
+      maxOptions: 5
+    source: "ADR 013 and ADR 016: the record of the measurements of the build has only the structure of the template"
+  - glob: "doc/adr/[0-9][0-9][0-9]-*.md"
+    maxLines: 100
+    adr:
+      template: doc/adr/template.md
+      minOptions: 2
+      maxOptions: 5
+      maxSectionLines:
+        Context: 12
+        Decision(s): 30
+        Consequences: 15
+    source: "Michael Nygard, Documenting Architecture Decisions: one or two pages; ADR 016 for the sections"
+  - path: doc/adr/template.md
     maxLines: 100
     source: "Michael Nygard, Documenting Architecture Decisions: one or two pages"
   - glob: "requirements/FR-*.md"

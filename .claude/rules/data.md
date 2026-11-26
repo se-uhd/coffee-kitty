@@ -1,4 +1,5 @@
 ---
+description: "the migrations, the JPA entities, the data adapters, and the entity mappers."
 paths:
   - "data/**"
 ---

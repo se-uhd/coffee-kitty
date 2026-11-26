@@ -1,4 +1,5 @@
 ---
+description: "the build scripts, CI, and the thresholds of coverage, mutation tests, and duplicates."
 paths:
   - "**/*.gradle.kts"
   - "build-logic/**"

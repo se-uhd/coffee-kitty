@@ -1,4 +1,5 @@
 ---
+description: "the tables of later features and the rules for money (FR-4 to FR-6, FR-10 to FR-12, FR-15 to FR-19)."
 paths:
   - "requirements/**"
   - "domain/src/main/kotlin/de/seuhd/campuscoffee/domain/model/**"

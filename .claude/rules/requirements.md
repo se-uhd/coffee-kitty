@@ -1,4 +1,5 @@
 ---
+description: "the IDs, the key words, and the sources of the numbers in `requirements/`."
 paths:
   - "requirements/**"
 ---

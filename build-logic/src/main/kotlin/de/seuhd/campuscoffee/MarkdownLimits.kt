@@ -9,16 +9,40 @@ class MarkdownLimits(
     private val entries: List<MarkdownEntry>
 ) {
     /** @param files each Markdown file by its path relative to the root of the repository */
-    fun check(files: Map<String, File>): List<String> =
-        files.toSortedMap().flatMap { (path, file) ->
+    fun check(files: Map<String, File>): List<String> {
+        val adrs = files.keys.filter { path -> entries.firstOrNull { it.matches(path) }?.adr != null }
+        return files.toSortedMap().flatMap { (path, file) ->
             val entry = entries.firstOrNull { it.matches(path) }
             val lines = file.readLines()
             if (entry == null) {
                 listOf("$path: no entry of config/markdown/limits.yml lists this file. Add the text to a listed file.")
             } else {
-                checkLineLength(path, lines) + checkEntry(path, lines, entry, files)
+                checkLineLength(path, lines) + checkEntry(path, lines, entry, files) +
+                    checkAdr(path, lines, entry, files, adrs.toSet())
             }
-        }
+        } + AdrStructure.checkNumbering(adrs)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun checkAdr(
+        path: String,
+        lines: List<String>,
+        entry: MarkdownEntry,
+        files: Map<String, File>,
+        adrs: Set<String>
+    ): List<String> {
+        val adr = entry.adr ?: return emptyList()
+        val template = adr["template"] as String
+        val structure =
+            AdrStructure(
+                template = files[template]?.readLines() ?: error("limits.yml names the missing template $template."),
+                maxSectionLines = (adr["maxSectionLines"] as Map<String, Int>?).orEmpty(),
+                minOptions = adr["minOptions"] as Int,
+                maxOptions = adr["maxOptions"] as Int,
+                source = entry.source
+            )
+        return structure.check(path, lines, adrs)
+    }
 
     private fun checkLineLength(
         path: String,
@@ -76,6 +100,7 @@ class MarkdownLimits(
                         includeUnscopedRules = it["includeUnscopedRules"] as Boolean? ?: false,
                         changelog = it["changelog"] as Boolean? ?: false,
                         maxBulletLines = it["maxBulletLines"] as Int?,
+                        adr = it["adr"] as Map<String, Any?>?,
                         source = it["source"] as String? ?: error("An entry of limits.yml has no source.")
                     )
                 }

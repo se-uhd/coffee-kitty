@@ -1,4 +1,5 @@
 ---
+description: "the controllers, the acting user, the DTOs, and the error responses."
 paths:
   - "api/**"
 ---

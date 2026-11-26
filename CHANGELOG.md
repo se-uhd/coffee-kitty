@@ -25,6 +25,10 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
 - `config/markdown/limits.yml` with a limit for each Markdown file, which `gradle markdownLimits` checks (ADR 013).
 - `scripts/check-commit-message.sh` checks Conventional Commits with a body of 1 to 5 bullets (ADR 013). CI runs it, and
   `git config core.hooksPath .githooks` enables it as a Git hook.
+- `gradle markdownLimits` checks the structure and the section lengths of each ADR against `doc/adr/template.md`
+  (ADR 016).
+- `gradle ruleIndex` writes the lists of the rule files in CLAUDE.md and AGENTS.md from the front matter of the rules,
+  and `gradle check` fails when a list differs from the rules.
 - Claude Code hooks in `.claude/settings.json` check a commit message and the Markdown limits right after an edit.
 - Path-scoped rules for agents in `.claude/rules/`, which Claude Code loads for the files that they name.
 - ADR 014 records the reasons of the build settings, and ADR 015 what the server log records about a request.
@@ -47,6 +51,7 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
 - FR-6 and FR-8 are shorter. What they require is unchanged.
 - GLOSSARY.md defines each term after ISO 704, in tables with the identifiers and the source of each term.
 - The history of `main` follows Conventional Commits.
+- ADRs 002 and 006 name the later ADRs that change them in their consequences, because the template has no such status.
 
 ### Removed
 

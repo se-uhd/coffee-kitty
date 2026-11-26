@@ -1,4 +1,5 @@
 ---
+description: "the ports, the value rules, the locks, and the models that follow a domain model."
 paths:
   - "domain/**"
 ---

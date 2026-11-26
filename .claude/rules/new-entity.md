@@ -1,4 +1,5 @@
 ---
+description: "the steps to add an entity across the modules."
 paths:
   - "domain/src/main/kotlin/de/seuhd/campuscoffee/domain/model/**"
   - "domain/src/main/kotlin/de/seuhd/campuscoffee/domain/ports/**"

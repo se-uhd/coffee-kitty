@@ -65,6 +65,27 @@ val detektComments =
         buildUponDefaultConfig.set(false)
     }
 
+val rules = fileTree(repository) { include(".claude/rules/*.md") }
+
+tasks.register<RuleIndexTask>("ruleIndex") {
+    group = "documentation"
+    description = "Writes the lists of the rule files in CLAUDE.md and AGENTS.md from the front matter of the rules."
+    ruleFiles.from(rules)
+    config.set(repository.file("config/markdown/limits.yml"))
+    root.set(repository)
+    verify.set(false)
+}
+
+val ruleIndexCheck =
+    tasks.register<RuleIndexTask>("ruleIndexCheck") {
+        group = "verification"
+        description = "Fails when a list of the rule files in CLAUDE.md or AGENTS.md differs from the rules."
+        ruleFiles.from(rules)
+        config.set(repository.file("config/markdown/limits.yml"))
+        root.set(repository)
+        verify.set(true)
+    }
+
 tasks.named("check") {
-    dependsOn(markdownLimits, detektComments)
+    dependsOn(markdownLimits, detektComments, ruleIndexCheck)
 }
