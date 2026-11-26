@@ -16,8 +16,8 @@ For the price per cup, the payments, the beans, and the ratings, steps 1, 3, 6, 
 step is the API port (`.claude/rules/later-features.md`).
 
 1. Create the domain model in `domain/.../model/`. It implements `DomainModel<UUID>` and has a nullable `id`,
-   `createdAt`, and `updatedAt` (see `User`). Declare each rule for a value as a constraint with a message, and add the
-   model to the Alloy model in the same step (`.claude/rules/domain.md`).
+   `createdAt`, and `updatedAt` (see `User`). Declare each rule for a value as a constraint with a message. Before the
+   change goes to `main` of se-uhd/coffee-kitty, add the model to the Alloy model (`.claude/rules/domain.md`).
 2. Create the API port in `domain/.../ports/api/`. An operation that only the startup task or the test setup calls
    belongs to an internal port in `domain/.../ports/internal/`.
 3. Create the data port in `domain/.../ports/data/`. `.claude/rules/domain.md` states when it extends

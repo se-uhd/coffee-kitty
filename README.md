@@ -52,7 +52,7 @@ same way for every module (ADR 001 in `doc/adr/`). The other subprojects hold no
   ports, limit its length, and allow no other comments except `// ADR-NNN` and `// External: <link> <reason>`.
 - `coverage`: the coverage report of all modules.
 - `models`: TLA+ and Alloy models of the domain, the tests that check them against the code, and the code that draws
-  the models as diagrams in `doc/` (`models/README.md`).
+  the models as diagrams in `doc/` (`models/README.md`). Gradle includes it only with `-Pmodels`.
 
 The root build checks the text of the repository (`doc/adr/013-limits-for-text.md`). Its task `markdownLimits` checks
 the Markdown files against the limits in `config/markdown/limits.yml`, and its task `detektComments` applies the comment
@@ -61,7 +61,7 @@ rules of `config/detekt/detekt.yml` to the tests and the build scripts. `gradle 
 ## Prerequisites
 
 - Java 25, Gradle 9.9, and TLC, the model checker of TLA+, which [mise](https://mise.jdx.dev/) installs from
-  `mise.toml`. The repository has no Gradle wrapper, and `gradle build` runs TLC on the models in `models/`.
+  `mise.toml`. The repository has no Gradle wrapper. Only `gradle -Pmodels build` runs TLC on the models in `models/`.
 - Docker, for the local PostgreSQL database and for the tests that use Testcontainers.
 
 `gradle/gradle-daemon-jvm.properties` requires JDK 25 for the Gradle daemon, the background process that runs the
@@ -152,9 +152,9 @@ Cucumber acceptance tests, because they run against PostgreSQL in Testcontainers
 JSON with literal field names, so a renamed field of the API fails them. ArchUnit tests check the layer rules, and
 detekt checks the KDoc and the comments with the rules in `config/detekt/detekt.yml`.
 
-`gradle build` compiles every module, runs ktlint, detekt, CPD, TLC, every test, and the checks of the text, and checks
-the code coverage. Gradle prints `BUILD SUCCESSFUL` when every check and every test passes. The other commands run one
-part of the build or, in the case of PIT, a check that `gradle build` leaves out:
+`gradle build` compiles every module, runs ktlint, detekt, CPD, every test, and the checks of the text, and checks the
+code coverage, with `-Pmodels` also the models. Gradle prints `BUILD SUCCESSFUL` when every check and every test passes.
+The other commands run one part of the build or, in the case of PIT, a check that `gradle build` leaves out:
 
 ```shell
 gradle build                              # compile, check, and test everything except PIT

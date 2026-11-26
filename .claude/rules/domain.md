@@ -41,7 +41,9 @@ paths:
 
 ## Models of the domain
 
-The tests in `models/` check two models against this module (`.claude/rules/models.md`).
+The tests in `models/` check two models against this module (`.claude/rules/models.md`). The models are optional:
+`gradle build` leaves them out, and a change in a fork, such as the solution of an assignment, does not have to update
+them. Before a change goes to `main` of se-uhd/coffee-kitty, whose CI runs `gradle -Pmodels build`, update them:
 
 - `ConsumptionConformanceTest` replays `models/src/main/tla/Consumption.tla` on `CoffeeConsumptionServiceImpl`. When you
   change the behavior of the service or a function of its port, change the model with it.
@@ -51,7 +53,7 @@ The tests in `models/` check two models against this module (`.claude/rules/mode
      predicate of each String property to the assertion `NoTextPropertyAcceptsNul`.
   2. Add the concrete values of each String and Int property to `TEXTS` or `NUMBERS` in `DomainModelConformanceTest`,
      which fails until the model and the class match.
-  3. Run `gradle :models:classDiagrams` and commit the class diagram.
+  3. Run `gradle -Pmodels :models:classDiagrams` and commit the class diagram.
 
 ## Mutation tests
 

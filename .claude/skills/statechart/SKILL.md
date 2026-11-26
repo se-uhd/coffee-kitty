@@ -26,8 +26,8 @@ count of a user (FR-3, FR-8, FR-13).
 
 ```shell
 mise install                          # once: installs tla2tools.jar, which mise.toml pins with its checksum
-gradle :models:statecharts        # checks each model and writes the chart of each model with a view
-gradle :models:checkStatecharts   # part of `gradle check`
+gradle -Pmodels :models:statecharts        # checks each model and writes the chart of each model with a view
+gradle -Pmodels :models:checkStatecharts   # part of `gradle -Pmodels check`
 ```
 
 `checkStatecharts` fails when a rule breaks or when a chart differs from its model. Commit the `.puml` and the `.svg`

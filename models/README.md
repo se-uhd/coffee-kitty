@@ -9,10 +9,13 @@ This subproject holds formal models of Coffee Kitty, checks them against the cod
 | `src/main/alloy/DomainModel.als` | Alloy Analyzer, `DomainModelConformanceTest` | `doc/class-diagrams/DomainModel.svg` |
 
 ```shell
-gradle :models:statecharts      # checks the TLA+ models with TLC and writes the statechart
-gradle :models:classDiagrams    # writes the class diagram of each Alloy model
-gradle :models:check            # runs the tests and fails when a rule breaks or a diagram differs from its model
+gradle -Pmodels :models:statecharts      # checks the TLA+ models with TLC and writes the statechart
+gradle -Pmodels :models:classDiagrams    # writes the class diagram of each Alloy model
+gradle -Pmodels :models:check            # runs the tests and fails when a rule breaks or a diagram differs from its model
 ```
+
+Gradle includes this subproject only with `-Pmodels`, or with `models=true` in `~/.gradle/gradle.properties`, which also
+shows it in IntelliJ IDEA. Without it, `gradle build` leaves out the models, so that a student needs no TLA+ or Alloy.
 
 Commit each diagram together with its model. `.claude/skills/statechart/SKILL.md` describes the TLA+ models and the
 statechart.

@@ -47,7 +47,8 @@ The build has seven subprojects. The four modules hold the app in a hexagonal (p
   `api`, and `data`.
 
 `coverage` creates the coverage report of all modules, `detekt-rules` holds the custom detekt rules, and `models`
-checks TLA+ and Alloy models against the code. The included build `build-logic/` holds the convention plugins.
+checks TLA+ and Alloy models against the code. Gradle includes `models` only with `-Pmodels` (ADR-012). The included
+build `build-logic/` holds the convention plugins.
 
 `ArchitectureTests` in `application/src/test/kotlin/de/seuhd/campuscoffee/tests/architecture/` checks the layer rules:
 
@@ -86,6 +87,7 @@ installs Java, Gradle, and TLC from `mise.toml`. The dev database and the Testco
 
 ```shell
 gradle build                                                 # compile, every check and test, coverage gate
+gradle -Pmodels build                                        # the same, and the TLA+ and Alloy models
 gradle ktlintFormat                                          # fix the formatting before a commit
 gradle :domain:test --tests "CoffeeConsumptionServiceTest"   # one test class
 gradle :application:test --tests "ArchitectureTests"         # the layer rules, without Docker

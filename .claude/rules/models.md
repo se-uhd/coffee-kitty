@@ -13,7 +13,10 @@ describes how to write a TLA+ model, its statechart, and its replay test. ADR-01
 models against the code.
 
 - The subproject `models` is not a module of the app. Its tests depend on `domain`, and no module depends on it.
-- Commit each diagram together with its model. `gradle :models:check` fails when a diagram differs from its model.
+- The models are optional. Gradle includes the subproject only with `-Pmodels`, such as `gradle -Pmodels check`, and CI
+  includes it only in se-uhd/coffee-kitty, so that students need no TLA+ or Alloy for an assignment.
+- Commit each diagram together with its model. `gradle -Pmodels :models:check` fails when a diagram differs from its
+  model.
 - The model tests may check an implementation detail that a model assumes, such as an annotation or the function of the
   data port that a service calls, because the verdict of the model depends on it. Other tests never check such details.
 - `.claude/rules/domain.md` lists the changes to `DomainModel.als` and `DomainModelConformanceTest` that a new or

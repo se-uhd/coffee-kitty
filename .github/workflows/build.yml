@@ -43,8 +43,10 @@ jobs:
       # `gradle build` runs `check`, which runs ktlint, detekt, CPD, the tests, and the coverage gate. The integration,
       # system, and acceptance tests start PostgreSQL in Docker through Testcontainers. The ubuntu-latest runner has
       # Docker installed.
+      # The models of the domain are optional (ADR-012), so CI checks them only in se-uhd/coffee-kitty and not in a fork,
+      # such as the fork of a student.
       - name: Build with Gradle
-        run: gradle build
+        run: gradle build ${{ github.repository == 'se-uhd/coffee-kitty' && '-Pmodels' || '' }}
 
       # `gradle build` does not run the mutation tests. PIT changes the code of the domain services and fails when the
       # unit tests of the domain module detect fewer than 90% of the changes (pitest-conventions.gradle.kts).

@@ -47,6 +47,8 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
   limit.
 - The upper limit of 1,000.00 € for a single amount is a rule (MUST) in FR-4, FR-6, and FR-17. Until now, these
   requirements stated it as a plausibility check (SHOULD). `CoffeePrice.amountCents` has the constraint for it.
+- The models are optional: `gradle build` leaves out the subproject `models`, and `gradle -Pmodels build` checks them.
+  CI checks them only in se-uhd/coffee-kitty, so that an assignment needs no TLA+ or Alloy (ADR 012).
 - CLAUDE.md has 162 instead of 639 lines. The guidance for single directories moved into `.claude/rules/`.
 - The README has 199 instead of 366 lines and points to Swagger UI for the REST API.
 - The code keeps KDoc only where ADR 013 requires it or the code cannot say it, and no other comments.

@@ -19,4 +19,9 @@ plugins {
 
 rootProject.name = "coffee-kitty"
 
-include("domain", "api", "data", "application", "coverage", "detekt-rules", "models")
+include("domain", "api", "data", "application", "coverage", "detekt-rules")
+
+// ADR-012 The models are optional, and gradle -Pmodels includes them.
+if (providers.gradleProperty("models").isPresent) {
+    include("models")
+}

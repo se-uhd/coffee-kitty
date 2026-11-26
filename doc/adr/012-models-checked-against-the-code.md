@@ -34,8 +34,9 @@ becomes wrong when the code changes, as an outdated comment does.
 
 The build checks the models against the code (the third option). The subproject `models` holds `Consumption.tla`, a
 model of the coffee count of a user, `ConsumptionConcurrency.tla`, a model of concurrent requests, and
-`DomainModel.als`, a model of the classes in `domain/.../model/` and the rules for their values. `gradle check` fails in
-these cases:
+`DomainModel.als`, a model of the classes in `domain/.../model/` and the rules for their values. The models are
+optional for students, who meet TLA+ and Alloy only in a demo of the lecture. Gradle therefore includes the subproject
+only with `-Pmodels`, and CI includes it only in se-uhd/coffee-kitty. `gradle -Pmodels check` fails in these cases:
 
 * A rule of a TLA+ model or an assertion of the Alloy model breaks.
 * A diagram in `doc/statecharts/` or `doc/class-diagrams/` differs from its model.
@@ -51,7 +52,7 @@ these cases:
 * The models have bounds, such as the largest count `MaxCount` and a scope of 4 objects in Alloy. A fault that needs
   larger values can stay hidden. The replay test therefore builds each state of the model a second time with counts up
   to `Int.MAX_VALUE`.
-* A change to `CoffeeConsumptionServiceImpl` or to a class in `domain/.../model/` needs a change to its model in the
-  same commit (see Adding a New Entity in `CLAUDE.md`).
+* A change to `CoffeeConsumptionServiceImpl` or to a class in `domain/.../model/` needs a change to its model before it
+  goes to `main` of se-uhd/coffee-kitty (`.claude/rules/domain.md`). A fork, such as the fork of a student, does not.
 * The model leaves out the undo status (FR-9) until 2026-12-08, because the tests of the undo status are the reference
   solution of assignment 7.
