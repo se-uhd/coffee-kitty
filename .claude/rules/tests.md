@@ -37,6 +37,8 @@ Test each part of the code at the level that can detect its faults:
   `mapOf("delta" to 1)`. Parse a response into a class of `Json.kt`, such as `UserJson`, and a timestamp with
   `parseUtc`. When an endpoint gets a new field, add the field to its class in `Json.kt`.
 - Write the names of the header `X-Acting-User` and of its challenge as literals, as `SystemTestUtils` does.
+- The client of `SystemTestUtils.clientFor` records the status of each response in `ObservedStatuses`, and
+  `OpenApiDefinitionSystemTests` compares the statuses with the OpenAPI definition after the other test classes.
 
 ## Test fixtures
 

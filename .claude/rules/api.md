@@ -38,5 +38,10 @@ paths:
 - The body of every error response is an `ErrorResponse`. Its `errorCode` is the class name of the domain exception or,
   for any other error, the reason phrase of the status without spaces, such as `BadRequest`.
 - Map each new domain exception to its status in `GlobalExceptionHandler.statusOf`.
+- `ErrorResponsesCustomizer` documents 400, 401, 406, 415, and 500 on each endpoint to which their rule applies.
+  Declare the statuses of the domain exceptions of an endpoint with `@ApiResponse`, such as `UserNotFoundResponse`,
+  and add `@ResponseStatus` with the success status, which springdoc leaves out otherwise.
+- `OpenApiDefinitionSystemTests` fails when a test receives a status that the OpenAPI definition does not document
+  for the endpoint, and when no test receives a documented status.
 - Code that runs before Spring MVC, such as the security filter chain, writes its `ErrorResponse` with
   `writeErrorResponse`, as `RequestRejectedExceptionHandler` and `JsonAuthenticationEntryPoint` do.

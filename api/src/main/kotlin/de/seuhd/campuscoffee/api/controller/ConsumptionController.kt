@@ -7,13 +7,17 @@ import de.seuhd.campuscoffee.api.dtos.CountCorrectionDto
 import de.seuhd.campuscoffee.api.dtos.UndoStatusDto
 import de.seuhd.campuscoffee.api.mapper.ConsumptionDtoMapper
 import de.seuhd.campuscoffee.api.mapper.CountCorrectionDtoMapper
+import de.seuhd.campuscoffee.api.openapi.NotAdminResponse
+import de.seuhd.campuscoffee.api.openapi.UserNotFoundResponse
 import de.seuhd.campuscoffee.api.security.CurrentUserProvider
 import de.seuhd.campuscoffee.api.security.OpenEndpoint
 import de.seuhd.campuscoffee.domain.ports.api.CoffeeConsumptionService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -21,6 +25,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as ApiRequestBody
@@ -52,6 +57,8 @@ class ConsumptionController(
      * @param userId the id of the user
      */
     @Operation(summary = "Get a user's coffee count.")
+    @ResponseStatus(HttpStatus.OK)
+    @UserNotFoundResponse
     @OpenEndpoint
     @GetMapping("")
     fun get(
@@ -69,6 +76,9 @@ class ConsumptionController(
      * @param dto    the request body with the delta, which must be `+1`
      */
     @Operation(summary = "Add a coffee to a user's coffee count (a delta of +1).")
+    @ResponseStatus(HttpStatus.OK)
+    @UserNotFoundResponse
+    @ApiResponse(responseCode = "409", description = "The coffee count is at its maximum of 2,147,483,647.")
     @OpenEndpoint
     @PostMapping("")
     fun applyDelta(
@@ -90,6 +100,12 @@ class ConsumptionController(
      * @param userId the id of the user
      */
     @Operation(summary = "Undo a user's most recent coffee within its grace period.")
+    @ResponseStatus(HttpStatus.OK)
+    @UserNotFoundResponse
+    @ApiResponse(
+        responseCode = "409",
+        description = "The user has no coffee, or the grace period of the most recent coffee has passed."
+    )
     @OpenEndpoint
     @PostMapping("/undo")
     fun undo(
@@ -106,6 +122,8 @@ class ConsumptionController(
      * @param userId the id of the user
      */
     @Operation(summary = "Get the undo status of a user.")
+    @ResponseStatus(HttpStatus.OK)
+    @UserNotFoundResponse
     @OpenEndpoint
     @GetMapping("/undo")
     fun undoStatus(
@@ -125,6 +143,9 @@ class ConsumptionController(
      * @param dto    the request body with the corrected coffee count and the note with the reason for the correction
      */
     @Operation(summary = "Correct a user's coffee count with a note (admin).")
+    @ResponseStatus(HttpStatus.OK)
+    @NotAdminResponse
+    @UserNotFoundResponse
     @Parameter(
         `in` = ParameterIn.HEADER,
         name = CurrentUserProvider.ACTING_USER_HEADER,
@@ -159,6 +180,9 @@ class ConsumptionController(
      * @param userId the id of the user whose corrections to return
      */
     @Operation(summary = "List the corrections of a user, newest first (admin).")
+    @ResponseStatus(HttpStatus.OK)
+    @NotAdminResponse
+    @UserNotFoundResponse
     @Parameter(
         `in` = ParameterIn.HEADER,
         name = CurrentUserProvider.ACTING_USER_HEADER,

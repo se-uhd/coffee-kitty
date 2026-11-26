@@ -1,5 +1,6 @@
 package de.seuhd.campuscoffee.api.exceptions
 
+import io.swagger.v3.oas.annotations.media.Schema
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import java.time.LocalDateTime
@@ -15,11 +16,22 @@ import java.time.LocalDateTime
  * @param path          the path of the request that caused the error
  */
 data class ErrorResponse(
+    @field:Schema(
+        description =
+            "The class name of the domain exception, or the reason phrase of the status without spaces, such as " +
+                "BadRequest.",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     val errorCode: String,
+    @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     val message: String,
+    @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     val statusCode: Int,
+    @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     val statusMessage: String,
+    @field:Schema(description = "When the error occurred, in UTC.", requiredMode = Schema.RequiredMode.REQUIRED)
     val timestamp: LocalDateTime,
+    @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     val path: String
 )
 

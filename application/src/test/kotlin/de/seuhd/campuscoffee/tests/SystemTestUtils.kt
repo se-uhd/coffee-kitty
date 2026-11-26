@@ -26,14 +26,19 @@ object SystemTestUtils {
     private val clients = ConcurrentHashMap<Int, RestTestClient>()
 
     /**
-     * Returns the [RestTestClient] for the server on [port]. Each Spring context of the tests serves the API on a port
-     * of its own, and a test passes the port of its context. The function creates one client per port and never binds
-     * a client to another port.
+     * Returns the [RestTestClient] for the server on [port], one client per port, because each Spring context of the
+     * tests serves the API on a port of its own. The client records each response in [ObservedStatuses].
      *
      * @param port the port of the server, which `@LocalServerPort` injects
      */
     fun clientFor(port: Int): RestTestClient =
-        clients.computeIfAbsent(port) { RestTestClient.bindToServer().baseUrl("http://localhost:$it").build() }
+        clients.computeIfAbsent(port) {
+            RestTestClient
+                .bindToServer()
+                .baseUrl("http://localhost:$it")
+                .requestInterceptor(ObservedStatuses.interceptor)
+                .build()
+        }
 
     // External: https://java.testcontainers.org/test_framework_integration/manual_lifecycle_control/ Testcontainers
     // stops a singleton container at the end of the test run, so the tests never close it.

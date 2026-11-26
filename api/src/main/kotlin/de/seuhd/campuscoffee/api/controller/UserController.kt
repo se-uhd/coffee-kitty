@@ -3,6 +3,8 @@ package de.seuhd.campuscoffee.api.controller
 import de.seuhd.campuscoffee.api.dtos.CreateUserDto
 import de.seuhd.campuscoffee.api.dtos.UserDto
 import de.seuhd.campuscoffee.api.mapper.UserDtoMapper
+import de.seuhd.campuscoffee.api.openapi.NotAdminResponse
+import de.seuhd.campuscoffee.api.openapi.UserNotFoundResponse
 import de.seuhd.campuscoffee.api.security.CurrentUserProvider
 import de.seuhd.campuscoffee.api.security.OpenEndpoint
 import de.seuhd.campuscoffee.domain.model.persistedId
@@ -10,6 +12,7 @@ import de.seuhd.campuscoffee.domain.ports.api.UserService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -54,6 +57,8 @@ class UserController(
      * @param id the id of the user
      */
     @Operation(summary = "Get a user by id.")
+    @ResponseStatus(HttpStatus.OK)
+    @UserNotFoundResponse
     @OpenEndpoint
     @GetMapping("/{id}")
     fun getById(
@@ -69,6 +74,8 @@ class UserController(
      * @param dto the fields of the user to create
      */
     @Operation(summary = "Create a user (admin).")
+    @NotAdminResponse
+    @ApiResponse(responseCode = "409", description = "Another user has the login name or the email address.")
     @Parameter(
         `in` = ParameterIn.HEADER,
         name = CurrentUserProvider.ACTING_USER_HEADER,
