@@ -11,7 +11,7 @@ mapstruct = "1.6.3"
 # kotlin-logging wraps SLF4J for Kotlin. A log call takes a lambda, which builds the message only when the log level is
 # enabled. `KotlinLogging.logger {}` names the logger after the enclosing class.
 kotlin-logging = "8.0.7"
-cucumber = "8.0.4"
+cucumber = "8.1.0"
 archunit = "1.5.1"
 # jvmTarget 25 needs Kotlin 2.3.0 or newer. java-conventions sets kotlin-stdlib and kotlin-reflect to this `kotlin`
 # version in place of the older Kotlin that the Spring Boot BOM manages. The version can change independently of detekt
