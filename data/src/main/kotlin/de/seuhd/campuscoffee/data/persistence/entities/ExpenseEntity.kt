@@ -10,12 +10,12 @@ import jakarta.persistence.Table
  * purchase with a [bean] and a [weightGrams], or [OTHER_TYPE] for any other expense, which has neither. A domain enum
  * with constants of these names needs no mapping code, because MapStruct converts an enum by the name of the constant.
  * The CHECK constraint `ck_expenses_split` requires that [privateAmountCents] and [kittyAmountCents] add up to
- * [amountCents]. The foreign keys `buyer_user_id` and `bean_id` have `NO ACTION`, because an expense moved money and
- * must not disappear with its buyer or its bean.
+ * [amountCents].
  */
 @jakarta.persistence.Entity
 @Table(name = "expenses")
 class ExpenseEntity : Entity() {
+    // ADR-020 NO ACTION, because an expense moved money and must not disappear with its buyer
     @field:ManyToOne
     @field:JoinColumn(name = "buyer_user_id", nullable = false)
     var buyer: UserEntity? = null
@@ -23,6 +23,7 @@ class ExpenseEntity : Entity() {
     @field:Column(name = "expense_type")
     var expenseType: String? = null
 
+    // ADR-020 NO ACTION, because an expense moved money and must not disappear with its bean
     @field:ManyToOne
     @field:JoinColumn(name = "bean_id")
     var bean: CoffeeBeanEntity? = null

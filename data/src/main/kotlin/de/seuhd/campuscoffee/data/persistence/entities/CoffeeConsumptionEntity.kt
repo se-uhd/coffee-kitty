@@ -20,6 +20,7 @@ import java.time.LocalDateTime
 @jakarta.persistence.Entity
 @Table(name = "coffee_consumptions")
 class CoffeeConsumptionEntity : Entity() {
+    // ADR-020 ON DELETE CASCADE, because a consumption belongs to its user
     @field:ManyToOne
     @field:JoinColumn(name = "user_id", nullable = false)
     var user: UserEntity? = null
@@ -27,6 +28,7 @@ class CoffeeConsumptionEntity : Entity() {
     @field:Column(name = "count")
     var count: Int? = null
 
+    // ADR-020 ON DELETE CASCADE, because a coffee time belongs to its consumption
     @field:ElementCollection(fetch = FetchType.EAGER)
     @field:CollectionTable(name = "coffee_times", joinColumns = [JoinColumn(name = "consumption_id")])
     @field:OrderColumn(name = "position")

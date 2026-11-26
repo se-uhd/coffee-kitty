@@ -21,11 +21,13 @@ paths:
   and never changes the schema. The check ignores the NOT NULL, CHECK, and unique constraints and every unmapped
   column, so a violation of these constraints fails only when the statement runs. Test each constraint in an
   integration test.
-- Choose the `ON DELETE` action of each foreign key. Use `CASCADE` only for a row that belongs to the referenced row,
-  such as a consumption, which belongs to its user. Under the default `NO ACTION`, deleting a referenced row throws a
-  `DataConstraintException`, and the client gets a 500. An operation that deletes a row must therefore check for
-  references first and, for a referenced row, throw a new domain exception that `GlobalExceptionHandler` maps to 409
-  Conflict.
+- Choose the `ON DELETE` action of each foreign key (ADR-020). Use `CASCADE` only for a row that belongs to the
+  referenced row, such as a consumption, which belongs to its user. Under the default `NO ACTION`, deleting a
+  referenced row throws a `DataConstraintException`, and the client gets a 500. An operation that deletes a row must
+  therefore check for references first and, for a referenced row, throw a new domain exception that
+  `GlobalExceptionHandler` maps to 409 Conflict.
+- PostgreSQL creates no index for a foreign key. Create an index that starts with its column in the same migration
+  (ADR-020).
 
 ## JPA entities and data adapters
 

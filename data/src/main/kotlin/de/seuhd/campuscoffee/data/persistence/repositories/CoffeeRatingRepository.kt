@@ -10,16 +10,16 @@ import java.util.UUID
  */
 interface CoffeeRatingRepository : JpaRepository<CoffeeRatingEntity, UUID> {
     /**
-     * Returns the ratings of the user with [userId], newest first. Spring Data reads `UserId` in the method name as the
-     * property path `user.id`.
+     * Returns the ratings of the user with [userId], newest first. The index on `(user_id, created_at)` serves the
+     * query (ADR-020). Spring Data reads `UserId` in the method name as the property path `user.id`.
      *
      * @param userId the id of the user who gave the ratings
      */
     fun findAllByUserIdOrderByCreatedAtDesc(userId: UUID): List<CoffeeRatingEntity>
 
     /**
-     * Returns the ratings of the bean with [beanId], oldest first. Spring Data reads `BeanId` in the method name as the
-     * property path `bean.id`.
+     * Returns the ratings of the bean with [beanId], oldest first. The index on `bean_id` serves the query (ADR-020).
+     * Spring Data reads `BeanId` in the method name as the property path `bean.id`.
      *
      * @param beanId the id of the rated bean
      */

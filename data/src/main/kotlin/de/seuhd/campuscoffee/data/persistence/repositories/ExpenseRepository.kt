@@ -10,8 +10,8 @@ import java.util.UUID
  */
 interface ExpenseRepository : JpaRepository<ExpenseEntity, UUID> {
     /**
-     * Returns the expenses of the buyer with [buyerId], newest first. Spring Data reads `BuyerId` in the method name as
-     * the property path `buyer.id`.
+     * Returns the expenses of the buyer with [buyerId], newest first. The index on `(buyer_user_id, created_at)` serves
+     * the query (ADR-020). Spring Data reads `BuyerId` in the method name as the property path `buyer.id`.
      *
      * @param buyerId the id of the user who spent the money
      */

@@ -7,9 +7,7 @@ import java.util.UUID
 /**
  * The JPA entity of a bean. The CHECK constraints of `V8__create_coffee_beans_table.sql` require that [active] is true
  * exactly when [mergedIntoId] is null and reject a bean merged into itself. The unique index [NAME_UNIQUE_CONSTRAINT]
- * on `lower(name)` covers only the live beans, so a live bean can have the name of a merged bean. [mergedIntoId] is an
- * id and not a JPA association, because JPA would load a chain of merged beans through an association. The foreign key
- * `merged_into_id` has `NO ACTION`, so PostgreSQL does not delete a bean while a merged bean refers to it.
+ * on `lower(name)` covers only the live beans, so a live bean can have the name of a merged bean.
  */
 @jakarta.persistence.Entity
 @Table(name = "coffee_beans")
@@ -20,6 +18,7 @@ class CoffeeBeanEntity : Entity() {
     @field:Column(name = "active")
     var active: Boolean? = null
 
+    // ADR-020, ADR-021 NO ACTION keeps a bean that a merged bean refers to, and an id avoids loading the chain
     @field:Column(name = "merged_into_id")
     var mergedIntoId: UUID? = null
 

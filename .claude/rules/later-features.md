@@ -37,8 +37,8 @@ constraints follow that app without its event log. No endpoint and no domain ser
   `UserServiceImpl.create` creates the row of a new user together with the consumption.
 - An undo has to raise the balance by the amount by which the coffee lowered it, even when the price per cup changed in
   between (FR-11). The column `coffee_times.price_cents` (V12) holds this amount, and no JPA entity maps it yet. The
-  implementation of FR-5 has to store the price with the time of each coffee, and the implementation of FR-11 has to
-  use it.
+  implementation of FR-5 has to store the price with the time of each coffee, for example in an embeddable class with
+  the time and the price, and the implementation of FR-11 has to use it.
 - Coffee Kitty drops the time and the price of a coffee outside its grace period when the user adds a coffee, so a
   correction cannot use the price of a coffee that it removes. A correction changes the balance by the price per cup at
   the time of the correction for each coffee that it adds or removes (FR-18).

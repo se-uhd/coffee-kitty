@@ -10,11 +10,11 @@ import org.springframework.data.domain.Persistable
 import java.util.UUID
 
 /**
- * The base class of the JPA entities with a [UUID] id that the application assigns. Spring Data treats an entity with
- * an id as stored, and `save()` runs a SELECT for the row before an insert. [isNew] returns true until JPA loads or
- * inserts the row, so `save()` inserts a new entity without the SELECT. The id is in the private field `entityId`,
- * because a Kotlin property named `id` would generate a second `getId()` next to the override of [Persistable.getId].
- * Kotlin code still uses `entity.id`, because Kotlin treats `getId()` and `setId()` as the property `id`.
+ * The base class of the JPA entities with a [UUID] id that the application assigns. [isNew] returns true until JPA
+ * loads or inserts the row, so that `save()` inserts a new entity without a SELECT for the row (ADR-021). The id is in
+ * the private field `entityId`, because a Kotlin property named `id` would generate a second `getId()` next to the
+ * override of [Persistable.getId]. Kotlin code still uses `entity.id`, because Kotlin treats `getId()` and `setId()`
+ * as the property `id`.
  */
 @MappedSuperclass
 abstract class PersistableEntity : Persistable<UUID> {

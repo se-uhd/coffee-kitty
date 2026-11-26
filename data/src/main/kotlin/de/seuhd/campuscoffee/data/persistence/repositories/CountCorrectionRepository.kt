@@ -10,8 +10,9 @@ import java.util.UUID
  */
 interface CountCorrectionRepository : JpaRepository<CountCorrectionEntity, UUID> {
     /**
-     * Returns the corrections of the coffee count of the user with [userId], newest first. Spring Data reads `UserId`
-     * in the method name as the property path `user.id`.
+     * Returns the corrections of the coffee count of the user with [userId], newest first. The index on
+     * `(user_id, created_at)` serves the query (ADR-020). Spring Data reads `UserId` in the method name as the property
+     * path `user.id`.
      *
      * @param userId the id of the user whose coffee count the admins corrected
      */

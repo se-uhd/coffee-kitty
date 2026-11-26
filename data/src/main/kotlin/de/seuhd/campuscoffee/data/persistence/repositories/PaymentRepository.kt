@@ -10,8 +10,9 @@ import java.util.UUID
  */
 interface PaymentRepository : JpaRepository<PaymentEntity, UUID> {
     /**
-     * Returns the deposits of the user with [userId], newest first. Spring Data reads `UserId` in the method name as
-     * the property path `user.id`, so the result never contains a kitty adjustment, which has no user.
+     * Returns the deposits of the user with [userId], newest first. The index on `(user_id, created_at)` serves the
+     * query (ADR-020). Spring Data reads `UserId` in the method name as the property path `user.id`, so the result
+     * never contains a kitty adjustment, which has no user.
      *
      * @param userId the id of the user who paid the deposits
      */

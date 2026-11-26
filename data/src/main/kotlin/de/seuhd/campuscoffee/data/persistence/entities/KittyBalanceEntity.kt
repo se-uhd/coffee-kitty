@@ -7,8 +7,8 @@ import jakarta.persistence.Table
 /**
  * The JPA entity of the kitty balance in euro cents. The CHECK constraints of `V11__create_balance_tables.sql` allow
  * only the row with the id [SINGLETON_ID] and reject a negative balance. No code writes the table yet, and the table
- * has no row, so the code that first stores a kitty balance has to insert the row. The class does not extend [Entity],
- * because the table has neither a random id nor timestamps.
+ * has no row, so the code that first stores a kitty balance has to insert the row. The class extends neither [Entity]
+ * nor [PersistableEntity] (ADR-021).
  */
 @jakarta.persistence.Entity
 @Table(name = "kitty_balance")
