@@ -26,6 +26,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- `POST /api/users` refuses an email address with a control character with 400 Bad Request, as FR-14 now requires.
+  Until now, a request with the NUL character in the address returned 500, because PostgreSQL cannot store it, and an
+  address with another control character that is not whitespace, such as U+0001, was stored. The OpenAPI definition
+  states the rules on control characters for the names, the email address, and the note of a correction.
 - The message of a `DataConstraintException` for a value that its column cannot store, such as a text with the NUL
   character, names the SQL state. Until now, it said that the object violates "the constraint (unnamed)", although
   PostgreSQL reported no violated constraint.

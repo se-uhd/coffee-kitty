@@ -26,19 +26,21 @@ data class CreateUserDto(
     )
     val loginName: String,
     @field:Schema(
-        description = "The unique email address of the form name@domain. The server stores it in lowercase.",
+        description =
+            "The unique email address of the form name@domain, without control characters. The server stores it in " +
+                "lowercase.",
         maxLength = User.MAX_EMAIL_LENGTH,
         requiredMode = Schema.RequiredMode.REQUIRED
     )
     val emailAddress: String,
     @field:Schema(
-        description = "The first name, which must not be blank.",
+        description = "The first name, which must not be blank or contain a control character.",
         maxLength = User.MAX_NAME_LENGTH,
         requiredMode = Schema.RequiredMode.REQUIRED
     )
     val firstName: String,
     @field:Schema(
-        description = "The last name, which must not be blank.",
+        description = "The last name, which must not be blank or contain a control character.",
         maxLength = User.MAX_NAME_LENGTH,
         requiredMode = Schema.RequiredMode.REQUIRED
     )

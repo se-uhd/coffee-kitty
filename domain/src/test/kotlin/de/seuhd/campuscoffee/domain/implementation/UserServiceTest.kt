@@ -124,6 +124,13 @@ class UserServiceTest {
         verifyNothingStored()
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = ["ja\u0000ne@se.de", "jane@se.de\u0000", "ja\u0001ne@se.de", "ja\u007Fne@se.de"])
+    fun `create throws ValidationException for an email address with a control character`(emailAddress: String) {
+        assertThrows<ValidationException> { service.create(newUser(emailAddress = emailAddress)) }
+        verifyNothingStored()
+    }
+
     @Test
     fun `create throws ValidationException for an email address of 255 characters`() {
         assertThrows<ValidationException> { service.create(newUser(emailAddress = "a".repeat(249) + "@se.de")) }

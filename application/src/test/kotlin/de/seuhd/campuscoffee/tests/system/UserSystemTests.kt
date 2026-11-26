@@ -193,6 +193,15 @@ class UserSystemTests : AbstractSystemTest() {
     }
 
     @Test
+    fun `creating a user with a NUL character in the email address returns 400 Bad Request`() {
+        val response = userRequests.create(newUser(emailAddress = "new.user@se.uni-heidelberg.de\u0000"))
+
+        assertThat(response.status).isEqualTo(400)
+        assertThat(response.error.errorCode).isEqualTo("ValidationException")
+        assertThat(userService.getAll()).hasSize(userFixtures.size)
+    }
+
+    @Test
     fun `creating a user with a blank first name returns 400 Bad Request`() {
         val response = userRequests.create(newUser(firstName = "   "))
 

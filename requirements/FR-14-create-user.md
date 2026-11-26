@@ -6,10 +6,10 @@ When an admin creates a user with a login name, an email address, a first name, 
 the user with a coffee count of 0.
 
 A login name consists of ASCII letters, digits, and underscores and has 1 to 255 characters. No two users have the same
-login name, and login names that differ only in case are different. An email address has the form name@domain, and no
-two users have the same email address, ignoring case. Coffee Kitty MUST store an email address in lowercase. A first
-name and a last name are not blank and contain no control character, such as a line break. A user is an admin only if
-the request says so.
+login name, and login names that differ only in case are different. An email address has the form name@domain and
+contains no control character, and no two users have the same email address, ignoring case. Coffee Kitty MUST store an
+email address in lowercase. A first name and a last name are not blank and contain no control character, such as a line
+break. A user is an admin only if the request says so.
 
 Coffee Kitty MUST refuse a request by a user who is not an admin with 403 Forbidden and a request without a known acting
 user with 401 Unauthorized. Coffee Kitty MUST refuse a request with a value that breaks these rules with 400 Bad Request
@@ -32,7 +32,8 @@ admin.
 - A request with the login name of another user returns 409 Conflict. A request with the login name "Jane_Doe" creates a
   user, although the user jane_doe exists.
 - A request with the email address "New.User@SE.Uni-Heidelberg.de" stores the address "new.user@se.uni-heidelberg.de". A
-  request with the email address of another user in other letter case returns 409 Conflict.
+  request with the email address of another user in other letter case returns 409 Conflict. A request with an email
+  address that contains the NUL character returns 400 Bad Request.
 - A request with a blank first name or a blank last name returns 400 Bad Request.
 - A request by maxmustermann, who is not an admin, returns 403 Forbidden. A request without a known acting user returns
   401 Unauthorized.
@@ -58,6 +59,8 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
   a user (FR-19). A user records an expense (FR-6) and adds a coffee (FR-13).
 - Technical limit, not a decision of a stakeholder: An email address has at most 254 characters, the longest address
   that a mail server accepts (RFC 5321, section 4.5.3.1.3, and Erratum 1690 to RFC 3696).
+- Technical limit, not a decision of a stakeholder: An email address contains no control character. RFC 5321, section
+  4.1.2, allows no ASCII control character in an address, and PostgreSQL cannot store the NUL character.
 - Verified by: `UserSystemTests`, `UserServiceTest`, and `BootstrapAdminLoaderTest`.
 - Coffee Kitty 0.1.0 had this function without a requirement and without roles. This requirement records it with a new
   ID.

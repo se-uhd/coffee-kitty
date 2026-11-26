@@ -24,6 +24,7 @@ data class User(
     val loginName: String,
     @field:Size(max = MAX_EMAIL_LENGTH, message = EMAIL_ADDRESS_MESSAGE)
     @field:Pattern(regexp = EMAIL_ADDRESS_PATTERN, message = EMAIL_ADDRESS_MESSAGE)
+    @field:Pattern(regexp = TextPatterns.NO_CONTROL_CHARACTER, message = EMAIL_ADDRESS_MESSAGE)
     val emailAddress: String,
     @field:Pattern(regexp = TextPatterns.NOT_BLANK, message = FIRST_NAME_MESSAGE)
     @field:Size(max = MAX_NAME_LENGTH, message = FIRST_NAME_MESSAGE)
@@ -52,7 +53,9 @@ data class User(
         /**
          * The regular expression that a whole email address must match. The address must have exactly one at sign with
          * at least one character on each side, and it must not contain whitespace. An address that matches therefore
-         * has at least three characters, which the CHECK constraint on `users.email_address` requires as well.
+         * has at least three characters, which the CHECK constraint on `users.email_address` requires as well. A second
+         * constraint rejects the control characters, as in a name: RFC 5321, section 4.1.2, allows no ASCII control
+         * character in an address.
          */
         const val EMAIL_ADDRESS_PATTERN = "[^@\\s]+@[^@\\s]+"
 
@@ -78,8 +81,8 @@ data class User(
 
         /** The message of the error response for an invalid email address. */
         const val EMAIL_ADDRESS_MESSAGE =
-            "An email address must have the form name@domain, with no spaces and one at sign, and at most " +
-                "$MAX_EMAIL_LENGTH characters."
+            "An email address must have the form name@domain, with one at sign and no spaces or control characters, " +
+                "and at most $MAX_EMAIL_LENGTH characters."
 
         /** The message of the error response for an invalid first name. */
         const val FIRST_NAME_MESSAGE =

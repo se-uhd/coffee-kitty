@@ -22,7 +22,7 @@ data class ConsumptionCorrectionDto(
     )
     val total: Int,
     @field:Schema(
-        description = "The reason for the correction, which must not be blank.",
+        description = "The note that explains the correction, which must not be blank or contain the NUL character.",
         maxLength = CountCorrection.MAX_NOTE_LENGTH,
         requiredMode = Schema.RequiredMode.REQUIRED
     )
