@@ -151,7 +151,7 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
     fun `creating a user with a wildcard Content-Type returns 415 Unsupported Media Type`() {
         val usersBefore = userRequests.retrieveAll().body
 
-        for (contentType in listOf("*/*", "application/*", "application/*+json")) {
+        for (contentType in listOf("*/*", "application/*", "application/*+json", "*/*;charset=utf-8")) {
             val response: Response<ErrorJson> =
                 client
                     .post()

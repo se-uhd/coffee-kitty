@@ -54,9 +54,9 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     /**
-     * Returns a 500 with a fixed message for every exception that no other handler maps. Spring throws an
-     * `IllegalArgumentException` for an asterisk as the type or subtype in the `Content-Type` header before it calls a
-     * message converter, so the handler returns 415 for it, as for any other media type that the API does not read.
+     * Returns a 500 with a fixed message for every exception that no other handler maps. For a wildcard `Content-Type`,
+     * Spring throws an `IllegalArgumentException` in `HttpHeaders.setContentType`, which gets 415, as for any other
+     * media type that the API does not read. Any other `IllegalArgumentException` stays a 500.
      *
      * @param exception the exception that no other handler maps
      * @param request   the current web request
@@ -66,7 +66,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         exception: Exception,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        if (exception is IllegalArgumentException && request.hasWildcardContentType()) {
+        if (exception is IllegalArgumentException && isRefusedWildcardContentType(exception, request)) {
             val status = HttpStatus.UNSUPPORTED_MEDIA_TYPE
             log.info { "Wildcard Content-Type -> $status on ${describe(request)}" }
             return respond(status, errorBody(status, request, status.reasonPhrase))
@@ -183,5 +183,9 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     }
 }
 
-private fun WebRequest.hasWildcardContentType(): Boolean =
-    '*' in getHeader(HttpHeaders.CONTENT_TYPE).orEmpty().substringBefore(';')
+private fun isRefusedWildcardContentType(
+    exception: IllegalArgumentException,
+    request: WebRequest
+): Boolean =
+    '*' in request.getHeader(HttpHeaders.CONTENT_TYPE).orEmpty().substringBefore(';') &&
+        exception.stackTrace.any { it.className == HttpHeaders::class.java.name && it.methodName == "setContentType" }
