@@ -4,7 +4,7 @@
 
 ### Status
 
-Accepted
+Accepted, amended by [ADR-009](009-value-rules-on-the-domain-models.md)
 
 ### Date
 
@@ -51,5 +51,3 @@ same structure.
 * A unit test does not check a transaction. Integration and system tests check the lock and the rollback
   (`CrudDataServiceIntegrationTest`, `FailureSystemTests`).
 * A new dependency of the domain module is an architecture decision and needs an ADR.
-* [ADR-009](009-value-rules-on-the-domain-models.md) adds the API of Jakarta Bean Validation to the compile classpath
-  of the domain.

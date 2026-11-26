@@ -23,7 +23,8 @@ holds their tables. Every user has the role `USER` or `ADMIN`. The app has no au
   status to `models/src/main/tla/Consumption.tla` and replay `undoableUntil` in `ConsumptionConformanceTest`.
 - Never edit an accepted ADR except for its status. A correction of the wording that does not change the decision is
   allowed, and ADR-010 takes new measurements. Record a changed decision in a new ADR that refers to the old one, and
-  set the status of the old ADR to superseded.
+  set the status of the old ADR to superseded, or to "Accepted, amended by [ADR-NNN](NNN-name.md)" when the new ADR
+  changes only a part of it (ADR 017).
 - Every threshold of the build, such as the coverage minimums, the mutation score, the duplicate size, the memory of the
   Gradle daemon, and the wait times of the tests, has a measurement on Coffee Kitty. Before you change a threshold or
   add one, measure, record the result in `doc/adr/010-thresholds-of-the-build.md`, and write a new ADR. Do not copy a

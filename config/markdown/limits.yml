@@ -52,4 +52,4 @@ files:
     source: "Michael Nygard, Documenting Architecture Decisions: one or two pages"
   - glob: "requirements/FR-*.md"
     maxLines: 110
-    source: "ADR 013: the longest requirement whose meaning a review confirmed, FR-6 with 101 lines, rounded up"
+    source: "ADR 018: the longest requirement whose meaning a review confirmed, FR-6 with 101 lines, rounded up"

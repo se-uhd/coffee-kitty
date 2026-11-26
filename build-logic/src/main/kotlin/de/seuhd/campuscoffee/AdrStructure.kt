@@ -41,10 +41,10 @@ class AdrStructure(
             violations += "$path: the metadata has the headings ${metadata.joinToString()}, in this order."
         }
         val status = firstLine(prose, "### Status")
-        val successor = status?.let { SUPERSEDED.matchEntire(it) }?.let { "doc/adr/${it.groupValues[1]}" }
-        if (status !in statuses.filter { it != SUPERSEDED_STATUS } && successor !in allAdrPaths) {
+        if (status == null || !isValidStatus(status, allAdrPaths)) {
             violations += "$path: the status is one of ${statuses.joinToString("/")} from doc/adr/template.md, and " +
-                "$SUPERSEDED_STATUS takes ' by [ADR-NNN](NNN-name.md)' with an existing ADR."
+                "$SUPERSEDED_STATUS takes ' by [ADR-NNN](NNN-name.md)'. Another status takes ', amended by " +
+                "[ADR-NNN](NNN-name.md)' for each later ADR that changes a part of it (ADR 017). Each link names an ADR."
         }
         if (firstLine(prose, "### Date")?.let(::isDate) != true) violations += "$path: the date is YYYY-MM-DD."
         if (body(prose, "### Involved").none { it.startsWith("* ") }) violations += "$path: Involved lists a person."
@@ -57,6 +57,17 @@ class AdrStructure(
             if (size > max) violations += "$path: the section $name has $size lines, more than $max ($source)."
         }
         return violations
+    }
+
+    private fun isValidStatus(
+        status: String,
+        allAdrPaths: Set<String>
+    ): Boolean {
+        val amendable = statuses.filter { it != SUPERSEDED_STATUS }.map { Regex.escape(it) }.joinToString("|")
+        val form =
+            Regex("($amendable)(, amended by $LINK_PATTERN)*").matches(status) ||
+                Regex("$SUPERSEDED_STATUS by $LINK_PATTERN").matches(status)
+        return form && Regex(LINK_PATTERN).findAll(status).all { "doc/adr/${it.groupValues[1]}" in allAdrPaths }
     }
 
     private fun firstLine(
@@ -105,7 +116,7 @@ class AdrStructure(
     companion object {
         private val FILE = Regex("""doc/adr/\d{3}-[a-z0-9]+(-[a-z0-9]+)*\.md""")
         private const val SUPERSEDED_STATUS = "Superseded"
-        private val SUPERSEDED = Regex("""$SUPERSEDED_STATUS by \[ADR-\d{3}]\((\d{3}-[a-z0-9-]+\.md)\)""")
+        private const val LINK_PATTERN = """\[ADR-\d{3}]\((\d{3}-[a-z0-9-]+\.md)\)"""
 
         fun checkNumbering(adrPaths: Collection<String>): List<String> {
             val numbers =

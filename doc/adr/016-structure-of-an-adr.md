@@ -4,7 +4,7 @@
 
 ### Status
 
-Accepted
+Accepted, amended by [ADR-017](017-amendments-of-an-adr.md)
 
 ### Date
 

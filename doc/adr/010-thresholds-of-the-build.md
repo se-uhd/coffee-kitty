@@ -123,6 +123,20 @@ The limit has to leave every text of a legitimate request whole. The longest pat
 longest message is the message of Jackson for a body of `CreateUserDto` with an unknown field, which has about 400
 characters. Only a client causes a longer text, for example with a long path (ADR-015).
 
+### Limits for text (ADR 013, ADR 016, ADR 018)
+
+* KDoc: on 2026-11-25, 1,719 of the 4,564 lines of production Kotlin were KDoc. The 268 blocks had a median of 6 lines,
+  a 90th percentile of 12, and a maximum of 23. The limits are 6 lines on a type and 3 elsewhere.
+* Commit messages: the 82 subjects on `main` of 2026-11-26 had a median of 56 characters, a 90th percentile of 70, and a
+  maximum of 79, and 78 of them had at most 72, the limit.
+* `CHANGELOG.md`: on 2026-11-26, 55 bullets had more than 2 lines, the limit, and the longest had 8.
+* ADRs: on 2026-11-26, the longest Context had 11 lines with text, the longest Decision(s) 24 apart from ADR 010, and
+  the longest Consequences 15. The limits are 12, 30, and 15. The ADRs considered 2 to 4 options, and the limit is 2
+  to 5.
+* Requirements: FR-6 needs 101 lines to keep its meaning (ADR 018), and the limit is 110.
+* OpenAPI texts: on 2026-11-26, the 9 summaries had at most 69 characters (90th percentile 68), and the 31 descriptions
+  of parameters, schemas, request bodies, and tags at most 162 (90th percentile 83). The limits are 60 and 120.
+
 ### Wait times of tests
 
 In 34 full builds, a whole concurrency test in `ConsumptionSystemTests` took at most 0.6 seconds, against a limit of 30

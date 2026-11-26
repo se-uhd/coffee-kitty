@@ -27,6 +27,7 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
   `mise install` enables it as a Git hook (`mise.toml`).
 - `gradle markdownLimits` checks the structure and the section lengths of each ADR against `doc/adr/template.md`
   (ADR 016).
+- The detekt rule `OpenApiTextLength` limits the summaries and descriptions of the OpenAPI annotations (ADR 018).
 - `gradle ruleIndex` writes the lists of the rule files in CLAUDE.md and AGENTS.md from the front matter of the rules,
   and `gradle check` fails when a list differs from the rules.
 - Claude Code hooks in `.claude/settings.json` check a commit message and the Markdown limits right after an edit.
@@ -48,10 +49,12 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
 - The README has 199 instead of 366 lines and points to Swagger UI for the REST API.
 - The code keeps KDoc only where ADR 013 requires it or the code cannot say it, and no other comments.
 - CHANGELOG.md follows Keep a Changelog 1.1.0 with bullets of at most 2 lines.
-- FR-6 has 101 instead of 122 lines. A review compared it statement by statement with the old version.
+- FR-6 has 101 instead of 122 lines, and a requirement has at most 110 lines (ADR 018). A review compared FR-6
+  statement by statement with the old version.
 - GLOSSARY.md defines each term after ISO 704, in tables with the identifiers and the source of each term.
 - The history of `main` follows Conventional Commits.
-- ADRs 002 and 006 name the later ADRs that change them in their consequences, because the template has no such status.
+- An accepted ADR that a later ADR changes in part has the status "Accepted, amended by [ADR-NNN](NNN-name.md)"
+  (ADR 017).
 
 ### Removed
 

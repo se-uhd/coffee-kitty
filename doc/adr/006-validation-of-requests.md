@@ -4,7 +4,7 @@
 
 ### Status
 
-Accepted
+Accepted, amended by [ADR-008](008-required-fields-of-a-request.md)
 
 ### Date
 
@@ -50,5 +50,3 @@ splits `UserDto`: `CreateUserDto` is the request body, and `UserDto` is the resp
 * The OpenAPI definition gets the limits from `@Schema` annotations on the request DTOs, which repeat the constants of
   the domain model for documentation only.
 * The controllers contain no rule, and only the domain throws a domain exception.
-* [ADR-008](008-required-fields-of-a-request.md) replaces the rule that a request DTO has nullable properties with
-  `@NotNull`.
