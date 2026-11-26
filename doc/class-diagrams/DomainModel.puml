@@ -50,5 +50,5 @@ legend right
 | AsManyConsumptionsAsUsers | assertion | holds |
 | NoTextPropertyAcceptsNUL | assertion | holds |
 endlegend
-caption The number at an arrowhead is how many objects one object refers to, as the model declares it.\nThe number at the other end is how many objects can refer to the same object. The Alloy Analyzer finds\nwhether it can be 0 and whether it can be more than 1, in every instance with up to 4 objects of each class.
+caption Multiplicities at the source ends of the arrows were derived with the Alloy Analyzer (scope 4).
 @enduml

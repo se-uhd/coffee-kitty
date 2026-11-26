@@ -12,7 +12,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.system.exitProcess
 
-/** The most objects of each class in the instances that decide the number at the other end of an arrow. */
+/** The scope of the Alloy runs that derive the multiplicity at the source end of an arrow. */
 const val REFERRER_SCOPE = 4
 
 private const val ARGUMENTS = 3
@@ -50,8 +50,7 @@ fun main(args: Array<String>) {
 
 /**
  * Returns the PlantUML source of the class diagram of the Alloy model [name], as the section Class diagram of
- * `models/README.md` describes it. The title is the subject of the first sentence of the comment at the top of the
- * model.
+ * `models/README.md` describes it. The title is the start of the header comment of the model and the file name.
  *
  * @param name the name of the model, such as `DomainModel`
  * @param text the source of the model
@@ -82,10 +81,8 @@ fun toClassDiagram(
         references.forEach { appendLine(it.arrow(model)) }
         appendRules(model)
         appendLine(
-            "caption The number at an arrowhead is how many objects one object refers to, as the model " +
-                "declares it.\\nThe number at the other end is how many objects can refer to the same object. The" +
-                " Alloy Analyzer finds\\nwhether it can be 0 and whether it can be more than 1, in every instance" +
-                " with up to $REFERRER_SCOPE objects of each class."
+            "caption Multiplicities at the source ends of the arrows were derived with the Alloy Analyzer " +
+                "(scope $REFERRER_SCOPE)."
         )
         appendLine("@enduml")
     }

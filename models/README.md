@@ -22,15 +22,14 @@ statechart.
 
 ## Class diagram
 
-`ClassDiagram.kt` draws each class sig of an Alloy model as a class and each enum sig as an enum. A field with a value
-sig, such as `Text`, or with an enum is an attribute. A field with a class sig is an arrow. The number at the arrowhead
-is how many objects one object refers to, as the field declares it: `one` is 1, `lone` 0..1, `some` 1..*, and `set` *.
-The number at the other end is how many objects can refer to the same object. For each arrow, two runs of the Alloy
-Analyzer find whether an object can have no such referrer and whether it can have two, in every instance with up to 4
-objects of each class, so the number follows the facts of the model. For example, because of the fact
-`OneConsumptionPerUser`, exactly one `CoffeeConsumption` refers to each `User`, and the arrow from `CoffeeConsumption`
-to `User` shows 1 at its other end. A legend lists the facts and whether each assertion holds. The title is the subject
-of the first sentence of the comment at the top of the model.
+`ClassDiagram.kt` draws each class sig of an Alloy model as a class and each enum sig as an enum. A field of a value
+sig, such as `Text`, or of an enum is an attribute, and a field of a class sig is an association. The multiplicity at
+the target end follows the field declaration: `one` gives 1, `lone` 0..1, `some` 1..*, and `set` *. An Alloy field
+declares no multiplicity for the source end, so two runs of the Alloy Analyzer with a scope of 4 derive it. One run
+checks whether a target object can exist without a source object, and the other whether two source objects can refer to
+the same target object. For example, the fact `OneConsumptionPerUser` gives 1 at the `CoffeeConsumption` end of the
+association from `CoffeeConsumption` to `User`. The legend lists the facts and whether each assertion holds. The title
+is the start of the header comment of the model, such as "Domain model of Coffee Kitty", and the file name.
 
 The diagram leaves out the value rules, that is, the predicates `valid<Sig><Field>`. The model states these rules with
 value classes such as `TextWithNul`, and the requirements state them in words.
