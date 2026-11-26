@@ -34,7 +34,7 @@ jobs:
           scripts/check-commit-message.sh --range "$range"
 
       # Install the versions of Java, Gradle, and TLC that mise.toml pins.
-      - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
+      - uses: jdx/mise-action@90f833d396d0cc3674b631d2d225e306476c303a # v5.2.10
 
       # Fail before the build when the version in gradle.properties differs from the latest release in CHANGELOG.md.
       - name: Check version is in sync with the changelog
