@@ -49,9 +49,11 @@ The build checks all text with fixed limits (the third option), and the existing
 * Every Markdown file needs an entry, and lines have at most 120 characters outside code blocks and tables.
 * `CLAUDE.md` with the unscoped rules has at most 200 lines, the target of the Claude Code documentation. A rule in
   `.claude/rules/` has at most 100 lines, and a `SKILL.md` at most 500, the limit of Anthropic's skill guide.
-* `README.md` and `GLOSSARY.md` have at most 200 lines, the README at most 60 per section, a requirement at most 80, and
-  an ADR at most 100, which Michael Nygard's "one or two pages" allows. ADR-010 has no line limit, because it records
-  every measurement of the build. ADR 016 checks the structure of an ADR.
+* `README.md` and `GLOSSARY.md` have at most 200 lines, and the README at most 60 per section. An ADR has at most 100,
+  which Michael Nygard's "one or two pages" allows. ADR-010 has no line limit, because it records every measurement of
+  the build. ADR 016 checks the structure of an ADR.
+* A requirement has at most 110 lines. A first limit of 80 changed the meaning of FR-6 in 12 places, and FR-6 needs 101
+  lines to keep its meaning.
 * `CHANGELOG.md` follows Keep a Changelog 1.1.0, with the sections in its order and bullets of at most 2 lines.
 
 ### Commit messages (`scripts/check-commit-message.sh`)

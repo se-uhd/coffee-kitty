@@ -48,7 +48,7 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
 - The README has 199 instead of 366 lines and points to Swagger UI for the REST API.
 - The code keeps KDoc only where ADR 013 requires it or the code cannot say it, and no other comments.
 - CHANGELOG.md follows Keep a Changelog 1.1.0 with bullets of at most 2 lines.
-- FR-6 and FR-8 are shorter. What they require is unchanged.
+- FR-6 has 101 instead of 122 lines. A review compared it statement by statement with the old version.
 - GLOSSARY.md defines each term after ISO 704, in tables with the identifiers and the source of each term.
 - The history of `main` follows Conventional Commits.
 - ADRs 002 and 006 name the later ADRs that change them in their consequences, because the template has no such status.
