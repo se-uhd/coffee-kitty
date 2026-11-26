@@ -1,273 +1,142 @@
 # Glossary
 
-This glossary defines one term for each concept of Coffee Kitty. Use these terms in the documentation, in KDoc and
-comments, and in the messages that the API returns. Identifiers such as the names of classes, fields, and tables and the
-paths of endpoints keep their spelling, and the lines "API:" and "Code:" of an entry list the identifiers that differ
-from the term. Some entries end with a line "Avoid:", which lists words not to use for the concept.
+This glossary defines one term for each concept of Coffee Kitty. Use these terms in the documentation, such as
+`README.md`, `CLAUDE.md`, the rules in `.claude/`, and the requirements in `requirements/`, in KDoc and comments, and in
+the messages that the API returns. Identifiers, such as the names of classes, fields, and tables and the paths of
+endpoints, keep their spelling, and the Code column lists the identifiers of the code and the API that name a concept.
+Quotations of stakeholders in the requirements keep their wording, and `CHANGELOG.md` and the decision records in
+`doc/adr/*` keep the terms of their date. FR-N names the requirement in `requirements/FR-N-*.md`. Where the sources
+disagree, the requirements decide for the concepts of the domain, and the code decides for the concepts of the
+architecture. A Source cell that starts with "Proposed" marks a definition inferred from use, which the maintainers have
+not confirmed.
 
-## Domain
+## Users and roles
 
-- **user**: A person whose coffees the app counts. The app stores the login name, the email address, the first and the
-  last name, and the role of the person.
-  API: `/api/users`, `UserDto`, `userId`. Code: `User`, `UserService`, `users`.
-  Avoid: member, drinker, account.
-- **login name**: A user's unique name, which consists of ASCII letters, digits, and underscores and has at most 255
-  characters (FR-14 in `requirements/FR-14-create-user.md`). Two users can have names that differ only in case, such as
-  `jane_doe` and `Jane_Doe`. `GET /api/users` sorts the users by this name, and the consumption endpoints return it
-  together with the coffee count.
-  API: `loginName`. Code: `User.loginName`, `login_name`.
-  Avoid: login (for the name).
-- **email address**: A user's unique address of the form name@domain, at most 254 characters long, which is the longest
-  address that a mail server accepts. Because the app trims
-  the address and stores it in lowercase, `Jane@se.de` and `jane@se.de` are the same address.
-  API: `emailAddress`. Code: `User.emailAddress`, `email_address`.
-  Avoid: email (for the address).
-- **coffee**: One cup that a user drinks. Adding a cup raises the user's coffee count by one (FR-13 in
-  `requirements/FR-13-add-coffee.md`).
-  API: `POST /api/users/{userId}/consumption` with `delta` 1. Code: `CoffeeConsumptionService.applyDelta`.
-  Avoid: bump (a count).
-- **coffee count**: A user's total number of coffees. The number starts at zero when the app creates the user. Adding a
-  coffee raises it by one, an undo lowers it by one, and a correction sets it to the count that an admin chooses.
-  API: `ConsumptionDto.count`. Code: `CoffeeConsumption.count`, `coffee_consumptions.count`.
-- **consumption**: The stored record that holds the coffee count of one user and the time of each recent coffee that the
-  user did not undo and that no correction removed. Adding a coffee drops the times of the coffees outside their grace
-  period. Every user has exactly one such record, which `UserService.create` or `UserInternalService.create` creates
-  together with the user.
-  API: `/api/users/{userId}/consumption`, `ConsumptionDto`. Code: `CoffeeConsumption`, `coffee_consumptions`,
-  `coffeeTimes`, `coffee_times`.
-- **delta**: The field in the request body of `POST /api/users/{userId}/consumption` that states the change to the
-  coffee count. The domain accepts only +1, which adds one coffee, and rejects every other integer. An extension can
-  accept -1 to remove a coffee without changing the format of the request body (see the KDoc of
-  `CoffeeConsumptionService.applyDelta`).
-  API: `ConsumptionDeltaDto.delta`, `{ "delta": 1 }`. Code: `CoffeeConsumptionService.applyDelta`.
-  Avoid: single-step change.
-- **undo**: Reversing the most recent coffee that a user added and did not undo, while that coffee is within the grace
-  period. The undo lowers the coffee count by one. After an undo, the coffee before is the most recent coffee (FR-3 in
-  `requirements/FR-3-undo-coffee.md`).
-  API: `POST /api/users/{userId}/consumption/undo`. Code: `CoffeeConsumptionService.undo`.
-  Avoid: cancel, coffee canceled.
-- **grace period**: The 5 minutes after a user adds a coffee, in which the user can undo that coffee (FR-3). A setting
-  can change the length.
-  The grace period includes the instant at which it ends: For a coffee added at 10:00:00, an undo at 10:05:00
-  succeeds, and an undo at 10:05:01 returns 409 Conflict.
-  Code: `GracePeriod`, `campus-coffee.consumption.grace-period`, environment variable
-  `CAMPUS_COFFEE_GRACE_PERIOD`.
-  Avoid: grace window.
-- **undo status**: Whether a user can undo their most recent coffee now and, if so, the end of the grace period of that
-  coffee. The undo status states that the user can undo a coffee exactly when an undo at the same time succeeds (FR-9
-  in `requirements/FR-9-undo-status.md`).
-  API: `GET /api/users/{userId}/consumption/undo`, `undoable`, `undoableUntil`. Code:
-  `CoffeeConsumptionService.undoableUntil`, `GracePeriod.closesAt`, `UndoStatusDto`.
-  Avoid: undo offer, cancellable.
-- **correction**: An admin's change of a user's coffee count to a new count, which the admin explains in a note (FR-8 in
-  `requirements/FR-8-correct-coffee-count.md`). An admin can correct a coffee count at any time, even after the grace
-  period. Coffee Kitty stores each correction with the count before, the count after, the note, the admin, and the time
-  of the correction. A correction to a lower count removes the most recent coffees, and an undo then applies to the most
-  recent coffee that remains. A correction to a higher count adds coffees that the user cannot undo.
-  API: `PUT /api/users/{userId}/consumption`, `ConsumptionCorrectionDto` (`total`, `note`),
-  `GET /api/users/{userId}/consumption/corrections`, `CountCorrectionDto`. Code:
-  `CoffeeConsumptionService.correctCount`, `CountCorrection`, `count_corrections`.
-  Avoid: adjustment, override, reset (for a coffee count).
-- **note**: The text that explains a correction, a payment, or an expense, such as "Double tap on 16.11." A note has at
-  most 500 characters, which the team assistant set (FR-8), and can span several lines. A correction needs a note that
-  is not blank. The note of a payment or an expense is optional, and a blank note counts as no note (FR-4 and FR-6).
-  API: `ConsumptionCorrectionDto.note`, `CountCorrectionDto.note`. Code: `CountCorrection.note`,
-  `CountCorrection.MAX_NOTE_LENGTH`, `count_corrections.note`, `Payment.note`, `payments.note`, `expenses.note`.
-  Avoid: comment, reason (for the field).
-- **euro cents**: The unit of every amount of money in the code and in the database. Each amount is an integer, so that
-  sums have no rounding errors.
-  Code: `amountCents`, `balanceCents`, `amount_cents`, `balance_cents`.
-- **plausibility check**: A check that refuses a value that probably comes from a typing error, although no rule of the
-  group forbids the value. Coffee Kitty checks the weight of a bean purchase in this way, from 100 g to 1,000 g (FR-6).
-  A requirement states a plausibility check with SHOULD, because the group can do without the check. The upper limit
-  of 1,000.00 € for a single amount of money (FR-4, FR-6, FR-17, and FR-19) and the daily limit are rules of the group,
-  which the requirements state with MUST.
-- **price per cup**: The one price of a coffee in euro cents, which applies to every user and which an admin sets to an
-  amount from 0.00 € to 1,000.00 €. It starts at 0.50 € (FR-17 in `requirements/FR-17-set-price-per-cup.md`). Each
-  coffee lowers the balance of its user by the price per cup at the time of the coffee, so a new price applies only to
-  the coffees added after the change (FR-5 in `requirements/FR-5-pay-for-coffee.md`). An undo raises the balance by the
-  amount by which the coffee lowered it (FR-11 in `requirements/FR-11-credit-undone-coffee.md`). Coffee Kitty stores at
-  most one price, and no endpoint reads or sets it yet. No migration stores a price, so the startup task has to store
-  the start price.
-  Code: `CoffeePrice`, `CoffeePriceDataService`, `coffee_prices`, `coffee_times.price_cents`.
-- **balance**: A user's amount of money in euro cents, negative when the user owes the kitty money and positive when the
-  kitty owes the user money. The balance of a new user is zero (FR-15 in `requirements/FR-15-report-balance.md`).
-  Coffees lower the balance, and undos, deposits, and the private shares of the user's expenses raise it. A correction
-  lowers or raises it (FR-18 in `requirements/FR-18-charge-correction.md`). The table `user_balance` holds the balance
-  of each user, but no code writes it yet.
-  Code: `UserBalanceEntity`, `user_balance`.
-  Avoid: member balance, account.
-- **kitty**: The shared cash of the group in euro cents. The current amount is the kitty balance, which every user can
-  read (FR-16 in `requirements/FR-16-report-kitty-balance.md`). Deposits raise the
-  kitty, the kitty shares of expenses lower it, and kitty adjustments change it in either direction. The kitty never
-  goes negative. The table `kitty_balance` holds the kitty balance in one row, but no code writes it yet.
-  Code: `KittyBalanceEntity`, `kitty_balance`.
-  Avoid: fund, coffee fund.
-- **payment**: A deposit or a kitty adjustment, which an admin records. A coffee is not a payment, because it lowers the
-  balance of the user without moving cash.
-  Code: `Payment`, `PaymentDataService`, `payments`.
-- **deposit**: Cash that a user pays into the kitty and that an admin records. A deposit raises the balance of the user
-  and the kitty by the same amount, which is positive (FR-4 in `requirements/FR-4-record-deposit.md` and FR-10 in
-  `requirements/FR-10-raise-kitty-balance.md`). No endpoint records a deposit yet.
-  Code: `Payment` with a `user`.
-  Avoid: settlement, top-up.
-- **kitty adjustment**: A change of the kitty that an admin makes and that belongs to no user, such as the initial cash
-  in the kitty. Its amount is positive or negative but not zero.
-  Code: `Payment` without a `user`.
-  Avoid: correction (for a change of the kitty).
-- **expense**: Money that a user, the buyer, spent for the group, either a bean purchase or any other expense. FR-6 in
-  `requirements/FR-6-record-own-expense.md` specifies how a user records an expense that they paid with their own money,
-  and FR-19 in `requirements/FR-19-record-expense-for-user.md` how an admin records an expense for a user.
-  So far, Coffee Kitty has only the table, the JPA entity, and the repository for expenses, without a domain model.
-  Code: `ExpenseEntity`, `ExpenseEntity.buyer`, `expenses`, `buyer_user_id`.
-  Avoid: outlay, purchase (except in bean purchase).
-- **daily limit**: The most that a user who is not an admin records as expenses for themselves on one day: 5 expenses
-  and 50.00 € in total. A day starts at midnight in the time zone Europe/Berlin. The group can configure another
-  amount of at most 100.00 €. The daily limit does not apply to an admin, and an admin records an expense beyond it for
-  the user (FR-6 in `requirements/FR-6-record-own-expense.md` and FR-19). Coffee Kitty does not implement it yet.
-- **bean purchase**: The kind of expense for coffee beans, which refers to a bean and has a weight in grams.
-  Code: `BEANS`, `ExpenseEntity.bean`, `ExpenseEntity.weightGrams`.
-- **other expense**: The kind of expense for anything except beans, such as filters or milk, without a bean or a weight.
-  Code: `OTHER`.
-- **private share / kitty share**: The two parts of an expense, which add up to its amount. The private share raises the
-  balance of the buyer, and the kitty share lowers the kitty.
-  Code: `ExpenseEntity.privateAmountCents`, `ExpenseEntity.kittyAmountCents`.
-- **bean**: One named kind of coffee beans, which bean purchases and ratings refer to. A live bean, that is, a bean that
-  no admin merged into another bean, has a name that no other live bean has, ignoring case. An admin can merge a bean
-  into another bean, and the merged bean stays as an inactive record that refers to the other bean.
-  Code: `CoffeeBean`, `CoffeeBean.mergedIntoId`, `CoffeeBeanDataService`, `coffee_beans`.
-- **rating**: The stored record of one score that a user gives a bean for their most recent coffee. Each coffee has at
-  most one rating: Until the user adds the next coffee, a new rating replaces the rating of the most recent coffee. The
-  ratings of different coffees stay, also for the same bean. A rating moves no money. FR-12 in
-  `requirements/FR-12-rate-a-bean.md` specifies how a user rates a bean. No endpoint records a rating yet.
-  Code: `CoffeeRating`, `CoffeeRatingDataService`, `coffee_ratings`.
-- **score**: The whole number from 1 to 5 of a rating.
-  Code: `CoffeeRating.value`, `coffee_ratings.value`.
-  Avoid: value (in prose), rating (for the number).
-- **role**: What a user may do in Coffee Kitty, either `USER` or `ADMIN`. An admin may also create users, correct coffee
-  counts, and list the corrections of a user.
-  API: `UserDto.role`. Code: `Role`, `User.role`, `users.role`, `requireAdmin`.
-- **acting user**: The user who sends a request, identified by the login name in the header `X-Acting-User`. Because
-  Coffee Kitty has no authentication yet, any client can act as any user.
-  API: `X-Acting-User`, `WWW-Authenticate: X-Acting-User realm="Coffee Kitty"` in a 401. Code: `CurrentUserProvider`,
-  `ActingUserAuthenticationFilter`, `OpenEndpoint`, `SecurityConfig`.
-  Avoid: current user (except in the class name `CurrentUserProvider` and its function `currentUser`, which the coffee
-  app of SE@UHD has as well), caller.
-- **bootstrap admin**: The admin that the app stores on startup from the keys under `campus-coffee.bootstrap-admin` when
-  no admin exists. If a user has the configured login name, the app gives that user the
-  role `ADMIN`. Otherwise, it creates the configured user.
-  Code: `BootstrapAdminLoader`, `BootstrapAdminProperties`, `StartupDataInitializer`,
-  `UserInternalService.createInitialAdmin`.
-- **user fixture**: One of the five users in `TestFixtures`, such as `jane_doe`, the only admin among them. The dev
-  application creates these users with a coffee count of zero on every start, and the system and acceptance tests
-  create them the same way before each test.
-  Code: `TestFixtures`, `DevFixtureLoader`.
-  Avoid: seeded user.
-- **test fixture**: A test object with fixed values that several tests share, or the state that a test prepares before
-  it runs the code under test. `TestFixtures` holds the shared test objects: the user fixtures, a fixed time with a
-  clock that shows it, and three consumptions. One consumption has no coffee, one has a recent coffee, and one has an
-  old coffee. At the fixed time, the grace period of the old coffee has passed. A function with `@BeforeEach` prepares
-  the state that each test of a class needs, such as a stored user. `TestFixtures` and the database cleaner are in the
-  Gradle source set `src/testFixtures` of their module, which the production jar does not contain.
-  Code: `TestFixtures`, `FIXED_TIME`, `fixedClock`, `consumptionWithRecentCoffee`, `DatabaseCleaner`.
+| Term | Definition | Code | Source |
+|---|---|---|---|
+| user | person whose coffees the app counts. Note: The app stores the login name, the email address, the first and the last name, and the role of the person. | `/api/users`, `UserDto`, `userId`, `User`, `UserService`, `users` | `requirements/FR-14-create-user.md`, Rationale, "Each person needs a user before Coffee Kitty can count their coffees" |
+| login name | unique name of a user, made up of ASCII letters, digits, and underscores. Note: A login name has at most 255 characters (FR-14). Two users can have names that differ only in case, such as `jane_doe` and `Jane_Doe`. `GET /api/users` sorts the users by this name, and the consumption endpoints return it together with the coffee count. | `loginName`, `User.loginName`, `login_name` | `requirements/FR-14-create-user.md`, Statement, "A login name consists of ASCII letters, digits, and underscores" |
+| email address | unique address of a user, of the form name@domain. Note: An email address has at most 254 characters, the longest address that a mail server accepts. Because the app trims the address and stores it in lowercase, `Jane@se.de` and `jane@se.de` are the same address. | `emailAddress`, `User.emailAddress`, `email_address` | `requirements/FR-14-create-user.md`, Statement, "An email address has the form name@domain" |
+| role | property of a user that determines what the user may do in the app. | `UserDto.role`, `Role`, `User.role`, `users.role`, `requireAdmin` | `doc/adr/003-role-checks-in-the-domain.md`, Context, "Only an admin may create a user, correct a coffee count" |
+| acting user | user who sends a request, identified by the login name in the header `X-Acting-User`. Note: Because Coffee Kitty has no authentication yet, any client can act as any user. | `X-Acting-User`, `WWW-Authenticate: X-Acting-User realm="Coffee Kitty"` in a 401, `CurrentUserProvider` and its function `currentUser` (the names in the coffee app of SE@UHD), `ActingUserAuthenticationFilter`, `OpenEndpoint`, `SecurityConfig` | `doc/adr/003-role-checks-in-the-domain.md`, Context, "The header `X-Acting-User` contains the login name of the acting user" |
+| bootstrap admin | user with the role `ADMIN` that the app stores on startup from the keys under `campus-coffee.bootstrap-admin` when no admin exists. Note: If a user has the configured login name, the app gives that user the role `ADMIN`. Otherwise, it creates the configured user. | `BootstrapAdminLoader`, `BootstrapAdminProperties`, `StartupDataInitializer`, `UserInternalService.createInitialAdmin`, `campus-coffee.bootstrap-admin` | `requirements/FR-14-create-user.md`, Success Criteria, "Coffee Kitty stores the admin that its configuration names when it starts" |
+
+Each user has one of these roles:
+
+| Value | Meaning |
+|---|---|
+| `USER` | The user is not an admin. |
+| `ADMIN` | The user is an admin and may also create users, correct coffee counts, and list the corrections of a user. |
+
+## Coffees and corrections
+
+| Term | Definition | Code | Source |
+|---|---|---|---|
+| coffee | cup that a user drinks. Note: Adding a coffee raises the coffee count of the user by one (FR-13). | `POST /api/users/{userId}/consumption` with `delta` 1, `CoffeeConsumptionService.applyDelta` | `requirements/FR-13-add-coffee.md`, Statement, "When a user adds a coffee, Coffee Kitty MUST raise the user's coffee count" |
+| coffee count | total number of coffees of a user. Note: The number starts at zero when the app creates the user. Adding a coffee raises it by one, an undo lowers it by one, and a correction sets it to the count that an admin chooses. | `ConsumptionDto.count`, `CoffeeConsumption.count`, `coffee_consumptions.count` | `requirements/FR-14-create-user.md`, Supporting Information, "A new user starts with a coffee count of 0" |
+| delta | change to a coffee count that the body of a request to `POST /api/users/{userId}/consumption` states. Note: The domain accepts only +1, which adds one coffee, and rejects every other integer. An extension can accept -1 to remove a coffee without changing the format of the request body (see the KDoc of `CoffeeConsumptionService.applyDelta`). | `ConsumptionDeltaDto.delta`, `{ "delta": 1 }`, `CoffeeConsumptionService.applyDelta` | `domain/.../ports/api/CoffeeConsumptionService.kt`, KDoc of `applyDelta`, "the change to the coffee count, which must be `+1`" |
+| undo | reversing the most recent coffee that a user added and that still counts. Note: An undo lowers the coffee count by one. The app accepts an undo only within the grace period of the coffee (FR-3). After an undo, the coffee before is the most recent coffee. | `POST /api/users/{userId}/consumption/undo`, `CoffeeConsumptionService.undo` | `requirements/FR-3-undo-coffee.md`, Statement, "When a user undoes their most recent coffee within the grace period" |
+| grace period | period after a user adds a coffee within which the user can undo that coffee. Note: The period lasts 5 minutes (FR-3), and a setting can change the length. The grace period includes the instant at which it ends: For a coffee added at 10:00:00, an undo at 10:05:00 succeeds, and an undo at 10:05:01 returns 409 Conflict. | `GracePeriod`, `campus-coffee.consumption.grace-period`, environment variable `CAMPUS_COFFEE_GRACE_PERIOD` | `requirements/FR-3-undo-coffee.md`, Supporting Information, "We call these 5 minutes the grace period" |
+| undo status | information on whether a user can undo their most recent coffee now and, if so, on the end of the grace period of that coffee. Note: The undo status states that the user can undo a coffee exactly when an undo at the same time succeeds (FR-9). | `GET /api/users/{userId}/consumption/undo`, `undoable`, `undoableUntil`, `CoffeeConsumptionService.undoableUntil`, `GracePeriod.closesAt`, `UndoStatusDto` | `requirements/FR-9-undo-status.md`, Statement, "MUST report whether the user can undo their most recent coffee" |
+| correction | setting of the coffee count of a user to a count that an admin chooses. Note: The admin explains the correction in a note (FR-8). An admin can correct a coffee count at any time, even after the grace period. Coffee Kitty stores each correction with the count before, the count after, the note, the admin, and the time of the correction. A correction to a lower count removes the most recent coffees, and an undo then applies to the most recent coffee that remains. A correction to a higher count adds coffees that the user cannot undo. Note: A correction never changes the kitty (FR-18). When an admin changes the kitty without a user, the change is a kitty adjustment. | `PUT /api/users/{userId}/consumption`, `ConsumptionCorrectionDto` (`total`, `note`), `GET /api/users/{userId}/consumption/corrections`, `CountCorrectionDto`, `CoffeeConsumptionService.correctCount`, `CountCorrection`, `count_corrections` | `requirements/FR-8-correct-coffee-count.md`, Statement, "When an admin corrects the coffee count of a user" |
+| consumption | stored record that holds the coffee count of one user and the time of each recent coffee that the user did not undo and that no correction removed. Note: Adding a coffee drops the times of the coffees outside their grace period. Every user has exactly one consumption, which `UserService.create` or `UserInternalService.create` creates together with the user. | `/api/users/{userId}/consumption`, `ConsumptionDto`, `CoffeeConsumption`, `coffee_consumptions`, `coffeeTimes`, `coffee_times` | `domain/.../model/CoffeeConsumption.kt`, KDoc, "Each user has exactly one consumption" |
+
+## Beans and ratings
+
+| Term | Definition | Code | Source |
+|---|---|---|---|
+| bean | named variety that the group buys for its coffees and that users rate. Note: Each bean purchase and each rating refers to a bean. A live bean, that is, a bean that no admin merged into another bean, has a name that no other live bean has, ignoring case. An admin can merge a bean into another bean, and the merged bean stays as an inactive record that refers to the other bean. | `CoffeeBean`, `CoffeeBean.mergedIntoId`, `CoffeeBeanDataService`, `coffee_beans` | `domain/.../model/CoffeeBean.kt`, KDoc, "one named kind of coffee beans that the group buys and that users rate" |
+| score | whole number from 1 to 5 with which a user rates a bean. | `CoffeeRating.value`, `coffee_ratings.value` (the names of the property and the column) | `requirements/FR-12-rate-a-bean.md`, Statement, "rates a bean with a whole-number score from 1 to 5" |
+| rating | stored record of the score that a user gives a bean for their most recent coffee. Note: Each coffee has at most one rating: Until the user adds the next coffee, a new rating replaces the rating of the most recent coffee. The ratings of different coffees stay, also for the same bean. A rating moves no money. FR-12 specifies how a user rates a bean. No endpoint records a rating yet. Note: The number from 1 to 5 is the score of a rating, and the rating is the record that holds the score. | `CoffeeRating`, `CoffeeRatingDataService`, `coffee_ratings` | `requirements/FR-12-rate-a-bean.md`, Statement, "MUST store one rating of that bean with that score" |
+
+## Money
+
+| Term | Definition | Code | Source |
+|---|---|---|---|
+| euro cents | unit of every amount of money in the code and in the database. Note: Each amount is an integer, so that sums have no rounding errors. | `amountCents`, `balanceCents`, `amount_cents`, `balance_cents` | `requirements/FR-15-report-balance.md`, Statement, "MUST report that balance in euro cents" |
+| kitty | shared cash of the group in euro cents. Note: The current amount is the kitty balance, which every user can read (FR-16). Deposits raise the kitty, the kitty shares of expenses lower it, and kitty adjustments change it in either direction. The kitty never goes negative. The table `kitty_balance` holds the kitty balance in one row, but no code writes it yet. | `KittyBalanceEntity`, `kitty_balance` | `requirements/FR-4-record-deposit.md`, Rationale, "who is an admin and puts the cash into the kitty" |
+| balance | amount of money of a user in euro cents, negative when the user owes the kitty money and positive when the kitty owes the user money. Note: The balance of a new user is zero (FR-15). Coffees lower the balance, and undos, deposits, and the private shares of the user's expenses raise it. A correction lowers or raises it (FR-18). The table `user_balance` holds the balance of each user, but no code writes it yet. | `UserBalanceEntity`, `user_balance` | `requirements/FR-5-pay-for-coffee.md`, Statement, "a negative balance is the amount that the user owes the kitty" |
+| price per cup | price of a coffee in euro cents that applies to every user and that an admin sets. Note: An admin sets the price to an amount from 0.00 € to 1,000.00 €, and the price starts at 0.50 € (FR-17). Each coffee lowers the balance of its user by the price per cup at the time of the coffee, so a new price applies only to the coffees added after the change (FR-5). An undo raises the balance by the amount by which the coffee lowered it (FR-11). Coffee Kitty stores at most one price, and no endpoint reads or sets it yet. No migration stores a price, so the startup task has to store the start price. | `CoffeePrice`, `CoffeePriceDataService`, `coffee_prices`, `coffee_times.price_cents` | `requirements/FR-17-set-price-per-cup.md`, Statement, "one price per cup, which is the same for every user" |
+| payment | amount of money that an admin records for the kitty. Note: A payment is a deposit or a kitty adjustment. A coffee is not a payment, because it lowers the balance of the user without moving cash. | `Payment`, `PaymentDataService`, `payments` | `domain/.../model/Payment.kt`, KDoc, "an amount of money in euro cents that an admin records for the kitty" |
+| deposit | payment of cash by a user into the kitty. Note: A deposit raises the balance of the user and the kitty by the same amount, which is positive (FR-4 and FR-10). No endpoint records a deposit yet. | `Payment` with a `user` | `requirements/FR-4-record-deposit.md`, Supporting Information, "When someone pays me cash, I record it as a deposit" |
+| kitty adjustment | payment that belongs to no user and changes only the kitty. Note: The initial cash in the kitty is an example. The amount of a kitty adjustment is positive or negative but not zero. | `Payment` without a `user` | `domain/.../model/Payment.kt`, KDoc, "it is a kitty adjustment, which changes only the kitty" |
+| expense | amount of money that a user spent for the group. Note: The user who spent the money is the buyer. An expense is a bean purchase or an other expense. FR-6 specifies how a user records an expense that they paid with their own money, and FR-19 how an admin records an expense for a user. So far, Coffee Kitty has only the table, the JPA entity, and the repository for expenses, without a domain model. | `ExpenseEntity`, `ExpenseEntity.buyer`, `expenses`, `buyer_user_id` | `requirements/FR-6-record-own-expense.md`, Rationale, "buy beans and other supplies for the group with their own money" |
+| bean purchase | expense for coffee beans, which refers to a bean and has a weight in grams. | `BEANS`, `ExpenseEntity.bean`, `ExpenseEntity.weightGrams` | `requirements/FR-6-record-own-expense.md`, Statement, "A bean purchase has a bean and a weight" |
+| other expense | expense for anything except beans, which has neither a bean nor a weight. Note: Filters and milk are examples. | `OTHER` | `requirements/FR-6-record-own-expense.md`, Statement, "and an other expense has neither" |
+| private share / kitty share | part of the amount of an expense that raises the balance of the buyer or lowers the kitty. Note: The private share raises the balance of the buyer, and the kitty share lowers the kitty. The two shares add up to the amount of the expense. | `ExpenseEntity.privateAmountCents`, `ExpenseEntity.kittyAmountCents` | `data/.../persistence/entities/ExpenseEntity.kt`, KDoc, "requires that [privateAmountCents] and [kittyAmountCents] add up to [amountCents]" |
+
+## Limits and notes
+
+| Term | Definition | Code | Source |
+|---|---|---|---|
+| daily limit | limit on the number and the total amount of the expenses that a user who is not an admin records for themselves on one day. Note: The limit is 5 expenses and 50.00 € in total, and the group can configure another amount of at most 100.00 €. A day starts at midnight in the time zone Europe/Berlin. The daily limit counts every expense of the user on that day, also an expense that an admin recorded for the user. It does not apply to an admin, and an admin records an expense beyond it for the user (FR-6 and FR-19). Coffee Kitty does not implement it yet. | | `requirements/FR-6-record-own-expense.md`, Statement, "A user who is not an admin has a daily limit" |
+| plausibility check | check that refuses a value that probably comes from a typing error, although no rule of the group forbids the value. Note: Coffee Kitty checks the weight of a bean purchase in this way, from 100 g to 1,000 g (FR-6). A requirement states a plausibility check with SHOULD, because the group can do without the check. The upper limit of 1,000.00 € for a single amount of money (FR-4, FR-6, FR-17, and FR-19) and the daily limit are rules of the group, which the requirements state with MUST. | | `requirements/FR-6-record-own-expense.md`, Supporting Information, "the weight limits are plausibility checks" |
+| note | text that explains a correction, a payment, or an expense. Note: An example is "Double tap on 16.11." A note has at most 500 characters, which the team assistant set (FR-8), and can span several lines. A correction needs a note that is not blank. The note of a payment or an expense is optional, and a blank note counts as no note (FR-4 and FR-6). | `ConsumptionCorrectionDto.note`, `CountCorrectionDto.note`, `CountCorrection.note`, `CountCorrection.MAX_NOTE_LENGTH`, `count_corrections.note`, `Payment.note`, `payments.note`, `expenses.note` | `requirements/FR-8-correct-coffee-count.md`, Statement, "the note with the reason for the correction" |
 
 ## Architecture
 
-- **module**: One of the four Gradle subprojects that hold the app code: `domain`, `api`, `data`, and `application`. The
-  architecture tests treat each of these subprojects as a layer. The subprojects `coverage` and `detekt-rules` hold
-  build tooling instead of app code.
-- **convention plugin**: A Gradle plugin in the included build `build-logic/` that configures one part of the build,
-  such as the Java toolchain or the Kotlin compiler options with ktlint and detekt. A subproject applies such a plugin
-  by the id `de.seuhd.campuscoffee.<name>`. Only the `data` module, for example, applies `kotlin-jpa-conventions`,
-  which adds the Kotlin JPA plugin.
-  Code: `java-conventions.gradle.kts`, `kotlin-conventions.gradle.kts`.
-- **port**: An interface in `domain/.../ports/` that connects the domain to the other modules. The controllers call the
-  API ports in `ports/api/`, and the data module implements the data ports in `ports/data/`. The bootstrap admin
-  loader, the tests, and the dev application call the internal port in `ports/internal/`, which creates a user without
-  an acting user.
-  Code: `UserService`, `UserDataService`, `UserInternalService`.
-- **adapter**: A class outside the domain that connects a port to a technology. Examples are a controller, which
-  handles HTTP requests and calls an API port, and a data adapter such as `UserDataServiceImpl`, which implements a
-  data port with Jakarta Persistence (JPA). The accepted ADR 001 applies the term to whole modules as well and calls
-  the `api` module the REST adapter and the `data` module the JPA adapter.
-  Code: `UserController`, `UserDataServiceImpl`.
-- **entity**: A kind of domain object that the app stores in a table of its own, such as users and consumptions. Each
-  kind needs several parts, such as a domain model, a data port, a JPA entity, an entity mapper, and a migration
-  (CLAUDE.md, Adding a New Entity). For the tables of later features, such as payments and expenses, some of these
-  parts already exist (CLAUDE.md, Tables Without an Endpoint).
-- **domain model**: A class in `domain/.../model/` that represents a concept of the business logic, such as a user, and
-  has no annotations or code for the web or the database. An instance of such a class is a domain object.
-  Code: `DomainModel`, `User`, `CoffeeConsumption`, `CountCorrection`.
-- **DTO**: A data transfer object, that is, a class in `api/.../dtos/` that defines the JSON body of a request or a
-  response. In a request DTO, a required field is a property that is not nullable, and Jackson rejects a body without
-  the field before the controller function runs. A request DTO checks no value: The domain models declare the rules for
-  the values as Bean Validation constraints, and a domain service checks them and throws a `ValidationException`. A
-  response DTO has only non-null properties. A MapStruct mapper in `api/.../mapper/` converts between a domain object
-  and the matching DTOs. `UserDtoMapper` converts a `User` to a `UserDto` and a `CreateUserDto` to a `User`,
-  `ConsumptionDtoMapper` converts a `CoffeeConsumption` to a `ConsumptionDto`, and `CountCorrectionDtoMapper` a
-  `CountCorrection` to a `CountCorrectionDto`. `ConsumptionDeltaDto` and `ConsumptionCorrectionDto` have no mapper,
-  because the controller passes their values to the domain. `UndoStatusDto` has no mapper either, because the controller
-  creates it from the result of `CoffeeConsumptionService.undoableUntil`.
-  Code: `UserDto`, `CreateUserDto`, `ConsumptionDto`, `ConsumptionDeltaDto`, `UserDtoMapper`.
-- **JPA entity**: A class in `data/.../persistence/entities/` that JPA maps to one table, such as `UserEntity` for the
-  table `users`. Each such class has a name that ends in `Entity`, and each one except `UserBalanceEntity` and
-  `KittyBalanceEntity` extends the base class `Entity`. The tables of these two classes have neither a random id nor
-  timestamps. An entity mapper converts between an instance of a JPA entity and the matching domain object.
-  Code: `UserEntity`, `CoffeeConsumptionEntity`, `UserEntityMapper`.
-- **upsert**: The operation of a data port that inserts or updates a domain object. The operation inserts a domain
-  object without an id as a new row under a new random `UUID`. For a domain object with an id, the operation updates the
-  stored row with that id, or throws a `NotFoundException` when no row has that id. The operation throws a
-  `DuplicationException` when a row violates a unique constraint that `ConstraintMapping.REGISTRY` lists, and a
-  `DataConstraintException` when a row violates any other constraint or when a column cannot store one of its values,
-  such as a text with the NUL character.
-  Code: `CrudDataService.upsert`, `CrudDataServiceImpl.upsert`.
-- **migration**: A versioned SQL file in `data/src/main/resources/db/migration/`. At startup, Flyway applies every such
-  file that it has not applied to the database before, in version order. A migration that others have applied, such as
-  a pushed migration, must not change (CLAUDE.md, Database).
-  Code: `V1__create_users_table.sql`, `V2__create_coffee_consumptions_table.sql`.
-- **database cleaner**: The class in the source set `src/testFixtures` of the data module that deletes the rows of every
-  table of the app. It reads the names of the tables from the PostgreSQL catalog and truncates them in one statement.
-  The data integration, system, and acceptance tests run it before each test, and the dev application runs it on every
-  start. The production jar does not contain it, so neither a client nor a configuration of a deployed app can delete
-  the data.
-  Code: `DatabaseCleaner.clean`.
-  Avoid: data reset.
-- **dev application**: The app in the dev profile with the user fixtures, which `gradle :application:bootTestRun`
-  starts. On every start, it runs the database cleaner and creates the user fixtures through
-  `UserInternalService.create` before it serves requests. Its `main` function is in the test sources of the application
-  module, because it uses the test fixtures.
-  Code: `DevApplication.kt`, `DevDataConfiguration`.
-- **fixture loader**: The component of the dev application that runs the database cleaner and creates the user fixtures
-  on every start.
-  Code: `DevFixtureLoader`.
-  Avoid: seeder, startup loader.
-- **dev profile**: The Spring profile `dev` for running the app locally. In this profile, the app serves the API and
-  Swagger UI on port 8081 and connects to PostgreSQL on port 5433. The dev application runs in this profile. The tests
-  run without it.
-  Code: `application.yaml`, `--spring.profiles.active=dev`.
-- **endpoint**: An HTTP method with a path that a controller function serves, such as `POST /api/users`. An endpoint
-  needs an acting user, unless its controller function has the annotation `OpenEndpoint`.
-  Code: `UserController`, `ConsumptionController`, `OpenEndpoint`.
-  Avoid: route.
-- **error response**: The response to a failed request. Its JSON body has the fields `errorCode`, `message`,
-  `statusCode`, `statusMessage`, `timestamp` (in UTC), and `path`. For a domain exception, `errorCode` is the class name
-  of the exception. For any other error, `errorCode` is the reason phrase of the status without spaces, such as
-  `BadRequest`.
-  Code: `ErrorResponse`, `GlobalExceptionHandler`, `writeErrorResponse`.
-- **domain exception**: A subclass of `DomainException` in `domain/.../exceptions/`. `GlobalExceptionHandler` maps each
-  of these classes to a status and uses the class name as the error code. `NotFoundException` (404) means that a lookup
-  found no stored object, for example no user with the id in the path. `DuplicationException` (409) means that a request
-  repeats a value that must be unique, such as the login name or the email address of another user. `ConflictException`
-  (409) means that a well-formed request does not apply to the current state, such as an undo after the grace period.
-  `ForbiddenException` (403) means that the acting user may not perform the action, such as creating a user or
-  correcting a coffee count without the role `ADMIN`. `ValidationException` (400) means that a value in a request breaks
-  a rule of the domain, such as an integer delta other than +1 or a login name of 256 characters. A request body that
-  the api module cannot read gets a 400 with the error code `BadRequest` instead. Such a body lacks a required field,
-  has an unknown field, or has a value of the wrong JSON type, such as a delta of 1.9. `DataConstraintException` is not
-  a domain exception. A data port throws it when the database refuses a row that the domain should have refused, and the
-  client gets a 500.
-- **firewall**: The `StrictHttpFirewall` of Spring Security, which rejects a request with `;`, `//`, `..`, or an encoded
-  slash in the path or with a control character in a header value. The firewall rejects such a request because security
-  rules and Spring MVC can read it differently. A rejected request gets 400 Bad Request with the error code
-  `BadRequest`, and the message of the error response does not quote the request.
-  Code: `SecurityConfig.requestRejectedHandler`, `RequestRejectedExceptionHandler`.
+| Term | Definition | Code | Source |
+|---|---|---|---|
+| module | Gradle subproject that holds app code. Note: The modules are `domain`, `api`, `data`, and `application`, and the architecture tests treat each of them as a layer. The subprojects `coverage`, `detekt-rules`, and `models` hold build tooling and models instead of app code. | | `CLAUDE.md`, Modules, "The four modules hold the app in a hexagonal (ports-and-adapters) architecture" |
+| convention plugin | Gradle plugin in the included build `build-logic/` that configures one part of the build. Note: Such a part is, for example, the Java toolchain or the Kotlin compiler options with ktlint and detekt. A subproject applies a convention plugin by the id `de.seuhd.campuscoffee.<name>`. Only the `data` module, for example, applies `kotlin-jpa-conventions`, which adds the Kotlin JPA plugin. | `java-conventions.gradle.kts`, `kotlin-conventions.gradle.kts`, `de.seuhd.campuscoffee.<name>` | `doc/adr/001-multi-module-gradle-build-with-convention-plugins.md`, Decision(s), "the convention plugins in the included build `build-logic/`" |
+| domain model | class in `domain/.../model/` that represents a concept of the business logic and has no annotations or code for the web or the database. Note: `User` is an example. | `DomainModel`, `User`, `CoffeeConsumption`, `CountCorrection` | `doc/adr/002-spring-annotations-in-the-domain-module.md`, Decision(s), "keep every web and persistence library out" |
+| domain object | instance of a domain model. | | `doc/adr/009-value-rules-on-the-domain-models.md`, Decision(s), "calls `DomainValidator.requireValid` with the domain object" |
+| entity | kind of domain object that the app stores in a table of its own. Note: Users and consumptions are examples. Each kind needs several parts, such as a domain model, a data port, a JPA entity, an entity mapper, and a migration (`.claude/rules/new-entity.md`). For the tables of later features, such as payments and expenses, some of these parts already exist (`.claude/rules/later-features.md`). | | `.claude/rules/new-entity.md`, heading, "Adding an entity" |
+| port | interface in `domain/.../ports/` that connects the domain to the other modules. Note: The controllers call the API ports in `ports/api/`, and the data module implements the data ports in `ports/data/`. The bootstrap admin loader, the tests, and the dev application call the internal port in `ports/internal/`, which creates a user without an acting user. | `UserService`, `UserDataService`, `UserInternalService` | `doc/adr/001-multi-module-gradle-build-with-convention-plugins.md`, Context, "A REST adapter calls the API ports of the domain" |
+| adapter | class outside the domain that connects a port to a technology. Note: A controller, which handles HTTP requests and calls an API port, is an example, and so is a data adapter such as `UserDataServiceImpl`, which implements a data port with Jakarta Persistence (JPA). The accepted ADR 001 applies the term to whole modules as well and calls the `api` module the REST adapter and the `data` module the JPA adapter. | `UserController`, `UserDataServiceImpl` | `doc/adr/001-multi-module-gradle-build-with-convention-plugins.md`, Context, "a Jakarta Persistence (JPA) adapter implements the data ports" |
+| DTO (data transfer object) | class in `api/.../dtos/` that defines the JSON body of a request or a response. Note: In a request DTO, a required field is a property that is not nullable, and Jackson rejects a body without the field before the controller function runs. A request DTO checks no value: The domain models declare the rules for the values as Bean Validation constraints, and a domain service checks them and throws a `ValidationException`. A response DTO has only non-null properties. Note: A MapStruct mapper in `api/.../mapper/` converts between a domain object and the matching DTOs. `UserDtoMapper` converts a `User` to a `UserDto` and a `CreateUserDto` to a `User`, `ConsumptionDtoMapper` converts a `CoffeeConsumption` to a `ConsumptionDto`, and `CountCorrectionDtoMapper` a `CountCorrection` to a `CountCorrectionDto`. `ConsumptionDeltaDto` and `ConsumptionCorrectionDto` have no mapper, because the controller passes their values to the domain. `UndoStatusDto` has no mapper either, because the controller creates it from the result of `CoffeeConsumptionService.undoableUntil`. | `UserDto`, `CreateUserDto`, `ConsumptionDto`, `ConsumptionDeltaDto`, `UserDtoMapper` | `doc/adr/006-validation-of-requests.md`, Decision(s), "`CreateUserDto` is the request body, and `UserDto` is the response body" |
+| JPA entity | class in `data/.../persistence/entities/` that JPA maps to one table. Note: `UserEntity` for the table `users` is an example. Each such class has a name that ends in `Entity`, and each one except `UserBalanceEntity` and `KittyBalanceEntity` extends the base class `Entity`. The tables of these two classes have neither a random id nor timestamps. An entity mapper converts between an instance of a JPA entity and the matching domain object. | `UserEntity`, `CoffeeConsumptionEntity`, `UserEntityMapper` | `.claude/rules/data.md`, JPA entities and data adapters, "A JPA entity extends `Entity`" |
+| upsert | operation of a data port that inserts or updates a domain object. Note: The operation inserts a domain object without an id as a new row under a new random `UUID`. For a domain object with an id, the operation updates the stored row with that id, or throws a `NotFoundException` when no row has that id. The operation throws a `DuplicationException` when a row violates a unique constraint that `ConstraintMapping.REGISTRY` lists, and a `DataConstraintException` when a row violates any other constraint or when a column cannot store one of its values, such as a text with the NUL character. | `CrudDataService.upsert`, `CrudDataServiceImpl.upsert` | `domain/.../ports/data/CrudDataService.kt`, KDoc of `upsert`, "Inserts [domain] under a new id if it has no id" |
+| migration | versioned SQL file in `data/src/main/resources/db/migration/`. Note: At startup, Flyway applies every migration that it has not applied to the database before, in version order. A migration that others have applied, such as a pushed migration, must not change (`.claude/rules/data.md`). | `V1__create_users_table.sql`, `V2__create_coffee_consumptions_table.sql` | `.claude/rules/data.md`, Migrations, "Flyway applies the migrations in `data/src/main/resources/db/migration/`" |
+| endpoint | combination of an HTTP method and a path that a controller function serves. Note: `POST /api/users` is an example. An endpoint needs an acting user, unless its controller function has the annotation `OpenEndpoint`. | `UserController`, `ConsumptionController`, `OpenEndpoint` | `doc/adr/011-endpoints-need-an-acting-user-by-default.md`, Decision(s), "the HTTP method and the path of each function" |
+| error response | response to a failed request. Note: Its JSON body has the fields `errorCode`, `message`, `statusCode`, `statusMessage`, `timestamp` (in UTC), and `path`. For a domain exception, `errorCode` is the class name of the exception. For any other error, `errorCode` is the reason phrase of the status without spaces, such as `BadRequest`. | `ErrorResponse`, `GlobalExceptionHandler`, `writeErrorResponse` | `.claude/rules/api.md`, Error responses, "The body of every error response is an `ErrorResponse`" |
+| domain exception | subclass of `DomainException` in `domain/.../exceptions/`. Note: `DataConstraintException` is not a domain exception. A data port throws it when the database refuses a row that the domain should have refused, and the client gets a 500. | `DomainException`, `GlobalExceptionHandler.statusOf` | `.claude/rules/domain.md`, Value rules, "To add a domain exception, subclass the sealed class `DomainException`" |
+| firewall | component of Spring Security that rejects a request with `;`, `//`, `..`, or an encoded slash in the path or with a control character in a header value. Note: The firewall is the `StrictHttpFirewall` of Spring Security. It rejects such a request because security rules and Spring MVC can read it differently. A rejected request gets 400 Bad Request with the error code `BadRequest`, and the message of the error response does not quote the request. | `StrictHttpFirewall`, `SecurityConfig.requestRejectedHandler`, `RequestRejectedExceptionHandler` | `api/.../security/RequestRejectedExceptionHandler.kt`, KDoc, "firewall of Spring Security checks a header value, for example for a control character" |
+
+`GlobalExceptionHandler` maps each domain exception to a status and uses the class name of the exception as the error
+code:
+
+| Value | Meaning |
+|---|---|
+| `NotFoundException` (404) | A lookup found no stored object, for example no user with the id in the path. |
+| `DuplicationException` (409) | A request repeats a value that must be unique, such as the login name or the email address of another user. |
+| `ConflictException` (409) | A well-formed request does not apply to the current state, such as an undo after the grace period. |
+| `ForbiddenException` (403) | The acting user may not perform the action, such as creating a user or correcting a coffee count without the role `ADMIN`. |
+| `ValidationException` (400) | A value in a request breaks a rule of the domain, such as an integer delta other than +1 or a login name of 256 characters. A request body that the api module cannot read gets a 400 with the error code `BadRequest` instead. Such a body lacks a required field, has an unknown field, or has a value of the wrong JSON type, such as a delta of 1.9. |
+
+## Tests and the dev application
+
+| Term | Definition | Code | Source |
+|---|---|---|---|
+| test fixture | object or state with fixed values that a test needs before it runs the code under test. Note: A test fixture is a test object that several tests share or the state that a test prepares. `TestFixtures` holds the shared test objects: the user fixtures, a fixed time with a clock that shows it, and three consumptions. One consumption has no coffee, one has a recent coffee, and one has an old coffee. At the fixed time, the grace period of the old coffee has passed. A function with `@BeforeEach` prepares the state that each test of a class needs, such as a stored user. `TestFixtures` and the database cleaner are in the Gradle source set `src/testFixtures` of their module, which the production jar does not contain. | `TestFixtures`, `FIXED_TIME`, `fixedClock`, `consumptionWithRecentCoffee`, `DatabaseCleaner` | `.claude/rules/tests.md`, Test fixtures, "Take a test object from `TestFixtures` when a test needs one of its objects" |
+| user fixture | user that `TestFixtures` provides as a shared test object. Note: `TestFixtures` has five such users, among them `jane_doe`, the only admin. The dev application creates these users with a coffee count of zero on every start, and the system and acceptance tests create them the same way before each test. | `TestFixtures`, `DevFixtureLoader` | `doc/adr/005-test-fixtures-outside-the-production-code.md`, Context, "The tests of every module share test objects, such as the user fixtures" |
+| database cleaner | class in the source set `src/testFixtures` of the data module that deletes the rows of every table of the app. Note: The database cleaner reads the names of the tables from the PostgreSQL catalog and truncates them in one statement. The data integration, system, and acceptance tests run it before each test, and the dev application runs it on every start. The production jar does not contain it, so neither a client nor a configuration of a deployed app can delete the data. | `DatabaseCleaner.clean` | `doc/adr/005-test-fixtures-outside-the-production-code.md`, Decision(s), "`DatabaseCleaner` in `data/src/testFixtures` replaces the data reset" |
+| dev profile | Spring profile `dev` for running the app locally. Note: In this profile, the app serves the API and Swagger UI on port 8081 and connects to PostgreSQL on port 5433. The dev application runs in this profile. The tests run without it. | `application.yaml`, `--spring.profiles.active=dev` | `README.md`, REST API, "In the dev profile, the app serves Swagger UI" |
+| dev application | app in the dev profile with the user fixtures. Note: `gradle :application:bootTestRun` starts the dev application. On every start, it runs the database cleaner and creates the user fixtures through `UserInternalService.create` before it serves requests. Its `main` function is in the test sources of the application module, because it uses the test fixtures. | `DevApplication.kt`, `DevDataConfiguration`, `gradle :application:bootTestRun` | `CLAUDE.md`, Commands, "the dev application with the user fixtures" |
+| fixture loader | component of the dev application that runs the database cleaner and creates the user fixtures on every start. | `DevFixtureLoader` | `application/src/test/.../dev/DevFixtureLoader.kt`, KDoc, "Prepares the data of the dev application on every start" |
+
+## Vocabulary to avoid
+
+| Avoid | Use instead | Scope and reason |
+|---|---|---|
+| account | user, balance | For a person, use user, and for the amount of money of a user, use balance. |
+| adjustment, override, reset | correction | For setting a coffee count to a count that an admin chooses. The term kitty adjustment remains correct. |
+| bump | add a coffee | For raising a coffee count by one. |
+| caller, current user | acting user | For the user who sends a request. |
+| cancel, coffee canceled | undo | For reversing the most recent coffee of a user. |
+| cancellable, undo offer | undo status | For whether a user can undo their most recent coffee. |
+| coffee fund, fund | kitty | For the shared cash of the group. |
+| comment, reason | note | For the field that explains a correction, a payment, or an expense. |
+| data reset | database cleaner | For the class that deletes the rows of every table. |
+| drinker, member | user | For a person whose coffees the app counts. |
+| email | email address | For the address of a user. |
+| grace window | grace period | For the period in which a user can undo a coffee. |
+| login | login name | For the name of a user. |
+| member balance | balance | For the amount of money of a user. |
+| outlay, purchase | expense | For money that a user spent for the group. The term bean purchase remains correct. |
+| route | endpoint | For an HTTP method with a path that a controller function serves. |
+| seeded user | user fixture | For a user from `TestFixtures`. |
+| seeder, startup loader | fixture loader | For the component that creates the user fixtures in the dev application. |
+| settlement, top-up | deposit | For cash that a user pays into the kitty. |
+| single-step change | delta | For the change to a coffee count in a request. |
+| value | score | For the number of a rating, in prose. |

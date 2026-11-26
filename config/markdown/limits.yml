@@ -25,6 +25,7 @@ files:
     maxBulletLines: 2
     source: "Keep a Changelog 1.1.0 and the decision of 2026-11-26 in ADR 013"
   - path: GLOSSARY.md
+    maxLines: 200
     source: "decision of 2026-11-26 in ADR 013"
   - path: models/README.md
     maxLines: 80

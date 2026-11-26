@@ -30,6 +30,6 @@ data class CoffeeRating(
         const val MAX_VALUE = 5
 
         /** The message of the error response for a score outside the range. */
-        const val VALUE_MESSAGE = "A rating must be from $MIN_VALUE to $MAX_VALUE."
+        const val VALUE_MESSAGE = "A score must be from $MIN_VALUE to $MAX_VALUE."
     }
 }

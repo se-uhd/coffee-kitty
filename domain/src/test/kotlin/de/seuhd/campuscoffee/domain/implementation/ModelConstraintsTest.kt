@@ -67,7 +67,7 @@ class ModelConstraintsTest {
 
     @ParameterizedTest
     @ValueSource(ints = [CoffeeRating.MIN_VALUE, CoffeeRating.MAX_VALUE])
-    fun `requireValid accepts a rating of 1 or 5`(value: Int) {
+    fun `requireValid accepts a rating with a score of 1 or 5`(value: Int) {
         val rating = CoffeeRating(user = TestFixtures.regularUser(), bean = bean, value = value)
 
         assertDoesNotThrow { domainValidator.requireValid(rating) }
@@ -75,7 +75,7 @@ class ModelConstraintsTest {
 
     @ParameterizedTest
     @ValueSource(ints = [CoffeeRating.MIN_VALUE - 1, CoffeeRating.MAX_VALUE + 1])
-    fun `requireValid throws ValidationException for a rating of 0 or 6`(value: Int) {
+    fun `requireValid throws ValidationException for a rating with a score of 0 or 6`(value: Int) {
         val rating = CoffeeRating(user = TestFixtures.regularUser(), bean = bean, value = value)
 
         assertThrows<ValidationException> { domainValidator.requireValid(rating) }
