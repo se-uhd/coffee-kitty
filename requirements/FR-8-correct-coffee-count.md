@@ -60,9 +60,9 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
 - Business requirement (parent), decided by the group lead: "From now on, an admin can correct a wrong coffee count at
   any time and has to add a note with the reason for the correction."
 - Input, from the team assistant: "Notes have at most 500 characters."
-- Depends on FR-3: After the grace period of FR-3, a correction is the only way to lower a coffee count, and a
-  correction changes which coffee an undo applies to. This requirement resolves the TBD of FR-3 on who is allowed to
-  correct a coffee count after the grace period.
+- Depends on FR-3: Only a correction removes a coffee whose grace period of FR-3 has passed, and a correction changes
+  which coffee an undo applies to. This requirement resolves the TBD of FR-3 on who is allowed to correct a coffee count
+  after the grace period.
 - Depends on FR-13 and FR-14: FR-13 specifies the coffees that a user adds, and FR-14 specifies which users are admins.
 - FR-9, FR-12, and FR-18 depend on this requirement. The undo status (FR-9) follows the undo after a correction. A
   correction removes the ratings of the coffees that it removes (FR-12). FR-18 specifies the balance after a correction.

@@ -81,6 +81,8 @@ Who: developer of the change. When: before the merge. Where: GitHub Actions.
   themselves. The 1,000 € are a hard upper limit for a single amount, and the weight limits are plausibility checks: A
   bag of beans weighs at least 100 g, and a weight above 1,000 g is more likely a typing error than one bag, such as a
   weight in kilograms that someone enters as grams. A user who buys more records several bean purchases.
+- Note on this input: The daily limit is the only limit on the expenses of one day. The limit of 1,000.00 € for a single
+  amount and the limits of the weight apply as well.
 - This requirement covers only an expense that a user records for themselves. Coffee Kitty cannot check with whose money
   the user paid, so its private share is its full amount, and its kitty share is 0.00 € (GLOSSARY.md).
 - Depends on FR-14 for the users and the admins. FR-12, FR-15, and FR-19 depend on this requirement for the beans that

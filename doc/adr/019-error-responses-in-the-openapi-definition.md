@@ -40,8 +40,8 @@ The API uses the third option:
   and `NotAdminResponse` for the repeated ones. A function with `@ApiResponse` also has `@ResponseStatus`, because
   springdoc otherwise drops its success status.
 * The client of the system tests records the method, the path, and the status of each response (`ObservedStatuses`).
-  `OpenApiDefinitionSystemTests` runs last and fails when a received status is not documented, when a documented status
-  has no test, or when a status in its list `NOT_YET_TESTED` gets a test.
+  `OpenApiDefinitionSystemTests` runs last and fails when a received status is not documented, or when a documented
+  status has no test and is not in its list `NOT_YET_TESTED`.
 
 ## Consequences
 

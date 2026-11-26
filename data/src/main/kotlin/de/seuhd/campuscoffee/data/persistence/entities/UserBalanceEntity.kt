@@ -15,7 +15,7 @@ import java.util.UUID
 @jakarta.persistence.Entity
 @Table(name = "user_balance")
 class UserBalanceEntity {
-    // ADR-020 ON DELETE CASCADE, because the row holds the balance of one user
+    // ADR-020 NO ACTION, because a balance is money that must not disappear with its user
     @field:Id
     @field:Column(name = "user_id")
     var userId: UUID? = null

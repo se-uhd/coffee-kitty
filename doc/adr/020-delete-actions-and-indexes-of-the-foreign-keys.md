@@ -58,13 +58,13 @@ lookup of the referencing rows when PostgreSQL deletes a referenced row.
 * `expenses.buyer_user_id` and `expenses.bean_id`: `NO ACTION`, because an expense moved money and must not disappear
   with its buyer or its bean. The index on `(buyer_user_id, created_at)` serves the query of the expenses of a buyer,
   newest first.
-* `user_balance.user_id`: `CASCADE`, because the row holds the balance of one user, as a consumption holds the coffee
-  count. The primary key provides the index.
+* `user_balance.user_id`: `NO ACTION`, because a balance is money that the user owes the kitty or has in it, and it must
+  not disappear with its user. V13 replaced the `CASCADE` of V11 on 2026-11-26. The primary key provides the index.
 
 ## Consequences
 
-* Deleting a user deletes the consumption, the coffee times, the corrections, the ratings, and the balance of the user.
-  PostgreSQL refuses to delete a user with a deposit or an expense or who corrected another coffee count as an admin,
+* Deleting a user deletes the consumption, the coffee times, the corrections, and the ratings of the user. PostgreSQL
+  refuses to delete a user with a balance, a deposit, or an expense or who corrected another coffee count as an admin,
   and a bean with a rating, an expense, or a merged bean. The data port then throws a `DataConstraintException`, which
   becomes a 500, so an operation that deletes such a row checks the references first (`.claude/rules/data.md`).
 * No endpoint deletes a user or a bean yet. The data integration tests check the action of each foreign key, such as

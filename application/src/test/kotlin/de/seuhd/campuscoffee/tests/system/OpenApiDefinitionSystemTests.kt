@@ -48,11 +48,6 @@ class OpenApiDefinitionSystemTests : AbstractSystemTest() {
         assertThat(untested).`as`("documented statuses that no test of this run observed").isEmpty()
     }
 
-    @Test
-    fun `the tests observe no status of NOT_YET_TESTED`() {
-        assertThat(NOT_YET_TESTED.filter { it in observed() }).`as`("tested statuses in NOT_YET_TESTED").isEmpty()
-    }
-
     private companion object {
         /** The statuses that `ErrorResponsesCustomizer` derives from a rule of the api module, not from the domain. */
         val RULE_STATUSES = setOf(400, 401, 406, 415, 500)

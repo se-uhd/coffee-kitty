@@ -3,6 +3,7 @@ package de.seuhd.campuscoffee.tests.system
 import de.seuhd.campuscoffee.domain.model.persistedId
 import de.seuhd.campuscoffee.tests.ConsumptionJson
 import de.seuhd.campuscoffee.tests.ConsumptionRequests
+import de.seuhd.campuscoffee.tests.SystemTestUtils.AUTHENTICATION_CHALLENGE
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
@@ -204,6 +205,26 @@ class ConsumptionSystemTests : AbstractSystemTest() {
 
         assertThat(response.status).isEqualTo(404)
         assertThat(response.error.errorCode).isEqualTo("NotFoundException")
+    }
+
+    @Test
+    fun `adding a coffee with an unknown acting user returns 401 Unauthorized`() {
+        val response = consumptionRequests.addCoffee(userFixtureId(), actingUser = "nobody")
+
+        assertThat(response.status).isEqualTo(401)
+        assertThat(response.headers.getFirst("WWW-Authenticate")).isEqualTo(AUTHENTICATION_CHALLENGE)
+        assertThat(consumption().count).isEqualTo(0)
+    }
+
+    @Test
+    fun `undoing a coffee with an unknown acting user returns 401 Unauthorized`() {
+        consumptionRequests.addCoffee(userFixtureId())
+
+        val response = consumptionRequests.undo(userFixtureId(), actingUser = "nobody")
+
+        assertThat(response.status).isEqualTo(401)
+        assertThat(response.headers.getFirst("WWW-Authenticate")).isEqualTo(AUTHENTICATION_CHALLENGE)
+        assertThat(consumption().count).isEqualTo(1)
     }
 
     private companion object {

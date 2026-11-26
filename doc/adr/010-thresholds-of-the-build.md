@@ -65,10 +65,10 @@ the system tests of the application module execute them. PIT does not remove a c
 (`avoidCallsTo`), such as a null check that the Kotlin compiler generates for a platform type. No test can detect such
 a mutant, because the value is never null.
 
-The unit tests detect 31 of the 32 mutants in `domain/.../implementation/` (96.9%). The surviving
+On 2026-11-26, the unit tests detected 32 of the 33 mutants in `domain/.../implementation/` (97.0%). The surviving
 mutant is a condition in the inlined code of `any` in `createInitialAdmin`, which does not change the behavior. The
-mutation score and the test strength have the same value, because the tests execute every mutant. With 32 mutants, each
-mutant is 3.1 points, so a minimum of 90% lets the task pass with up to three undetected mutants and fail at the fourth.
+mutation score and the test strength have the same value, because the tests execute every mutant. With 33 mutants, each
+mutant is 3.0 points, so a minimum of 90% lets the task pass with up to three undetected mutants and fail at the fourth.
 The task fails when the mutation score or the test strength is below 90%. The mutation score also counts the mutants in
 code that no unit test executes, so a domain function without a unit test lowers it. The test strength counts only the
 mutants that a test executes and cannot detect such a function.
@@ -85,7 +85,8 @@ With the exclusions of the gate, the tests covered 695 of 715 lines (97.2%) and 
 first measurement. 8 of the 24 missed branches belong to the three functions of the undo status, which have no tests
 until 2026-12-08. With these tests, the tests cover 150 of 166 branches (90.4%). A second measurement on 2026-11-25,
 after the commits that declared the constraints on the domain models of the later features and required an acting user
-for every endpoint, gave 700 of 721 lines (97.1%) and 148 of 174 branches (85.1%).
+for every endpoint, gave 700 of 721 lines (97.1%) and 148 of 174 branches (85.1%). A third measurement on 2026-11-26,
+after the error responses of the OpenAPI definition, gave 754 of 774 lines (97.4%) and 180 of 212 branches (84.9%).
 
 The minimums are on purpose about 7 and 5 points below the measured values. A minimum close to the measured value makes
 developers write tests only to reach the number. Such tests check implementation details and are more than the code

@@ -194,7 +194,7 @@ class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest()
     }
 
     @Test
-    fun `deleting a user deletes the balance of the user`() {
+    fun `deleting a user with a balance throws DataConstraintException`() {
         val userId = requireNotNull(buyer.id)
         userBalanceRepository.saveAndFlush(
             UserBalanceEntity().apply {
@@ -203,11 +203,9 @@ class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest()
             }
         )
 
+        assertThatThrownBy { userDataService.delete(userId) }
+            .isInstanceOf(DataConstraintException::class.java)
         assertThat(userBalanceRepository.findByIdOrNull(userId)?.balanceCents).isEqualTo(-450)
-
-        userDataService.delete(userId)
-
-        assertThat(userBalanceRepository.count()).isZero()
     }
 
     @Test

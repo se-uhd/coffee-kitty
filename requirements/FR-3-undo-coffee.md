@@ -10,7 +10,8 @@ which the grace period ends belongs to the grace period. After an undo, the coff
 coffee is the most recent coffee.
 
 Coffee Kitty MUST refuse an undo after the grace period and an undo at a coffee count of 0 with 409 Conflict. A refused
-undo MUST NOT change the coffee count.
+undo MUST NOT change the coffee count. The request needs no acting user, and Coffee Kitty MUST refuse a request with an
+unknown login name in the header `X-Acting-User` with 401 Unauthorized.
 
 ## Rationale
 
@@ -31,6 +32,7 @@ count, and a wrong coffee count remains recorded. Assumption: 5 minutes are enou
   second undo at 10:06:00 returns 409 Conflict, because the coffee from 10:00:00 is outside its grace period. The count
   stays 3.
 - An undo for an unknown user returns 404 Not Found.
+- An undo with an unknown login name in `X-Acting-User` returns 401 Unauthorized, and the count stays the same.
 
 ## Verification Method
 

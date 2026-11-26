@@ -44,22 +44,29 @@ class ConsumptionRequests(
      * Adds a coffee for the user with [userId] with the body `{"delta": 1}`.
      *
      * @param userId the id of the user
+     * @param actingUser the login name of the acting user, or null to send the request without an acting user
      */
-    fun addCoffee(userId: UUID): Response<ConsumptionJson> = applyDelta(userId, mapOf("delta" to 1))
+    fun addCoffee(
+        userId: UUID,
+        actingUser: String? = null
+    ): Response<ConsumptionJson> = applyDelta(userId, mapOf("delta" to 1), actingUser)
 
     /**
      * Sends [body], which holds the delta, to change the coffee count of the user with [userId].
      *
      * @param userId the id of the user
      * @param body   the request body, such as `mapOf("delta" to 2)` or `mapOf("delta" to "one coffee")`
+     * @param actingUser the login name of the acting user, or null to send the request without an acting user
      */
     fun applyDelta(
         userId: UUID,
-        body: Map<String, Any?>
+        body: Map<String, Any?>,
+        actingUser: String? = null
     ): Response<ConsumptionJson> =
         client
             .post()
             .uri("/api/users/{userId}/consumption", userId)
+            .headers { headers -> actingUser?.let { headers.set(ACTING_USER_HEADER, it) } }
             .contentType(MediaType.APPLICATION_JSON)
             .body(body)
             .exchange()
@@ -69,11 +76,16 @@ class ConsumptionRequests(
      * Undoes the most recent coffee of the user with [userId] (FR-3).
      *
      * @param userId the id of the user
+     * @param actingUser the login name of the acting user, or null to send the request without an acting user
      */
-    fun undo(userId: UUID): Response<ConsumptionJson> =
+    fun undo(
+        userId: UUID,
+        actingUser: String? = null
+    ): Response<ConsumptionJson> =
         client
             .post()
             .uri("/api/users/{userId}/consumption/undo", userId)
+            .headers { headers -> actingUser?.let { headers.set(ACTING_USER_HEADER, it) } }
             .exchange()
             .toResponse()
 

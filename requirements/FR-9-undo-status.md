@@ -8,6 +8,10 @@ coffee.
 The undo status describes the time of the request. If the user can undo their most recent coffee, the undo status MUST
 also state the instant at which the grace period of that coffee ends.
 
+Coffee Kitty MUST refuse a request for the undo status of an unknown user with 404 Not Found. The request needs no
+acting user, and Coffee Kitty MUST refuse a request with an unknown login name in the header `X-Acting-User` with 401
+Unauthorized.
+
 ## Rationale
 
 FR-3 lets a user undo their most recent coffee only within its grace period. A client that does not know the end of the
@@ -20,6 +24,8 @@ late. With the undo status, a client shows the undo only while Coffee Kitty acce
 - At any time, the undo status states that the user can undo a coffee exactly when an undo at that time lowers the
   coffee count (FR-3).
 - A request for the undo status changes neither the coffee count nor the result of a later undo.
+- A request for the undo status of an unknown user returns 404 Not Found.
+- A request with an unknown login name in `X-Acting-User` returns 401 Unauthorized.
 
 ## Verification Method
 

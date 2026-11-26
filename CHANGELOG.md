@@ -49,6 +49,11 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
   limit.
 - The upper limit of 1,000.00 € for a single amount is a rule (MUST) in FR-4, FR-6, and FR-17. Until now, these
   requirements stated it as a plausibility check (SHOULD). `CoffeePrice.amountCents` has the constraint for it.
+- PostgreSQL refuses to delete a user with a balance, because the foreign key of `user_balance` has `NO ACTION` instead
+  of `CASCADE` (migration V13, ADR-020).
+- FR-3, FR-9, and FR-13 state 401 Unauthorized for an unknown login name in `X-Acting-User`, and FR-9 states 404 Not
+  Found for an unknown user. Supporting statements in FR-6 and FR-8 no longer contradict their requirements.
+- The OpenAPI definition states `application/json` as the media type of every response.
 - The models are optional: `gradle build` leaves out the subproject `models`, and `gradle -Pmodels build` checks them.
   CI checks them only in se-uhd/coffee-kitty, so that an assignment needs no TLA+ or Alloy (ADR 012).
 - CLAUDE.md has 168 instead of 639 lines. The guidance for single directories moved into `.claude/rules/`.

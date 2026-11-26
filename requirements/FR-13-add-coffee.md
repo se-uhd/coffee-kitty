@@ -6,7 +6,8 @@ When a user adds a coffee, Coffee Kitty MUST raise the user's coffee count by on
 
 A request adds exactly one coffee. Coffee Kitty MUST count every coffee, also when several requests add a coffee for the
 same user at the same instant. Coffee Kitty MUST refuse a request that adds another number of coffees with 400 Bad
-Request and a request for an unknown user with 404 Not Found.
+Request and a request for an unknown user with 404 Not Found. The request needs no acting user, and Coffee Kitty MUST
+refuse a request with an unknown login name in the header `X-Acting-User` with 401 Unauthorized.
 
 ## Rationale
 
@@ -20,6 +21,8 @@ The team assistant counts the strokes by hand once a month and makes mistakes.
 - Several requests add a coffee for maxmustermann at the same time. The coffee count rises by the number of requests.
 - A request to add 2 coffees or 0 coffees returns 400 Bad Request, and the count stays the same.
 - A request to add a coffee for an unknown user returns 404 Not Found.
+- A request to add a coffee with an unknown login name in `X-Acting-User` returns 401 Unauthorized, and the count stays
+  the same.
 - With a coffee count of 2,147,483,647, a request to add a coffee returns 409 Conflict, and the count stays the same.
 
 ## Verification Method
