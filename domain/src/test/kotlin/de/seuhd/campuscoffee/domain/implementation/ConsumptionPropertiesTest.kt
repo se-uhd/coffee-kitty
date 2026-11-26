@@ -1,6 +1,5 @@
 package de.seuhd.campuscoffee.domain.implementation
 
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.time.Duration

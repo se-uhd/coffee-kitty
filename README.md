@@ -55,8 +55,8 @@ same way for every module (ADR 001 in `doc/adr/`). The other subprojects hold no
   the models as diagrams in `doc/` (`models/README.md`). Gradle includes it only with `-Pmodels`.
 
 The root build checks the text of the repository (`doc/adr/013-limits-for-text.md`). Its task `markdownLimits` checks
-the Markdown files against the limits in `config/markdown/limits.yml`, and its task `detektComments` applies the comment
-rules of `config/detekt/detekt.yml` to the tests and the build scripts. `gradle check` runs both tasks.
+the Markdown files against the limits in `config/markdown/limits.yml`, and its task `detektBuildLogic` applies detekt to
+`build-logic` and the Gradle scripts (ADR 023). `gradle check` runs both tasks.
 
 ## Prerequisites
 
@@ -150,7 +150,7 @@ gradle :application:bootRun --args='--spring.profiles.active=dev'
 The domain unit tests use Mockito. Docker must be running for the data integration tests, the system tests, and the
 Cucumber acceptance tests, because they run against PostgreSQL in Testcontainers. The system and acceptance tests send
 JSON with literal field names, so a renamed field of the API fails them. ArchUnit tests check the layer rules, and
-detekt checks the KDoc and the comments with the rules in `config/detekt/detekt.yml`.
+detekt checks every Kotlin file with all its rules and those of `config/detekt/detekt.yml` for comments (ADR 023).
 
 `gradle build` compiles every module, runs ktlint, detekt, CPD, every test, and the checks of the text, and checks the
 code coverage, with `-Pmodels` also the models. Gradle prints `BUILD SUCCESSFUL` when every check and every test passes.
@@ -164,7 +164,7 @@ gradle :coverage:testCodeCoverageReport   # the coverage report of all modules
 gradle :domain:pitest                     # the mutation tests of the domain services with PIT, without Docker
 gradle cpd                                # CPD, the copy-paste detector of PMD, on the production code
 gradle markdownLimits                     # the limits of the Markdown files
-gradle detektComments                     # the comment rules for the tests and the build scripts
+gradle detekt detektBuildLogic            # detekt on every Kotlin file, without the rules with type resolution
 ```
 
 The coverage report is `coverage/build/reports/jacoco/testCodeCoverageReport/html/index.html`, and the PIT report is

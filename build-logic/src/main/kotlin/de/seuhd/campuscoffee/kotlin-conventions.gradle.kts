@@ -23,6 +23,8 @@ kotlin {
         jvmTarget.set(JvmTarget.fromTarget(javaVersion))
         // ADR-014
         javaParameters.set(true)
+        // ADR-023 a warning of the Kotlin compiler fails the build
+        allWarningsAsErrors.set(true)
     }
 }
 
@@ -55,10 +57,19 @@ detekt {
     config.from(rootProject.file("config/detekt/detekt.yml"))
 }
 
-// ADR-013
+// ADR-023 all rules on the tests and the test fixtures as well
 tasks.named<Detekt>("detekt") {
-    setSource(files("src/main/kotlin"))
+    setSource(files("src/main/kotlin", "src/test/kotlin", "src/testFixtures/kotlin"))
 }
+
+// ADR-023 the rules of type-resolution.yml with type resolution, in check as well
+val typeResolved =
+    tasks.withType<Detekt>().matching { it.name in setOf("detektMain", "detektTest", "detektTestFixtures") }
+typeResolved.configureEach {
+    config.setFrom(rootProject.file("config/detekt/type-resolution.yml"))
+    buildUponDefaultConfig.set(false)
+}
+tasks.named("check") { dependsOn(typeResolved) }
 
 dependencies {
     implementation(kotlin("reflect"))

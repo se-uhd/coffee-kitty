@@ -38,14 +38,14 @@ fun buildChart(
     val pathOf = graph.states.mapValues { (_, state) -> view.state(state) }
     val labels = linkedMapOf<Triple<List<String>, List<String>, String?>, MutableSet<String>>()
     val hidden = sortedSetOf<String>()
-    for (step in graph.steps) {
-        val label = view.step(step.action, graph.states.getValue(step.from), graph.states.getValue(step.to))
-        val from = pathOf.getValue(step.from)
-        val to = pathOf.getValue(step.to)
+    for ((source, target, action) in graph.steps) {
+        val label = view.step(action, graph.states.getValue(source), graph.states.getValue(target))
+        val from = pathOf.getValue(source)
+        val to = pathOf.getValue(target)
         when {
-            label == null -> hidden += step.action
+            label == null -> hidden += action
             from == to -> labels.getOrPut(Triple(from, to, null)) { sortedSetOf() } += label
-            else -> labels.getOrPut(Triple(from, to, panelOf(view, step.action))) { sortedSetOf() } += label
+            else -> labels.getOrPut(Triple(from, to, panelOf(view, action))) { sortedSetOf() } += label
         }
     }
     val initial = graph.initial.map { pathOf.getValue(it) }.distinct()

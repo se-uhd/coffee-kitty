@@ -5,7 +5,6 @@ import de.seuhd.campuscoffee.tests.ConsumptionJson
 import de.seuhd.campuscoffee.tests.ConsumptionRequests
 import de.seuhd.campuscoffee.tests.SystemTestUtils.AUTHENTICATION_CHALLENGE
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 import java.util.UUID
 import java.util.concurrent.CountDownLatch

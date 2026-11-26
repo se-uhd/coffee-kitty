@@ -4,8 +4,9 @@ import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
 /**
- * The structure of an ADR after `doc/adr/template.md` (ADR 016): the sections and metadata of the template in its order,
- * a status from the status line of the template, a date, the people involved, a number of options, and section lengths.
+ * The structure of an ADR after `doc/adr/template.md` (ADR 016): the sections and metadata of the template in its
+ * order, a status from the status line of the template, a date, the people involved, a number of options, and section
+ * lengths.
  *
  * @property maxSectionLines the most lines with text in a section, by the name of its heading, such as `Context`
  */
@@ -40,7 +41,7 @@ class AdrStructure(
         if (headingsBelow(prose, "## Decision Metadata") != metadata) {
             violations += "$path: the metadata has the headings ${metadata.joinToString()}, in this order."
         }
-        val status = firstLine(prose, "### Status")
+        val status = firstParagraph(prose, "### Status")
         if (status == null || !isValidStatus(status, allAdrPaths)) {
             violations += "$path: the status is one of ${statuses.joinToString("/")} from doc/adr/template.md, and " +
                 "$SUPERSEDED_STATUS takes ' by [ADR-NNN](NNN-name.md)'. Another status takes ', amended by " +
@@ -74,6 +75,16 @@ class AdrStructure(
         prose: List<String>,
         heading: String
     ): String? = body(prose, heading).firstOrNull { it.isNotBlank() }
+
+    private fun firstParagraph(
+        prose: List<String>,
+        heading: String
+    ): String? =
+        body(prose, heading)
+            .dropWhile { it.isBlank() }
+            .takeWhile { it.isNotBlank() }
+            .joinToString(" ")
+            .ifEmpty { null }
 
     private fun body(
         prose: List<String>,

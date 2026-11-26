@@ -12,58 +12,85 @@ class ChangelogStructure(
         path: String,
         lines: List<String>
     ): List<String> {
+        val scan = Scan(path)
+        if (lines.firstOrNull() != "# Changelog") scan.fail(0, "the file starts with the heading '# Changelog'.")
+        lines.withIndex().drop(1).forEach { (index, line) -> scan.read(index, line) }
+        scan.endSection(lines.size)
+        return scan.violations
+    }
+
+    private inner class Scan(
+        private val path: String
+    ) {
         val violations = mutableListOf<String>()
-        val fail = { index: Int, message: String -> violations += "$path:${index + 1}: $message" }
-        if (lines.firstOrNull() != "# Changelog") fail(0, "the file starts with the heading '# Changelog'.")
-        var versions = listOf<String>()
-        var section = -1
-        var bullets = 0
-        var bulletStart = -1
-        var bulletLines = 0
-        val endSection = { index: Int ->
+        private var versions = listOf<String>()
+        private var section = -1
+        private var bullets = 0
+        private var bulletStart = -1
+        private var bulletLines = 0
+
+        fun fail(
+            index: Int,
+            message: String
+        ) {
+            violations += "$path:${index + 1}: $message"
+        }
+
+        fun endSection(index: Int) {
             if (section >= 0 && bullets == 0) fail(index, "the section ${SECTIONS[section]} has no bullet.")
         }
-        for ((index, line) in lines.withIndex()) {
-            val version = VERSION.matchEntire(line)
+
+        fun read(
+            index: Int,
+            line: String
+        ) {
             when {
-                index == 0 || line.isBlank() || LINK_TARGET.matches(line) -> {
-                    Unit
-                }
+                line.isBlank() -> bulletStart = -1
+                line.startsWith("## ") -> readVersion(index, line)
+                line.startsWith("### ") -> readSection(index, line)
+                versions.isNotEmpty() && !LINK_TARGET.matches(line) -> readEntry(index, line)
+            }
+        }
 
-                line.startsWith("## ") -> {
-                    endSection(index)
-                    val dated = version?.groupValues?.get(2)?.isNotEmpty() == true
-                    val unreleased = version?.groupValues?.get(1) == UNRELEASED
-                    if (version == null || dated == unreleased) {
-                        fail(index, "a version heading is '## [Unreleased]' or '## [x.y.z] - YYYY-MM-DD'.")
-                    }
-                    version?.groupValues?.get(1)?.let { name ->
-                        if (versions.isNotEmpty() && !newer(versions.last(), name)) {
-                            fail(index, "the version $name is not older than the version above it.")
-                        }
-                        versions = versions + name
-                    }
-                    section = -1
-                    bullets = 0
+        private fun readVersion(
+            index: Int,
+            line: String
+        ) {
+            endSection(index)
+            val version = VERSION.matchEntire(line)
+            val dated = version?.groupValues?.get(2)?.isNotEmpty() == true
+            val unreleased = version?.groupValues?.get(1) == UNRELEASED
+            if (version == null || dated == unreleased) {
+                fail(index, "a version heading is '## [Unreleased]' or '## [x.y.z] - YYYY-MM-DD'.")
+            }
+            version?.groupValues?.get(1)?.let { name ->
+                if (versions.isNotEmpty() && !newer(versions.last(), name)) {
+                    fail(index, "the version $name is not older than the version above it.")
                 }
+                versions = versions + name
+            }
+            section = -1
+            bullets = 0
+        }
 
-                line.startsWith("### ") -> {
-                    endSection(index)
-                    val next = SECTIONS.indexOf(line.removePrefix("### "))
-                    if (versions.isEmpty() || next <= section) {
-                        fail(
-                            index,
-                            "the sections of a version are ${SECTIONS.joinToString()}, in this order, each once."
-                        )
-                    }
-                    section = maxOf(section, next)
-                    bullets = 0
-                }
+        private fun readSection(
+            index: Int,
+            line: String
+        ) {
+            endSection(index)
+            val next = SECTIONS.indexOf(line.removePrefix("### "))
+            if (versions.isEmpty() || next <= section) {
+                fail(index, "the sections of a version are ${SECTIONS.joinToString()}, in this order, each once.")
+            }
+            section = maxOf(section, next)
+            bullets = 0
+        }
 
-                versions.isEmpty() -> {
-                    Unit
-                }
-
+        private fun readEntry(
+            index: Int,
+            line: String
+        ) {
+            when {
                 line.startsWith("- ") && section >= 0 -> {
                     bullets++
                     bulletStart = index
@@ -81,26 +108,32 @@ class ChangelogStructure(
                     fail(index, "a section holds only bullets ('- ') and their continuation lines (two spaces).")
                 }
             }
-            if (line.isBlank()) bulletStart = -1
         }
-        endSection(lines.size)
-        return violations
     }
 
     private fun newer(
         above: String,
         below: String
-    ): Boolean {
-        if (above == UNRELEASED) return below != UNRELEASED
-        if (below == UNRELEASED) return false
-        val (a, b) = listOf(above, below).map { version -> version.split(".").map { it.toInt() } }
-        return a.zip(b).firstOrNull { (x, y) -> x != y }?.let { (x, y) -> x > y } ?: false
-    }
+    ): Boolean =
+        when {
+            above == UNRELEASED -> {
+                below != UNRELEASED
+            }
+
+            below == UNRELEASED -> {
+                false
+            }
+
+            else -> {
+                val (a, b) = listOf(above, below).map { version -> version.split(".").map { it.toInt() } }
+                a.zip(b).firstOrNull { (x, y) -> x != y }?.let { (x, y) -> x > y } ?: false
+            }
+        }
 
     private companion object {
         const val UNRELEASED = "Unreleased"
         val SECTIONS = listOf("Added", "Changed", "Deprecated", "Removed", "Fixed", "Security")
         val VERSION = Regex("""^## \[(Unreleased|\d+\.\d+\.\d+)](?: - (\d{4}-\d{2}-\d{2}))?$""")
-        val LINK_TARGET = Regex("""^\[[^\]]+]: \S+$""")
+        val LINK_TARGET = Regex("""^\[[^]]+]: \S+$""")
     }
 }

@@ -31,7 +31,7 @@ class RuleIndex(
     ): String {
         val start = text.indexOf(BEGIN)
         val end = text.indexOf(END)
-        require(start >= 0 && end > start) { "$target has no lines $BEGIN and $END." }
+        require(start in 0..<end) { "$target has no lines $BEGIN and $END." }
         val list =
             if (target == "AGENTS.md") {
                 listOf("| Rule file | Read it before you change | Content |", "|---|---|---|") +

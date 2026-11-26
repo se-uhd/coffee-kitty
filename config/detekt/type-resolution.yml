@@ -1,0 +1,21 @@
+# The rules that the tasks detektMain, detektTest, and detektTestFixtures of each module apply with type resolution
+# (doc/adr/023-static-analysis-in-the-build.md). The task detekt applies every other rule without type resolution, and
+# these rules report nothing there. Each one matches an inspection of Qodana. Only the rules listed here are active.
+style:
+  active: true
+  OptionalUnit:
+    active: true
+  UnnecessaryFullyQualifiedName:
+    active: true
+  UnnecessaryLet:
+    active: true
+  UnusedImport:
+    active: true
+  UseOrEmpty:
+    active: true
+  VarCouldBeVal:
+    active: true
+    # ADR-023 Spring and Mockito set an injected field after the construction, which needs a lateinit var
+    ignoreLateinitVar: true
+    # ADR-023 Spring sets the field of @LocalServerPort after the construction, so it stays a var
+    ignoreAnnotated: ['LocalServerPort']

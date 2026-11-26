@@ -50,19 +50,24 @@ configurations.matching { it.name.startsWith("detekt") }.configureEach {
     }
 }
 
-val detektComments =
-    tasks.register<Detekt>("detektComments") {
+val modules = listOf("domain", "api", "data", "application", "models", "coverage", "detekt-rules")
+
+// ADR-023 the modules check their own sources, and this task checks the rest of the Kotlin files
+val detektBuildLogic =
+    tasks.register<Detekt>("detektBuildLogic") {
         group = "verification"
-        description = "Applies the comment rules of config/detekt/detekt.yml to the Kotlin files outside src/main."
+        description = "Applies detekt with config/detekt/detekt.yml to build-logic and the Gradle scripts."
         setSource(
-            fileTree(repository) {
-                include("**/*.kt", "**/*.kts")
-                exclude(outsideTheRepository)
-                exclude(listOf("domain", "api", "data", "application", "models").map { "$it/src/main/**" })
-            }
+            listOf(
+                fileTree(repository.dir("build-logic")) {
+                    include("**/*.kt", "**/*.kts")
+                    exclude("**/build/**", "**/.gradle/**")
+                },
+                fileTree(repository) { include("*.kts") }
+            ) + modules.map { module -> fileTree(repository.dir(module)) { include("*.kts") } }
         )
         config.setFrom(repository.file("config/detekt/detekt.yml"))
-        buildUponDefaultConfig.set(false)
+        buildUponDefaultConfig.set(true)
     }
 
 val rules = fileTree(repository) { include(".claude/rules/*.md") }
@@ -87,5 +92,5 @@ val ruleIndexCheck =
     }
 
 tasks.named("check") {
-    dependsOn(markdownLimits, detektComments, ruleIndexCheck)
+    dependsOn(markdownLimits, detektBuildLogic, ruleIndexCheck)
 }

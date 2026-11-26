@@ -1,5 +1,7 @@
-# The rules that this project adds to the default configuration of detekt. The task detektComments of the root project
-# applies only these rules to the tests and the build scripts (doc/adr/013-limits-for-text.md).
+# The rules that this project adds to the default configuration of detekt. The task detekt of each module applies them
+# with the defaults to its Kotlin sources, and the task detektBuildLogic of the root project to build-logic and the
+# Gradle scripts (doc/adr/023-static-analysis-in-the-build.md). The comment rules are those of
+# doc/adr/013-limits-for-text.md.
 campus-coffee-comments:
   active: true
   UndocumentedContract:
@@ -23,6 +25,9 @@ comments:
     active: true
 style:
   active: true
+  # ADR-023 a rule that matches an inspection of Qodana, needs no type resolution, and is inactive by default
+  UseIfInsteadOfWhen:
+    active: true
   ForbiddenComment:
     active: true
     comments:

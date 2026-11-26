@@ -31,6 +31,6 @@ class MarkdownLines(
     }
 
     private companion object {
-        val LINK_TARGET = Regex("""^\[[^\]]+]: \S+$""")
+        val LINK_TARGET = Regex("""^\[[^]]+]: \S+$""")
     }
 }

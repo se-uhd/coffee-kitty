@@ -2,6 +2,7 @@ package de.seuhd.campuscoffee.models.alloy
 
 import java.awt.Font
 import java.awt.font.FontRenderContext
+import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -245,4 +246,4 @@ private fun bezier(
     return at(p0.first, p1.first, p2.first, p3.first) to at(p0.second, p1.second, p2.second, p3.second)
 }
 
-private fun format(value: Double): String = "%.3f".format(java.util.Locale.ROOT, value).trimEnd('0').trimEnd('.')
+private fun format(value: Double): String = "%.3f".format(Locale.ROOT, value).trimEnd('0').trimEnd('.')

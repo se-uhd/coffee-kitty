@@ -21,7 +21,11 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
 - `models/README.md` describes the models and the diagrams.
 - Rules for comments, enforced by detekt (ADR 013): KDoc is required only on contracts and has at most 6 lines on a
   type and 3 elsewhere, and other comments are only `// ADR-NNN` or `// External: <link> <reason>`.
-- `gradle detektComments` applies the comment rules to the tests and the build scripts.
+- detekt applies all its rules to the tests and the test fixtures of each module, and `gradle detektBuildLogic` to
+  `build-logic` and the Gradle scripts (ADR 023).
+- The Kotlin compiler fails on a warning in every compilation and Gradle script (ADR 023).
+- `detektMain`, `detektTest`, and `detektTestFixtures` apply the rules of `config/detekt/type-resolution.yml` with
+  type resolution, such as `UnusedImport`, and `gradle check` runs them (ADR 023).
 - `config/markdown/limits.yml` with a limit for each Markdown file, which `gradle markdownLimits` checks (ADR 013).
 - `scripts/check-commit-message.sh` checks Conventional Commits with a body of 1 to 5 bullets (ADR 013). CI runs it, and
   `mise install` enables it as a Git hook (`mise.toml`).

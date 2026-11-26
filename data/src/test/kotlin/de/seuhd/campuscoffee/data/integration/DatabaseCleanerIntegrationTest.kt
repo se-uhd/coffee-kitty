@@ -9,7 +9,6 @@ import de.seuhd.campuscoffee.data.persistence.repositories.UserBalanceRepository
 import de.seuhd.campuscoffee.data.persistence.repositories.UserRepository
 import de.seuhd.campuscoffee.data.tests.DatabaseCleaner
 import de.seuhd.campuscoffee.domain.model.CoffeeBean
-import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
 import de.seuhd.campuscoffee.domain.model.CoffeePrice
 import de.seuhd.campuscoffee.domain.model.CoffeeRating
 import de.seuhd.campuscoffee.domain.model.CountCorrection

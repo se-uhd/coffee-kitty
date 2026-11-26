@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.support.TransactionTemplate
+import java.util.UUID
 
 /**
  * The integration tests of the tables `expenses`, `user_balance`, and `kitty_balance` against PostgreSQL. Each of these
@@ -251,6 +252,6 @@ class ExpenseAndBalanceRepositoryIntegrationTest : AbstractDataIntegrationTest()
 
     private companion object {
         /** Returns a new random id. A test assigns it to an [ExpenseEntity], as `upsert` does in a data adapter. */
-        fun randomId() = java.util.UUID.randomUUID()
+        fun randomId(): UUID = UUID.randomUUID()
     }
 }

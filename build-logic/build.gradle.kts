@@ -3,6 +3,13 @@ plugins {
     alias(libs.plugins.ktlint)
 }
 
+// ADR-023 a warning of the Kotlin compiler fails the build
+kotlin {
+    compilerOptions {
+        allWarningsAsErrors.set(true)
+    }
+}
+
 // ADR-001
 dependencies {
     implementation(libs.dependency.management.plugin)

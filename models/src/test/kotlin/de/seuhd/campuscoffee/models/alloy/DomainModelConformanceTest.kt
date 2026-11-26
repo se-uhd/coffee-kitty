@@ -12,7 +12,6 @@ import de.seuhd.campuscoffee.domain.model.User
 import edu.mit.csail.sdg.ast.Expr
 import edu.mit.csail.sdg.ast.ExprList
 import edu.mit.csail.sdg.ast.Sig
-import edu.mit.csail.sdg.parser.CompModule
 import edu.mit.csail.sdg.translator.A4Solution
 import jakarta.validation.Validation
 import org.assertj.core.api.Assertions.assertThat

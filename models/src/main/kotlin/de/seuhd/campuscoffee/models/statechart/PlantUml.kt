@@ -60,10 +60,10 @@ private fun StringBuilder.writeDiagram(
     writeStates(chart.states, ids, emptyList(), indent, StateIds(idPrefix, generateSequence(0) { it + 1 }.iterator()))
     chart.initial.forEach { appendLine("$indent[*] --> ${ids.getValue(it)}") }
     val rank = chart.states.withIndex().associate { (index, state) -> state.path to index }
-    for (arrow in arrows) {
-        val up = rank.getValue(arrow.to) < rank.getValue(arrow.from)
-        val label = arrow.labels.joinToString("\\n") { "${if (up) UP else DOWN} ${text(it)}" }
-        val line = "${ids.getValue(arrow.from)} ${if (up) "-up->" else "-->"} ${ids.getValue(arrow.to)} : $label"
+    for ((from, to, labels) in arrows) {
+        val up = rank.getValue(to) < rank.getValue(from)
+        val label = labels.joinToString("\\n") { "${if (up) UP else DOWN} ${text(it)}" }
+        val line = "${ids.getValue(from)} ${if (up) "-up->" else "-->"} ${ids.getValue(to)} : $label"
         appendLine("$indent$line")
     }
     val drawn = arrows.map { downward(it, rank) }.toSet()
@@ -109,7 +109,8 @@ private fun StringBuilder.writeStates(
             require(below.none { it.path.size > prefix.size + 1 && it.path[prefix.size] == name }) {
                 "The label ${leaf.path} names both a state and a parent state."
             }
-            val style = mapOf(Mark.BREAKS to " $BREAKS_STYLE", Mark.MAY_BREAK to " $MAY_BREAK_STYLE")[leaf.mark] ?: ""
+            val styles = mapOf(Mark.BREAKS to " $BREAKS_STYLE", Mark.MAY_BREAK to " $MAY_BREAK_STYLE")
+            val style = styles[leaf.mark].orEmpty()
             appendLine("${indent}state \"${text(name)}\" as ${ids.getValue(leaf.path)}$style")
         } else {
             appendLine("${indent}state \"${text(name)}\" as ${parentIds.next()} {")
@@ -127,10 +128,10 @@ private fun StringBuilder.writeLegend(
     if (marked.isEmpty()) return
     appendLine("legend right")
     appendLine("|= State |= Breaks the rule |")
-    for (state in marked) {
-        val sentences = state.rules.joinToString("\\n") { text(rules[it] ?: it) }
-        val prefix = if (state.mark == Mark.MAY_BREAK) "in some cases: " else ""
-        appendLine("| ${text(state.path.joinToString(" / "))} | $prefix$sentences |")
+    for ((path, mark, broken) in marked) {
+        val sentences = broken.joinToString("\\n") { text(rules[it] ?: it) }
+        val prefix = if (mark == Mark.MAY_BREAK) "in some cases: " else ""
+        appendLine("| ${text(path.joinToString(" / "))} | $prefix$sentences |")
     }
     appendLine("endlegend")
 }

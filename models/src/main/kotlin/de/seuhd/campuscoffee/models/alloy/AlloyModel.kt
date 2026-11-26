@@ -88,17 +88,26 @@ val Sig.name: String get() = label.removePrefix("this/")
 
 /** The keyword of the multiplicity of the field: one, lone, some, set, seq, or other. */
 val Sig.Field.multiplicity: String
-    get() {
-        val expr = decl().expr
-        return when {
-            expr is ExprBinary && expr.op == ExprBinary.Op.ISSEQ_ARROW_LONE -> "seq"
-            expr is ExprUnary && expr.op == ExprUnary.Op.ONEOF -> "one"
-            expr is ExprUnary && expr.op == ExprUnary.Op.LONEOF -> "lone"
-            expr is ExprUnary && expr.op == ExprUnary.Op.SOMEOF -> "some"
-            expr is ExprUnary && expr.op == ExprUnary.Op.SETOF -> "set"
-            else -> "other"
+    get() =
+        when (val expr = decl().expr) {
+            is ExprBinary -> {
+                if (expr.op == ExprBinary.Op.ISSEQ_ARROW_LONE) "seq" else "other"
+            }
+
+            is ExprUnary -> {
+                when (expr.op) {
+                    ExprUnary.Op.ONEOF -> "one"
+                    ExprUnary.Op.LONEOF -> "lone"
+                    ExprUnary.Op.SOMEOF -> "some"
+                    ExprUnary.Op.SETOF -> "set"
+                    else -> "other"
+                }
+            }
+
+            else -> {
+                "other"
+            }
         }
-    }
 
 /** The name of the sig that the field refers to. */
 val Sig.Field.target: String

@@ -5,7 +5,6 @@ import de.seuhd.campuscoffee.tests.ErrorJson
 import de.seuhd.campuscoffee.tests.Response
 import de.seuhd.campuscoffee.tests.SystemTestUtils.ACTING_USER_HEADER
 import de.seuhd.campuscoffee.tests.SystemTestUtils.ADMIN_LOGIN_NAME
-import de.seuhd.campuscoffee.tests.UserRequests
 import de.seuhd.campuscoffee.tests.parseUtc
 import de.seuhd.campuscoffee.tests.toResponse
 import org.assertj.core.api.Assertions.assertThat
@@ -160,9 +159,8 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
                     .header(HttpHeaders.CONTENT_TYPE, contentType)
                     .accept(MediaType.APPLICATION_JSON)
                     .header(ACTING_USER_HEADER, ADMIN_LOGIN_NAME)
-                    .body(
-                        """{"loginName":"wildcard_user","emailAddress":"w@example.com","firstName":"W","lastName":"U"}"""
-                    ).exchange()
+                    .body(WILDCARD_USER)
+                    .exchange()
                     .toResponse()
 
             assertThat(response.status).`as`(contentType).isEqualTo(415)
@@ -186,6 +184,9 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
     }
 
     private companion object {
+        const val WILDCARD_USER =
+            """{"loginName":"wildcard_user","emailAddress":"w@example.com","firstName":"W","lastName":"U"}"""
+
         /** The media type of a YAML body, which the API neither reads nor writes. */
         val YAML: MediaType = MediaType.parseMediaType("application/yaml")
 

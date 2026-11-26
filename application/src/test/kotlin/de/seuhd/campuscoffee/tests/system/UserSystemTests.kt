@@ -1,7 +1,6 @@
 package de.seuhd.campuscoffee.tests.system
 
 import de.seuhd.campuscoffee.domain.model.persistedId
-import de.seuhd.campuscoffee.tests.ConsumptionRequests
 import de.seuhd.campuscoffee.tests.SystemTestUtils.AUTHENTICATION_CHALLENGE
 import de.seuhd.campuscoffee.tests.UserJson
 import de.seuhd.campuscoffee.tests.UserRequests

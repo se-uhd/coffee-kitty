@@ -4,7 +4,8 @@
 
 ### Status
 
-Accepted, amended by [ADR-018](018-limits-for-requirements-and-openapi-texts.md)
+Accepted, amended by [ADR-018](018-limits-for-requirements-and-openapi-texts.md), amended by
+[ADR-023](023-static-analysis-in-the-build.md)
 
 ### Date
 

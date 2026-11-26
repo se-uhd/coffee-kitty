@@ -1,3 +1,5 @@
+import dev.detekt.gradle.Detekt
+
 plugins {
     id("de.seuhd.campuscoffee.java-conventions")
     id("de.seuhd.campuscoffee.kotlin-conventions")
@@ -40,4 +42,9 @@ springBoot {
 
 tasks.named("jar") {
     enabled = false
+}
+
+// ADR-023 Without the plain jar, detektTest finds the internal declarations in the classes of the main source set.
+tasks.named<Detekt>("detektTest") {
+    friendPaths.setFrom(sourceSets.main.map { it.output.classesDirs })
 }

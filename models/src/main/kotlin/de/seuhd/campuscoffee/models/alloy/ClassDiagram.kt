@@ -5,7 +5,6 @@ import de.seuhd.campuscoffee.models.statechart.renderSvg
 import edu.mit.csail.sdg.ast.Sig
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
-import kotlin.io.path.exists
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.readText
