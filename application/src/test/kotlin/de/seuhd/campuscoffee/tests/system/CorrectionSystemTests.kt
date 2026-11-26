@@ -1,6 +1,7 @@
 package de.seuhd.campuscoffee.tests.system
 
 import de.seuhd.campuscoffee.domain.model.persistedId
+import de.seuhd.campuscoffee.domain.ports.data.CoffeeConsumptionDataService
 import de.seuhd.campuscoffee.tests.ConsumptionRequests
 import de.seuhd.campuscoffee.tests.CorrectionJson
 import de.seuhd.campuscoffee.tests.SystemTestUtils.ADMIN_LOGIN_NAME
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import org.springframework.beans.factory.annotation.Autowired
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
@@ -24,6 +26,9 @@ import java.util.UUID
  * `X-Acting-User` out.
  */
 class CorrectionSystemTests : AbstractSystemTest() {
+    @Autowired
+    private lateinit var consumptionDataService: CoffeeConsumptionDataService
+
     private val note = "Double tap on 16.11."
 
     private fun userId(): UUID = userFixture(USER_LOGIN_NAME).persistedId
@@ -100,8 +105,8 @@ class CorrectionSystemTests : AbstractSystemTest() {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = [0, Int.MAX_VALUE])
-    fun `correcting a coffee count to 0 or 2147483647 returns 200 OK with that count`(total: Int) {
+    @ValueSource(ints = [0, 1_000_000])
+    fun `correcting a coffee count to 0 or 1,000,000 returns 200 OK with that count`(total: Int) {
         val response = consumptionRequests.correctCount(userId(), total, note)
 
         assertThat(response.status).isEqualTo(200)
@@ -119,8 +124,18 @@ class CorrectionSystemTests : AbstractSystemTest() {
     }
 
     @Test
+    fun `correcting a coffee count to 1,000,001 returns 400 Bad Request`() {
+        val response = consumptionRequests.correctCount(userId(), 1_000_001, note)
+
+        assertThat(response.status).isEqualTo(400)
+        assertThat(response.error.errorCode).isEqualTo("ValidationException")
+        assertThat(count()).isEqualTo(3)
+    }
+
+    @Test
     fun `adding a coffee at a coffee count of 2147483647 returns 409 Conflict`() {
-        consumptionRequests.correctCount(userId(), Int.MAX_VALUE, note).requireStatus(200)
+        val consumption = consumptionDataService.getByUserId(userId())
+        consumptionDataService.upsert(consumption.copy(count = Int.MAX_VALUE, coffeeTimes = emptyList()))
 
         val response = consumptionRequests.addCoffee(userId())
 
@@ -139,8 +154,8 @@ class CorrectionSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `correcting a coffee count with a blank note as a user who is not an admin returns 403 Forbidden`() {
-        val response = consumptionRequests.correctCount(userId(), 2, "   ", actingUser = USER_LOGIN_NAME)
+    fun `correcting with a note of 501 characters as a user who is not an admin returns 403 Forbidden`() {
+        val response = consumptionRequests.correctCount(userId(), 2, "a".repeat(501), actingUser = USER_LOGIN_NAME)
 
         assertThat(response.status).isEqualTo(403)
         assertThat(count()).isEqualTo(3)
@@ -156,23 +171,42 @@ class CorrectionSystemTests : AbstractSystemTest() {
     }
 
     @Test
-    fun `correcting a coffee count without a note returns 400 Bad Request with the error code BadRequest`() {
+    fun `correcting a coffee count without a note returns 200 OK and stores a correction without a note`() {
         val response = consumptionRequests.correctCount(userId(), mapOf("total" to 1))
 
-        assertThat(response.status).isEqualTo(400)
-        assertThat(response.error.errorCode).isEqualTo("BadRequest")
-        assertThat(count()).isEqualTo(3)
-        assertThat(corrections()).isEmpty()
+        assertThat(response.status).isEqualTo(200)
+        assertThat(count()).isEqualTo(1)
+        assertThat(corrections().single().note).isNull()
     }
 
     @ParameterizedTest
     @ValueSource(strings = ["", "   ", "\u00A0"])
-    fun `correcting a coffee count with a blank note returns 400 Bad Request`(blankNote: String) {
+    fun `correcting a coffee count with a blank note returns 200 OK and stores a correction without a note`(
+        blankNote: String
+    ) {
         val response = consumptionRequests.correctCount(userId(), 1, blankNote)
 
-        assertThat(response.status).isEqualTo(400)
-        assertThat(response.error.errorCode).isEqualTo("ValidationException")
-        assertThat(count()).isEqualTo(3)
+        assertThat(response.status).isEqualTo(200)
+        assertThat(corrections().single().note).isNull()
+    }
+
+    @Test
+    fun `correcting a coffee count with the current count as the expected count returns 200 OK`() {
+        val response = consumptionRequests.correctCount(userId(), 1, note, expectedCount = 3)
+
+        assertThat(response.status).isEqualTo(200)
+        assertThat(count()).isEqualTo(1)
+    }
+
+    @Test
+    fun `correcting a coffee count that differs from the expected count returns 409 Conflict`() {
+        consumptionRequests.addCoffee(userId()).requireStatus(200)
+
+        val response = consumptionRequests.correctCount(userId(), 1, note, expectedCount = 3)
+
+        assertThat(response.status).isEqualTo(409)
+        assertThat(response.error.errorCode).isEqualTo("StaleDataException")
+        assertThat(count()).isEqualTo(4)
         assertThat(corrections()).isEmpty()
     }
 

@@ -17,7 +17,7 @@ class CoffeeConsumption {
 class CountCorrection {
   countBefore : Number
   countAfter : Number
-  note : Text
+  note : Text [0..1]
 }
 class CoffeeBean {
   name : Text

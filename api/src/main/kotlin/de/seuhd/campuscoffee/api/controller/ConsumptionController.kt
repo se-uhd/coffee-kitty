@@ -141,12 +141,13 @@ class ConsumptionController(
      * count. The coffee app of SE@UHD has an endpoint with the same HTTP method, path, and name.
      *
      * @param userId the id of the user whose coffee count the admin corrects
-     * @param dto    the request body with the corrected coffee count and the note with the reason for the correction
+     * @param dto    the request body with the corrected coffee count, the note, and the expected coffee count
      */
-    @Operation(summary = "Correct a user's coffee count with a note (admin).")
+    @Operation(summary = "Correct a user's coffee count (admin).")
     @ResponseStatus(HttpStatus.OK)
     @NotAdminResponse
     @UserNotFoundResponse
+    @ApiResponse(responseCode = "409", description = "The coffee count differs from expectedCount.")
     @Parameter(
         `in` = ParameterIn.HEADER,
         name = CurrentUserProvider.ACTING_USER_HEADER,
@@ -158,7 +159,7 @@ class ConsumptionController(
         @Parameter(description = "The id of the user.", required = true)
         @PathVariable userId: UUID,
         @ApiRequestBody(
-            description = "The corrected coffee count, which must not be negative, and a note with the reason.",
+            description = "The corrected coffee count from 0 to 1,000,000, a note, and the expected coffee count.",
             required = true
         )
         @RequestBody
@@ -169,7 +170,8 @@ class ConsumptionController(
                 userId,
                 dto.total,
                 dto.note,
-                currentUserProvider.currentUser()
+                currentUserProvider.currentUser(),
+                dto.expectedCount
             )
         return ResponseEntity.ok(consumptionDtoMapper.toDto(corrected))
     }

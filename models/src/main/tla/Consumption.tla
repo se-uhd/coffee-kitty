@@ -6,11 +6,14 @@
 (* "recent" (within its grace period) or "old". Grace periods end in the   *)
 (* order in which the user added the coffees. The note of a correction     *)
 (* falls into one of the classes that CountCorrection accepts or refuses.  *)
-(* MaxCount stands for the largest count that the app stores.              *)
+(* MaxCount stands for the largest count that the app stores, and          *)
+(* MaxCorrected for the largest count of a correction.                     *)
 (***************************************************************************)
 EXTENDS Integers, Sequences
 
-CONSTANT MaxCount
+CONSTANTS MaxCount, MaxCorrected
+
+ASSUME MaxCorrected \in 0..MaxCount
 
 VARIABLES count, times
 
@@ -27,9 +30,10 @@ TimesAfterAdd(t) == SelectSeq(t, Recent) \o <<"recent">>
 
 TimesAfterCorrection(c, t, newCount) == IF newCount < c THEN DropLast(t, c - newCount) ELSE t
 
-ValidNotes == {"short", "longest"}
+\* A blank note counts as no note (FR-8).
+ValidNotes == {"none", "blank", "short", "longest"}
 
-InvalidNotes == {"blank", "too long", "NUL character"}
+InvalidNotes == {"too long", "NUL character"}
 
 Init == count = 0 /\ times = <<>>
 
@@ -49,14 +53,17 @@ Undo ==
     /\ times' = DropLast(times, 1)
 
 Correct ==
-    \E newCount \in 0..MaxCount, note \in ValidNotes :
+    \E newCount \in 0..MaxCorrected, note \in ValidNotes :
         /\ count' = newCount
         /\ times' = TimesAfterCorrection(count, times, newCount)
 
 RefuseCorrection ==
-    \E newCount \in -1..MaxCount, note \in ValidNotes \cup InvalidNotes :
-        /\ newCount < 0 \/ note \in InvalidNotes
+    \E newCount \in -1..(MaxCorrected + 1), note \in ValidNotes \cup InvalidNotes :
+        /\ newCount < 0 \/ newCount > MaxCorrected \/ note \in InvalidNotes
         /\ UNCHANGED vars
+
+\* A correction with an expected count other than the count (FR-8).
+RefuseStaleCorrection == UNCHANGED vars
 
 \* Only an admin corrects a coffee count (FR-8).
 RefuseCorrectionByUser == UNCHANGED vars
@@ -70,7 +77,7 @@ GracePeriodEnds ==
 
 Next ==
     \/ AddCoffee \/ RefuseCoffee \/ RefuseDelta \/ Undo
-    \/ Correct \/ RefuseCorrection \/ RefuseCorrectionByUser \/ GracePeriodEnds
+    \/ Correct \/ RefuseCorrection \/ RefuseStaleCorrection \/ RefuseCorrectionByUser \/ GracePeriodEnds
 
 Spec == Init /\ [][Next]_vars
 

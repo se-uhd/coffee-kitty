@@ -3,6 +3,7 @@ package de.seuhd.campuscoffee.domain.ports.api
 import de.seuhd.campuscoffee.domain.exceptions.ConflictException
 import de.seuhd.campuscoffee.domain.exceptions.ForbiddenException
 import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
+import de.seuhd.campuscoffee.domain.exceptions.StaleDataException
 import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
 import de.seuhd.campuscoffee.domain.model.CountCorrection
@@ -66,20 +67,23 @@ interface CoffeeConsumptionService {
      * also after the grace period. A lower [total] removes the newest coffees, and an undo then applies to the newest
      * coffee that remains. A higher [total] adds coffees that the user cannot undo.
      *
-     * @param userId     the id of the user whose coffee count the admin corrects
-     * @param total      the corrected coffee count, which must not be negative
-     * @param note       the note with the reason for the correction, which must not be blank
-     * @param actingUser the user who sends the request
+     * @param userId        the id of the user whose coffee count the admin corrects
+     * @param total         the corrected coffee count, from 0 to `CountCorrection.MAX_CORRECTED_COUNT`
+     * @param note          the reason for the correction, or null or a blank text for a correction without a note
+     * @param actingUser    the user who sends the request
+     * @param expectedCount the coffee count that the admin saw, or null for a correction without this check
      * @return the consumption with the corrected coffee count
      * @throws ForbiddenException if [actingUser] is not an admin
-     * @throws ValidationException if [total] is negative or [note] breaks a constraint on [CountCorrection]
+     * @throws ValidationException if [total] or [note] breaks a constraint on [CountCorrection]
+     * @throws StaleDataException if the coffee count differs from [expectedCount]
      * @throws NotFoundException if no user has [userId]
      */
     fun correctCount(
         userId: UUID,
         total: Int,
-        note: String,
-        actingUser: User
+        note: String?,
+        actingUser: User,
+        expectedCount: Int? = null
     ): CoffeeConsumption
 
     /**

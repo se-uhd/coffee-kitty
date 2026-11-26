@@ -22,7 +22,7 @@ class CucumberCorrectionSteps(
     data class Correction(
         val countBefore: Int,
         val countAfter: Int,
-        val note: String,
+        val note: String?,
         val adminLoginName: String
     )
 
@@ -32,12 +32,12 @@ class CucumberCorrectionSteps(
     fun note(text: String?): String? = text
 
     @DataTableType
-    fun correction(row: Map<String, String>): Correction =
+    fun correction(row: Map<String, String?>): Correction =
         Correction(
-            countBefore = row.getValue("countBefore").toInt(),
-            countAfter = row.getValue("countAfter").toInt(),
-            note = row.getValue("note"),
-            adminLoginName = row.getValue("adminLoginName")
+            countBefore = requireNotNull(row["countBefore"]).toInt(),
+            countAfter = requireNotNull(row["countAfter"]).toInt(),
+            note = row["note"],
+            adminLoginName = requireNotNull(row["adminLoginName"])
         )
 
     @When("{string} corrects the coffee count of {string} to {int} {note}")

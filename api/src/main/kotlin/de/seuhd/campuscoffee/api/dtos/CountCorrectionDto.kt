@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 
 /**
  * One correction in the response of `GET /api/users/{userId}/consumption/corrections`: The admin with
- * [adminLoginName] set the coffee count from [countBefore] to [countAfter] and explained the correction in [note]. The
+ * [adminLoginName] set the coffee count from [countBefore] to [countAfter] and can have explained it in [note]. The
  * class has no id, because no endpoint reads a single correction by id.
  */
 data class CountCorrectionDto(
@@ -14,10 +14,11 @@ data class CountCorrectionDto(
     @field:Schema(description = "The coffee count after the correction.", requiredMode = Schema.RequiredMode.REQUIRED)
     val countAfter: Int,
     @field:Schema(
-        description = "The note with the reason for the correction.",
-        requiredMode = Schema.RequiredMode.REQUIRED
+        description = "The note with the reason for the correction, or null for a correction without a note.",
+        requiredMode = Schema.RequiredMode.REQUIRED,
+        nullable = true
     )
-    val note: String,
+    val note: String?,
     @field:Schema(
         description = "The login name of the admin who corrected the coffee count.",
         requiredMode = Schema.RequiredMode.REQUIRED

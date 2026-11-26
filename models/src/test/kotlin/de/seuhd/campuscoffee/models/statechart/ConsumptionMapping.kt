@@ -13,6 +13,7 @@ internal object ConsumptionMapping {
             "Undo" to "undo",
             "Correct" to "correctCount",
             "RefuseCorrection" to "correctCount",
+            "RefuseStaleCorrection" to "correctCount",
             "RefuseCorrectionByUser" to "correctCount"
         )
 

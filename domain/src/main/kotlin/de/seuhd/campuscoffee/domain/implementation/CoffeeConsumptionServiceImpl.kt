@@ -1,6 +1,7 @@
 package de.seuhd.campuscoffee.domain.implementation
 
 import de.seuhd.campuscoffee.domain.exceptions.ConflictException
+import de.seuhd.campuscoffee.domain.exceptions.StaleDataException
 import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
 import de.seuhd.campuscoffee.domain.model.CountCorrection
@@ -81,8 +82,9 @@ class CoffeeConsumptionServiceImpl(
     override fun correctCount(
         userId: UUID,
         total: Int,
-        note: String,
-        actingUser: User
+        note: String?,
+        actingUser: User,
+        expectedCount: Int?
     ): CoffeeConsumption {
         requireAdmin(actingUser, "correct a coffee count")
         val current = coffeeConsumptionDataService.getByUserIdForUpdate(userId)
@@ -92,9 +94,12 @@ class CoffeeConsumptionServiceImpl(
                 admin = actingUser,
                 countBefore = current.count,
                 countAfter = total,
-                note = note
+                note = note?.takeUnless { it.isBlank() }
             )
         domainValidator.requireValid(correction)
+        if (expectedCount != null && expectedCount != current.count) {
+            throw StaleDataException("The coffee count is ${current.count}, not the expected $expectedCount.")
+        }
         val removedCoffees = (current.count - total).coerceAtLeast(0)
         val corrected =
             coffeeConsumptionDataService.upsert(

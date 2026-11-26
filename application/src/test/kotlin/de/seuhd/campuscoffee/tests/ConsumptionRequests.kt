@@ -105,17 +105,22 @@ class ConsumptionRequests(
     /**
      * Corrects the coffee count of the user with [userId] to [total] with [note] (FR-8).
      *
-     * @param userId     the id of the user
-     * @param total      the corrected coffee count
-     * @param note       the note with the reason for the correction, or null to send the field `note` as null
-     * @param actingUser the login name of the acting user, or null to send the request without an acting user
+     * @param userId        the id of the user
+     * @param total         the corrected coffee count
+     * @param note          the note with the reason for the correction, or null to send the field `note` as null
+     * @param actingUser    the login name of the acting user, or null to send the request without an acting user
+     * @param expectedCount the coffee count that the admin saw, or null to leave the field `expectedCount` out
      */
     fun correctCount(
         userId: UUID,
         total: Int,
         note: String?,
-        actingUser: String? = ADMIN_LOGIN_NAME
-    ): Response<ConsumptionJson> = correctCount(userId, mapOf("total" to total, "note" to note), actingUser)
+        actingUser: String? = ADMIN_LOGIN_NAME,
+        expectedCount: Int? = null
+    ): Response<ConsumptionJson> {
+        val body = mapOf("total" to total, "note" to note) + listOfNotNull(expectedCount?.let { "expectedCount" to it })
+        return correctCount(userId, body, actingUser)
+    }
 
     /**
      * Sends [body], which holds the corrected coffee count and the note, to correct the coffee count of the user with

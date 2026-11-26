@@ -63,6 +63,8 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
 - FR-3, FR-9, and FR-13 state 401 Unauthorized for an unknown login name in `X-Acting-User`, and FR-9 states 404 Not
   Found for an unknown user. Supporting statements in FR-6 and FR-8 no longer contradict their requirements.
 - The OpenAPI definition states `application/json` as the media type of every response.
+- A correction needs no note, and a blank note counts as no note (FR-8, ADR 025). A correction to more than 1,000,000
+  returns 400, and one with an `expectedCount` that differs from the count returns 409 `StaleDataException`.
 - The models are optional: `gradle build` leaves out the subproject `models`, and `gradle -Pmodels build` checks them.
   CI checks them only in se-uhd/coffee-kitty, so that an assignment needs no TLA+ or Alloy (ADR 012).
 - CLAUDE.md has 168 instead of 639 lines. The guidance for single directories moved into `.claude/rules/`.

@@ -25,8 +25,8 @@ and the corrections of their coffee counts.
   coffee raises it by one (FR-13).
 - A user can undo their most recent coffee within the grace period of 5 minutes after adding it (FR-3). The undo status
   states whether the user can undo their most recent coffee now and, if so, until when (FR-9).
-- An admin can correct the coffee count of a user at any time with a note that states the reason, and can list the
-  corrections of a user (FR-8). Only an admin may create a user, correct a coffee count, or list the corrections.
+- An admin can correct the coffee count of a user at any time, with an optional note that states the reason, and list
+  the corrections of a user (FR-8). Only an admin may create a user, correct a coffee count, or list the corrections.
 - A Spring Boot backend in Kotlin stores the data in PostgreSQL through Jakarta Persistence (JPA), and Flyway migrations
   define the database schema. The REST API accepts and returns only JSON.
 - The migrations V6 to V12 prepare later features, such as the price per cup and the expenses, which have requirements

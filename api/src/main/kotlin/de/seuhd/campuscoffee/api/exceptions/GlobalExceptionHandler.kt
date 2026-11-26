@@ -6,6 +6,7 @@ import de.seuhd.campuscoffee.domain.exceptions.DomainException
 import de.seuhd.campuscoffee.domain.exceptions.DuplicationException
 import de.seuhd.campuscoffee.domain.exceptions.ForbiddenException
 import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
+import de.seuhd.campuscoffee.domain.exceptions.StaleDataException
 import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.servlet.http.HttpServletRequest
@@ -191,7 +192,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     private fun statusOf(exception: DomainException): HttpStatus =
         when (exception) {
             is NotFoundException -> HttpStatus.NOT_FOUND
-            is DuplicationException, is ConflictException -> HttpStatus.CONFLICT
+            is DuplicationException, is ConflictException, is StaleDataException -> HttpStatus.CONFLICT
             is ForbiddenException -> HttpStatus.FORBIDDEN
             is ValidationException -> HttpStatus.BAD_REQUEST
         }

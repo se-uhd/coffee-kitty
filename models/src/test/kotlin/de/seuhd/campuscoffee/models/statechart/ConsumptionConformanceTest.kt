@@ -2,6 +2,7 @@ package de.seuhd.campuscoffee.models.statechart
 
 import de.seuhd.campuscoffee.domain.exceptions.ConflictException
 import de.seuhd.campuscoffee.domain.exceptions.ForbiddenException
+import de.seuhd.campuscoffee.domain.exceptions.StaleDataException
 import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import de.seuhd.campuscoffee.domain.implementation.CoffeeConsumptionServiceImpl
 import de.seuhd.campuscoffee.domain.implementation.ConsumptionProperties
@@ -138,6 +139,7 @@ class ConsumptionConformanceTest {
     fun `each function of CoffeeConsumptionService is an action of the model or a listed query`() {
         val functions =
             CoffeeConsumptionService::class.java.declaredMethods
+                .filterNot { it.isSynthetic }
                 .map { it.name }
                 .toSet()
         assertThat(functions).isEqualTo(ConsumptionMapping.FUNCTIONS.values.toSet() + ConsumptionMapping.QUERIES)
@@ -163,7 +165,12 @@ class ConsumptionConformanceTest {
             .filter { it.action in ConsumptionMapping.FUNCTIONS && it.from != it.to }
             .distinctBy { it.from to it.action }
 
-    private fun countsFor(action: String) = if (action == "RefuseCoffee") listOf(Counts.HIGH) else Counts.entries
+    private fun countsFor(action: String) =
+        when (action) {
+            "RefuseCoffee" -> listOf(Counts.HIGH)
+            "Correct" -> listOf(Counts.LOW)
+            else -> Counts.entries
+        }
 
     private fun concreteCount(
         modelCount: Long,
@@ -172,12 +179,14 @@ class ConsumptionConformanceTest {
 
     private data class Input(
         val count: Int = 0,
-        val note: String = "",
+        val note: String? = "",
         val delta: Int = 1,
-        val byAdmin: Boolean = true
+        val byAdmin: Boolean = true,
+        val expectedCount: Int? = null
     ) {
         override fun toString() =
-            "count $count, note of ${note.length} characters, delta $delta, ${if (byAdmin) "admin" else "user"}"
+            "count $count, note of ${note?.length} characters, delta $delta, ${if (byAdmin) "admin" else "user"}, " +
+                "expected count $expectedCount"
     }
 
     private fun inputs(
@@ -187,20 +196,55 @@ class ConsumptionConformanceTest {
         counts: Counts
     ): List<Input> {
         val current = concreteCount(from["count"].int, counts)
-        val refused = INVALID_NOTES.map { Input(current, it) } + Input(-1, VALID_NOTES.first())
+        val target = concreteCount(to["count"].int, counts)
+        val refused =
+            INVALID_NOTES.map { Input(current, it) } +
+                listOf(-1, CountCorrection.MAX_CORRECTED_COUNT + 1).map { Input(it, VALID_NOTES.last()) }
         return when (action) {
-            "Correct" -> VALID_NOTES.map { Input(concreteCount(to["count"].int, counts), it) }
-            "RefuseCorrection" -> refused
-            "RefuseCorrectionByUser" -> listOf(Input(current, VALID_NOTES.first(), byAdmin = false))
-            "RefuseDelta" -> REFUSED_DELTAS.map { Input(delta = it) }
-            else -> listOf(Input())
+            "Correct" -> {
+                VALID_NOTES.map { Input(target, it) } +
+                    Input(target, VALID_NOTES.last(), expectedCount = current)
+            }
+
+            "RefuseCorrection" -> {
+                refused
+            }
+
+            "RefuseStaleCorrection" -> {
+                listOf(
+                    Input(
+                        0,
+                        VALID_NOTES.last(),
+                        expectedCount =
+                            if (current ==
+                                0
+                            ) {
+                                1
+                            } else {
+                                current - 1
+                            }
+                    )
+                )
+            }
+
+            "RefuseCorrectionByUser" -> {
+                listOf(Input(current, VALID_NOTES.first(), byAdmin = false))
+            }
+
+            "RefuseDelta" -> {
+                REFUSED_DELTAS.map { Input(delta = it) }
+            }
+
+            else -> {
+                listOf(Input())
+            }
         }
     }
 
     private enum class Counts {
         /**
-         * The counts of the model. The service refuses a coffee only at the largest count that it stores, so the test
-         * replays `RefuseCoffee` only in [HIGH].
+         * The counts of the model. The service refuses a coffee only at the largest count that it stores, and it
+         * corrects a count only up to 1,000,000, so the test replays `RefuseCoffee` only in [HIGH] and `Correct` here.
          */
         LOW,
 
@@ -263,8 +307,9 @@ class ConsumptionConformanceTest {
                 "RefuseCoffee" -> refuse<ConflictException>(input) { service.applyDelta(userId, 1) }
                 "RefuseDelta" -> refuse<ValidationException>(input) { service.applyDelta(userId, input.delta) }
                 "Undo" -> service.undo(userId)
-                "Correct" -> service.correctCount(userId, input.count, input.note, admin)
+                "Correct" -> correct(input)
                 "RefuseCorrection" -> refuse<ValidationException>(input) { correct(input) }
+                "RefuseStaleCorrection" -> refuse<StaleDataException>(input) { correct(input) }
                 "RefuseCorrectionByUser" -> refuse<ForbiddenException>(input) { correct(input) }
                 CLOCK_ACTION -> endOldestGracePeriod()
                 else -> fail("The model has the action $action, which this test does not map to the service.")
@@ -272,7 +317,13 @@ class ConsumptionConformanceTest {
         }
 
         private fun correct(input: Input) {
-            service.correctCount(userId, input.count, input.note, if (input.byAdmin) admin else user)
+            service.correctCount(
+                userId,
+                input.count,
+                input.note,
+                if (input.byAdmin) admin else user,
+                input.expectedCount
+            )
         }
 
         private inline fun <reified T : Throwable> refuse(
@@ -389,11 +440,11 @@ class ConsumptionConformanceTest {
         /** The largest count of the model in [CONFIG]. */
         val MAX_COUNT: Int = Regex("""MaxCount\s*=\s*(\d+)""").find(CONFIG.readText())!!.groupValues[1].toInt()
 
-        /** Notes that CountCorrection accepts: a short one and one of the largest length. */
-        val VALID_NOTES = listOf("Double tap on 16.11.", "x".repeat(CountCorrection.MAX_NOTE_LENGTH))
+        /** Notes that a correction accepts: none, a blank one, a short one, and one of the largest length. */
+        val VALID_NOTES = listOf(null, " \u00A0", "x".repeat(CountCorrection.MAX_NOTE_LENGTH), "Double tap on 16.11.")
 
-        /** Notes that CountCorrection refuses: a blank one, one that is too long, and one with a NUL character. */
-        val INVALID_NOTES = listOf(" ", "x".repeat(CountCorrection.MAX_NOTE_LENGTH + 1), "Double\u0000tap")
+        /** Notes that CountCorrection refuses: one that is too long and one with a NUL character. */
+        val INVALID_NOTES = listOf("x".repeat(CountCorrection.MAX_NOTE_LENGTH + 1), "Double\u0000tap")
 
         /** Deltas that the service refuses, from the classes of the model. */
         val REFUSED_DELTAS = listOf(-1, 0, 2)

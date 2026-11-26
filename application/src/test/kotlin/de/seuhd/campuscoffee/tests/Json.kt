@@ -41,7 +41,7 @@ data class UndoStatusJson(
 data class CorrectionJson(
     val countBefore: Int,
     val countAfter: Int,
-    val note: String,
+    val note: String?,
     val adminLoginName: String,
     val createdAt: String
 )

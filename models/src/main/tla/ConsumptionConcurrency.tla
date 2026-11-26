@@ -42,7 +42,7 @@ ConcurrentInit ==
     /\ count = start[1]
     /\ times = start[2]
     /\ kind \in [Requests -> Kinds]
-    /\ target \in [Requests -> 0..MaxCount]
+    /\ target \in [Requests -> 0..MaxCorrected]
     /\ pc = [r \in Requests |-> "start"]
     /\ seen = [r \in Requests |-> start]
     /\ lock = {}

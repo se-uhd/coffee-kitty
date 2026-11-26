@@ -31,7 +31,8 @@ paths:
 - A request DTO has no property for a value that the server assigns (see `CreateUserDto`). Its `@Schema` annotations
   document the limits of the domain in the OpenAPI definition.
 - A response DTO has only non-null properties, including `id`, `createdAt`, and `updatedAt`, and marks each as required
-  with `@field:Schema(requiredMode = Schema.RequiredMode.REQUIRED)` (see `UserDto`).
+  with `@field:Schema(requiredMode = Schema.RequiredMode.REQUIRED)` (see `UserDto`). A value that can be absent, such as
+  `undoableUntil` or the note of a correction, is null and also has `nullable = true`.
 - The `spring.jackson` settings in `application.yaml` and `JsonConfig` reject an unknown field and a value of the wrong
   JSON type with a 400, so a new DTO needs no code for these checks.
 

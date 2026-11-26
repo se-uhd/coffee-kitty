@@ -67,8 +67,12 @@ object ConsumptionView : ChartView {
             }
 
             "RefuseCorrection" -> {
-                "the app refuses a correction to a negative count or with a note that is blank, longer than 500 " +
-                    "characters, or contains the NUL character"
+                "the app refuses a correction to a negative count or to a count above 1,000,000, or with a note that " +
+                    "is longer than 500 characters or contains the NUL character"
+            }
+
+            "RefuseStaleCorrection" -> {
+                "the app refuses a correction with an expected count other than the coffee count"
             }
 
             "RefuseCorrectionByUser" -> {

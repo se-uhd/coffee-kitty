@@ -1,0 +1,1 @@
+ALTER TABLE count_corrections ALTER COLUMN note DROP NOT NULL;

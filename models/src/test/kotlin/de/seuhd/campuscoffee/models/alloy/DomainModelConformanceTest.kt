@@ -325,7 +325,7 @@ class DomainModelConformanceTest {
             mapOf(
                 "CoffeeConsumption.count" to NumberValues(null, null),
                 "CountCorrection.countBefore" to NumberValues(null, null),
-                "CountCorrection.countAfter" to NumberValues(0, null),
+                "CountCorrection.countAfter" to NumberValues(0, CountCorrection.MAX_CORRECTED_COUNT),
                 "CoffeeRating.value" to NumberValues(CoffeeRating.MIN_VALUE, CoffeeRating.MAX_VALUE),
                 "CoffeePrice.amountCents" to NumberValues(0, CoffeePrice.MAX_AMOUNT_CENTS),
                 "Payment.amountCents" to NumberValues(null, null)

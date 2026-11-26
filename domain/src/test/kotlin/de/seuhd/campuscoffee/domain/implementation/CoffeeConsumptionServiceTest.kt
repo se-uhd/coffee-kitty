@@ -3,6 +3,7 @@ package de.seuhd.campuscoffee.domain.implementation
 import de.seuhd.campuscoffee.domain.exceptions.ConflictException
 import de.seuhd.campuscoffee.domain.exceptions.ForbiddenException
 import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
+import de.seuhd.campuscoffee.domain.exceptions.StaleDataException
 import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import de.seuhd.campuscoffee.domain.model.CoffeeConsumption
 import de.seuhd.campuscoffee.domain.model.CountCorrection
@@ -242,8 +243,8 @@ class CoffeeConsumptionServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = [0, Int.MAX_VALUE])
-    fun `correctCount stores a count of 0 or the largest Int`(total: Int) {
+    @ValueSource(ints = [0, CountCorrection.MAX_CORRECTED_COUNT])
+    fun `correctCount stores a count of 0 or 1,000,000`(total: Int) {
         stubCorrection(consumption(3))
 
         service.correctCount(userId, total, note, admin)
@@ -270,21 +271,51 @@ class CoffeeConsumptionServiceTest {
         verifyNothingStored()
     }
 
-    @Test
-    fun `correctCount throws ValidationException for a negative count`() {
+    @ParameterizedTest
+    @ValueSource(ints = [-1, CountCorrection.MAX_CORRECTED_COUNT + 1])
+    fun `correctCount throws ValidationException for a count of -1 or 1,000,001`(total: Int) {
         stubCorrection(consumption(3))
 
-        assertThrows<ValidationException> { service.correctCount(userId, -1, note, admin) }
+        assertThrows<ValidationException> { service.correctCount(userId, total, note, admin) }
 
         verifyNothingStored()
     }
 
     @ParameterizedTest
     @ValueSource(strings = ["", "   ", "\t\n", "\u00A0"])
-    fun `correctCount throws ValidationException for a blank note`(blankNote: String) {
+    fun `correctCount stores a blank note as no note`(blankNote: String) {
         stubCorrection(consumption(3))
 
-        assertThrows<ValidationException> { service.correctCount(userId, 1, blankNote, admin) }
+        service.correctCount(userId, 1, blankNote, admin)
+
+        verify(correctionDataService).insert(argThat { note == null })
+    }
+
+    @Test
+    fun `correctCount stores a correction without a note`() {
+        stubCorrection(consumption(3))
+
+        service.correctCount(userId, 1, null, admin)
+
+        verify(correctionDataService).insert(
+            CountCorrection(user = user, admin = admin, countBefore = 3, countAfter = 1, note = null)
+        )
+    }
+
+    @Test
+    fun `correctCount stores the correction when the count equals the expected count`() {
+        stubCorrection(consumption(3))
+
+        val result = service.correctCount(userId, 1, note, admin, expectedCount = 3)
+
+        assertThat(result.count).isEqualTo(1)
+    }
+
+    @Test
+    fun `correctCount throws StaleDataException when the count differs from the expected count`() {
+        stubCorrection(consumption(4))
+
+        assertThrows<StaleDataException> { service.correctCount(userId, 1, note, admin, expectedCount = 3) }
 
         verifyNothingStored()
     }

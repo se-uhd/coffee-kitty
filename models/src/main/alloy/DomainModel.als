@@ -43,7 +43,7 @@ sig CountCorrection {
     admin: one User,
     countBefore: one Number,
     countAfter: one Number,
-    note: one Text
+    note: lone Text
 }
 
 sig CoffeeBean {
@@ -84,7 +84,7 @@ pred validCoffeeConsumptionCount[n: Number] { n in Number }
 
 pred validCountCorrectionCountBefore[n: Number] { n in Number }
 
-pred validCountCorrectionCountAfter[n: Number] { n not in BelowMin }
+pred validCountCorrectionCountAfter[n: Number] { n in Min + Middle + Max }
 
 pred validCountCorrectionNote[t: Text] { notBlankNoNul[t] }
 

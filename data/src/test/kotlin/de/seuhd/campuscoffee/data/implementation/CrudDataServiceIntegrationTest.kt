@@ -63,7 +63,7 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     private fun correction(
         user: User,
         admin: User,
-        note: String = "Double tap"
+        note: String? = "Double tap"
     ): CountCorrection = CountCorrection(user = user, admin = admin, countBefore = 3, countAfter = 1, note = note)
 
     private fun storeAdmin(loginName: String): User = userDataService.upsert(user(loginName).copy(role = Role.ADMIN))
@@ -311,6 +311,16 @@ class CrudDataServiceIntegrationTest : AbstractDataIntegrationTest() {
         assertThatThrownBy { countCorrectionDataService.insert(invalid) }
             .isInstanceOf(DataConstraintException::class.java)
         assertThat(countCorrectionDataService.getAllByUserId(requireNotNull(user.id))).isEmpty()
+    }
+
+    @Test
+    fun `insert stores a correction without a note`() {
+        val user = userDataService.upsert(user("ida"))
+
+        val created = countCorrectionDataService.insert(correction(user, storeAdmin("olga"), note = null))
+
+        assertThat(countCorrectionDataService.getAllByUserId(requireNotNull(user.id))).containsExactly(created)
+        assertThat(created.note).isNull()
     }
 
     @Test
