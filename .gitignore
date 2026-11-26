@@ -39,7 +39,9 @@ gradle/wrapper/
 ###############
 # Claude Code #
 ###############
-.claude/
+# The repository holds the shared configuration of Claude Code, such as .claude/skills/. Keep the personal files out.
+.claude/settings.local.json
+.claude/worktrees/
 
 ########
 # Misc #

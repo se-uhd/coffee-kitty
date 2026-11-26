@@ -38,6 +38,10 @@ detekt = "2.0.0-alpha.6"
 detekt-kotlin = "2.4.10"
 # The code coverage tool that jacoco-conventions applies to every module.
 jacoco = "0.8.16"
+# The MIT build of PlantUML, which draws the diagrams of the models subproject.
+plantuml = "1.2026.10"
+# The Alloy Analyzer, which checks the Alloy model of the domain model in the models subproject.
+alloy = "6.2.0"
 # The mutation testing tool PIT. `pitest-tool` is the version of PIT, `pitest-junit5` is the version of its JUnit
 # plugin, and `pitest-plugin` is the version of the Gradle plugin by solidsoft.
 pitest-tool = "1.30.2"
@@ -89,6 +93,8 @@ cucumber-java = { module = "io.cucumber:cucumber-java", version.ref = "cucumber"
 cucumber-junit-platform-engine = { module = "io.cucumber:cucumber-junit-platform-engine", version.ref = "cucumber" }
 cucumber-spring = { module = "io.cucumber:cucumber-spring", version.ref = "cucumber" }
 archunit = { module = "com.tngtech.archunit:archunit", version.ref = "archunit" }
+plantuml-mit = { module = "net.sourceforge.plantuml:plantuml-mit", version.ref = "plantuml" }
+alloy = { module = "org.alloytools:org.alloytools.alloy.dist", version.ref = "alloy" }
 
 # Jars of the Gradle plugins that the convention plugins apply by id, for the classpath of build-logic
 dependency-management-plugin = { module = "io.spring.gradle:dependency-management-plugin", version.ref = "dependency-management" }

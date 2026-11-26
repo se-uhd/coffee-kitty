@@ -27,4 +27,4 @@ plugins {
 
 rootProject.name = "coffee-kitty"
 
-include("domain", "api", "data", "application", "coverage", "detekt-rules")
+include("domain", "api", "data", "application", "coverage", "detekt-rules", "models")

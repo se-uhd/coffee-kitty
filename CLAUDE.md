@@ -44,8 +44,14 @@ The included build `build-logic/` holds the convention plugins, and a subproject
 `de.seuhd.campuscoffee.<name>`. The root build and `build-logic/` read the same version catalog,
 `gradle/libs.versions.toml`. `doc/adr/001-multi-module-gradle-build-with-convention-plugins.md` records why the build
 has this structure. The `detekt-rules` subproject holds the custom detekt rules, and the `coverage` subproject creates
-the coverage report of all modules. `settings.gradle.kts` and `build-logic/settings.gradle.kts` declare every Maven
-repository of the build, and `FAIL_ON_PROJECT_REPOS` fails the build when a build script declares a repository.
+the coverage report of all modules. The `models` subproject checks the TLA+ models in `models/src/main/tla/` with TLC
+and draws `Consumption.tla` as a statechart in `doc/statecharts/` (`.claude/skills/statechart/SKILL.md`). Its tests
+replay `Consumption.tla` on `CoffeeConsumptionServiceImpl` and check the Alloy model of the domain model in
+`models/src/main/alloy/` against the classes in `domain/.../model/`. The assertions of the Alloy model state rules
+across the classes, such as the rule that no text property accepts the NUL character, and `doc/class-diagrams/` holds
+its class diagram (`models/README.md`). `doc/adr/012-models-checked-against-the-code.md` records why the build checks
+the models. `settings.gradle.kts` and `build-logic/settings.gradle.kts` declare every Maven repository of the build,
+and `FAIL_ON_PROJECT_REPOS` fails the build when a build script declares a repository.
 
 ### Module Dependencies
 
@@ -60,6 +66,9 @@ repository of the build, and `FAIL_ON_PROJECT_REPOS` fails the build when a buil
   `BootstrapAdminProperties`), `ClockConfiguration`, and `application.yaml`, but no web or business code. Its test
   sources hold the dev application (see Configuration).
   Depends on `domain`, `api`, and `data`.
+
+The subproject `models` is not a module of the app. Its tests depend on `domain` (see Architecture), and no module
+depends on it.
 
 ### Layer Rules (Enforced by ArchUnit)
 
@@ -209,13 +218,15 @@ follow that app without its event log. The KDoc of each JPA entity explains the 
 ## Build and Run Commands
 
 Run Gradle in a shell with mise activated or as `mise exec -- gradle ...`, because the project has no Gradle wrapper and
-mise installs Java and Gradle from `mise.toml`. The `java` entry in `gradle/libs.versions.toml` sets the Java toolchain
-and the Kotlin `jvmTarget`. `mise.toml` pins the same major version, and no tool copies it from one file to the other,
-so change both files together. The dev database and the Testcontainers tests need Docker.
+mise installs Java, Gradle, and TLC (`tla2tools.jar`) from `mise.toml`. The `java` entry in `gradle/libs.versions.toml`
+sets the Java toolchain and the Kotlin `jvmTarget`. `mise.toml` pins the same major version, and no tool copies it from
+one file to the other, so change both files together. The dev database and the Testcontainers tests need Docker.
 
 ```shell
 gradle build                                                 # compile, ktlint, detekt, CPD, every test, coverage gate
 gradle ktlintFormat                                          # apply the formatting fixes before a commit
+gradle :models:statecharts                                   # check the TLA+ models and write the statechart
+gradle :models:classDiagrams                                 # write the class diagram of the Alloy model
 gradle :domain:test --tests "CoffeeConsumptionServiceTest"   # one test class
 gradle :application:test --tests "ArchitectureTests"         # the layer rules only, which need no Docker
 gradle :coverage:testCodeCoverageReport                      # the coverage report of all modules
@@ -374,6 +385,8 @@ The tests are in these places:
   the scenarios, such as 10:05:01. It also provides the `ConsumptionRequests` of the steps. A step names a user by login
   name and looks up the id with `ConsumptionRequests.userId`.
 - Architecture tests: `ArchitectureTests` (see Layer Rules).
+- Model tests: the classes in `models/src/test/kotlin/`, which check the TLA+ models and the Alloy model against the
+  code (`models/README.md`).
 
 System tests and step definitions send every request through `UserRequests` and `ConsumptionRequests` and never build an
 HTTP request themselves, so that a reader of a test does not need to know the REST API. The exception is
@@ -425,7 +438,9 @@ state. It never checks an implementation detail, that is, anything that can chan
 Examples are the wording of a message, an annotation, a configuration setting, the calls between domain classes, and the
 number and order of calls. It does not check a framework either, such as the messages of Jackson or the rule of
 Spring that a lock needs a transaction. A test may check which values a message contains or leaves out, such as the name
-of an invalid field, a rejected value, or a login name in a log message.
+of an invalid field, a rejected value, or a login name in a log message. The tests in `models/` are the exception: They
+check the assumptions that a model makes about the code, such as an annotation or the function of the data port that a
+service calls, because the verdict of the model depends on them.
 
 ### Code Coverage, Mutation Testing, and Duplicate Code
 
@@ -443,7 +458,8 @@ Until 2026-12-08, both gates leave out the functions of the undo status (FR-9): 
 and `ConsumptionController.undoStatus`. Their tests are the reference solution of assignment 7, which students submit
 by that date, so the public repository does not contain them yet. On that date, add the tests and delete the exemptions
 in `coverage/build.gradle.kts` and `pitest-conventions.gradle.kts`. Never commit these tests to a pushed branch before
-that date.
+that date. On that date, also add the undo status to `models/src/main/tla/Consumption.tla` and replay `undoableUntil` in
+`ConsumptionConformanceTest`.
 
 `gradle :domain:pitest` runs the mutation testing tool PIT on the classes in `domain/.../implementation/`. PIT changes
 the code, e.g., by negating a condition, and runs the unit tests of the domain module against each changed version
@@ -573,7 +589,13 @@ is the API port (step 2).
 
 1. Create the domain model in `domain/.../model/`. The domain model implements `DomainModel<UUID>` and has a nullable
    `id`, `createdAt`, and `updatedAt` (see `User`). Declare each rule for a value as a Bean Validation constraint with
-   a message on the property (see Value rules in Important Patterns).
+   a message on the property (see Value rules in Important Patterns). In the same step, add a sig with a field for each
+   property except `id`, `createdAt`, and `updatedAt` to `models/src/main/alloy/DomainModel.als`, a predicate
+   `valid<Sig><Field>` for each String and Int property, and the predicate of each String property to the assertion
+   `NoTextPropertyAcceptsNul`. Add the concrete values of each String and Int property to `TEXTS` or `NUMBERS` in
+   `DomainModelConformanceTest`. Run `gradle :models:classDiagrams` and commit the class diagram.
+   `DomainModelConformanceTest` fails until the model and the class match, and `checkClassDiagrams` fails until the
+   diagram matches the model.
 2. Create the API port in `domain/.../ports/api/`. An operation that only the startup task or the test setup calls
    belongs to an internal port in `domain/.../ports/internal/`.
 3. Create the data port in `domain/.../ports/data/`. Ports and Adapters states when a data port extends

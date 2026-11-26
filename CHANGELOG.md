@@ -11,6 +11,18 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - The requirement FR-19 (record an expense for a user) in `requirements/`: An admin records an expense for a user, and
   the daily limit of FR-6 does not refuse it. Coffee Kitty does not implement it yet.
+- The subproject `models`: TLC checks a TLA+ model of the coffee count of a user, which covers adding and undoing
+  coffees and the corrections of an admin, and a model of concurrent requests. `doc/statecharts/` holds a chart of the
+  first model. `gradle check` fails when a rule of a TLA+ model breaks, a chart is out of date, or a replay test finds a
+  step of a model that `CoffeeConsumptionServiceImpl` does not take. ADR 012 records the decision.
+- An Alloy model of the domain model (`models/src/main/alloy/DomainModel.als`). `gradle check` fails when a class or a
+  property of `domain/.../model/` differs from the model, when a value rule differs from the rule of the model, or when
+  the model breaks one of its assertions, such as the rule that no text property accepts the NUL character.
+- A class diagram of the Alloy model in `doc/class-diagrams/`, which `gradle :models:classDiagrams` writes. The Alloy
+  Analyzer finds how many objects can refer to one object, so the multiplicities at the tails of the arrows follow the
+  facts of the model, such as one consumption for each user.
+  `gradle check` fails when the diagram differs from the model. `models/README.md` describes the models and the
+  diagrams and notes object diagrams of counterexamples as a possible extension.
 
 ### Changed
 

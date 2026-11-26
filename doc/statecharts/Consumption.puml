@@ -1,0 +1,31 @@
+@startuml
+!pragma layout smetana
+hide empty description
+title Coffee count of a user (FR-3, FR-8, FR-13)
+state "A user adds and undoes coffees" as q0 {
+  state "The coffee count is 0" as q0s0
+  state "The coffee count is above 0" as q0p0 {
+    state "A user can undo a coffee" as q0s1
+    state "A user cannot undo a coffee" as q0s2
+  }
+  [*] --> q0s0
+  q0s0 --> q0s1 : ↓ a user adds a coffee
+  q0s1 -up-> q0s0 : ↑ a user undoes their most recent coffee
+  q0s1 --> q0s2 : ↓ a user undoes their most recent coffee\n↓ the grace period of a coffee ends
+  q0s2 -up-> q0s1 : ↑ a user adds a coffee
+  q0s0 -[hidden]-> q0s2
+}
+state "An admin corrects the coffee count of a user" as q1 {
+  state "The coffee count is 0" as q1s0
+  state "The coffee count is above 0" as q1p0 {
+    state "A user can undo a coffee" as q1s1
+    state "A user cannot undo a coffee" as q1s2
+  }
+  [*] --> q1s0
+  q1s0 --> q1s2 : ↓ an admin corrects the coffee count of a user
+  q1s1 -up-> q1s0 : ↑ an admin corrects the coffee count of a user
+  q1s1 --> q1s2 : ↓ an admin corrects the coffee count of a user
+  q1s2 -up-> q1s0 : ↑ an admin corrects the coffee count of a user
+}
+caption ↓ and ↑ before a label show whether its arrow points down or up.
+@enduml

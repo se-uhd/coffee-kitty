@@ -3,7 +3,8 @@
 # release, e.g., the pin `gradle = '9.8'` after the release of Gradle 9.9. The workflow does not report a newer release
 # within a pin, e.g., Gradle 9.9.1 under `gradle = '9.9'`. CI installs such a release without a change to mise.toml, and
 # `mise upgrade` installs it on a developer machine. The workflow only reports, and a developer bumps the pin in
-# mise.toml by hand. The same workflow runs in the coffee app of SE@UHD.
+# mise.toml by hand. The same workflow runs in the coffee app of SE@UHD. mise cannot look up newer releases of
+# `http:tla2tools`, which pins a release of TLA+ by URL and checksum, so the workflow does not report them.
 name: mise outdated
 
 on:

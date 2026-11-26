@@ -69,13 +69,14 @@ architecture. ArchUnit tests check the boundaries between the four modules:
 The included build `build-logic/` holds the convention plugins, which configure Java, Kotlin, ktlint, and detekt in the
 same way for every module (see `doc/adr/001-multi-module-gradle-build-with-convention-plugins.md`). The `detekt-rules`
 subproject holds the custom detekt rules that require KDoc, and the `coverage` subproject creates the coverage report of
-all modules. `CLAUDE.md` describes the architecture and the conventions in detail, and `GLOSSARY.md` defines the terms
-of the project.
+all modules. The `models` subproject holds TLA+ and Alloy models of the domain, the tests that check them against the
+code, and the code that draws the models as diagrams in `doc/` (`models/README.md`). `CLAUDE.md` describes the
+architecture and the conventions in detail, and `GLOSSARY.md` defines the terms of the project.
 
 ## Prerequisites
 
-- Java 25 and Gradle 9.9, which [mise](https://mise.jdx.dev/) installs from `mise.toml`. The repository has no Gradle
-  wrapper.
+- Java 25, Gradle 9.9, and TLC, the model checker of TLA+, which [mise](https://mise.jdx.dev/) installs from
+  `mise.toml`. The repository has no Gradle wrapper, and `gradle build` runs TLC on the models in `models/`.
 - Docker, for the local PostgreSQL database and for the tests that use Testcontainers.
 
 `gradle/gradle-daemon-jvm.properties` requires JDK 25 for the Gradle daemon, the background process that runs the

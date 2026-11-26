@@ -1,0 +1,54 @@
+@startuml
+!pragma layout smetana
+hide methods
+skinparam classAttributeIconSize 0
+title Classes of the Alloy model DomainModel
+class User {
+  loginName : Text
+  emailAddress : Text
+  firstName : Text
+  lastName : Text
+  role : Role
+}
+class CoffeeConsumption {
+  count : Number
+  coffeeTimes : Instant [*] {seq}
+}
+class CountCorrection {
+  countBefore : Number
+  countAfter : Number
+  note : Text
+}
+class CoffeeBean {
+  name : Text
+  active : Bool
+}
+class CoffeeRating {
+  value : Number
+}
+class CoffeePrice {
+  amountCents : Number
+}
+class Payment {
+  amountCents : Number
+  note : Text [0..1]
+}
+enum Role {
+  USER
+  ADMIN
+}
+CoffeeConsumption "1" --> "1" User : user
+CountCorrection "*" --> "1" User : user
+CountCorrection "*" --> "1" User : admin
+CoffeeBean "*" --> "0..1" CoffeeBean : mergedInto
+CoffeeRating "*" --> "1" User : user
+CoffeeRating "*" --> "1" CoffeeBean : bean
+Payment "*" --> "0..1" User : user
+legend right
+|= Rule |= Kind |= Result |
+| OneConsumptionPerUser | fact | assumed |
+| AsManyConsumptionsAsUsers | assertion | holds |
+| NoTextPropertyAcceptsNul | assertion | holds |
+endlegend
+caption The multiplicity at the head of an arrow comes from the field.\nThe multiplicity at its tail is the number of objects that can refer to one object in the instances that the Alloy Analyzer finds within a scope of 4.
+@enduml
