@@ -69,6 +69,8 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
   character, names the SQL state instead of "the constraint (unnamed)".
 - `gradle build -x :application:test` no longer fails because the coverage report reads the output of
   `:application:bootBuildInfo` without depending on it.
+- The detekt rule `UndocumentedFunctionParameter` finds an `@param` tag after a tag whose text starts with a code span.
+  The Kotlin PSI merged the two tags, so the rule reported the second parameter as undocumented.
 
 ## [0.3.1] - 2026-11-25
 

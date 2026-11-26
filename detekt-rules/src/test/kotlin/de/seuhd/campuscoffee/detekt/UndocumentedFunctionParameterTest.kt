@@ -63,4 +63,30 @@ class UndocumentedFunctionParameterTest {
             """.trimIndent()
         assertEquals(emptyList<String?>(), rule.reportedNames(code))
     }
+
+    @Test
+    fun `UndocumentedFunctionParameter finds an @param tag after a code span and in a KDoc of one line`() {
+        val withoutDescription =
+            """
+            /**
+             * @param target `CLAUDE.md` or `AGENTS.md`
+             * @param text the content of the file
+             */
+            fun render(target: String, text: String) = text
+            """.trimIndent()
+        val withDescription =
+            """
+            /**
+             * Renders the file.
+             *
+             * @param target `CLAUDE.md` or `AGENTS.md`
+             * @param text the content of the file
+             */
+            fun render(target: String, text: String) = text
+            """.trimIndent()
+        val oneLine = "/** @param text the content of the file */\nfun render(text: String) = text"
+        assertEquals(emptyList<String>(), rule.reportedNames(withoutDescription))
+        assertEquals(emptyList<String>(), rule.reportedNames(withDescription))
+        assertEquals(emptyList<String>(), rule.reportedNames(oneLine))
+    }
 }
