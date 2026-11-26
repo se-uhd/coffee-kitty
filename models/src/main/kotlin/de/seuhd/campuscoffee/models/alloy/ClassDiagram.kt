@@ -12,7 +12,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.system.exitProcess
 
-/** The scope of the runs that find how many objects can refer to one object. */
+/** The scope of the Alloy runs that derive the multiplicity at the source end of an arrow. */
 const val REFERRER_SCOPE = 4
 
 private const val ARGUMENTS = 3
@@ -32,7 +32,10 @@ fun main(args: Array<String>) {
         models.listDirectoryEntries("*.als").sorted().flatMap { model ->
             val source = toClassDiagram(model.nameWithoutExtension, model.readText())
             val name = model.nameWithoutExtension
-            listOf(diagrams.resolve("$name.puml") to source, diagrams.resolve("$name.svg") to renderSvg(source))
+            listOf(
+                diagrams.resolve("$name.puml") to source,
+                diagrams.resolve("$name.svg") to EndLabelPlacement.place(renderSvg(source))
+            )
         }
     if (args[0] == "write") {
         diagrams.createDirectories()
@@ -50,8 +53,7 @@ fun main(args: Array<String>) {
 
 /**
  * Returns the PlantUML source of the class diagram of the Alloy model [name], as the section Class diagram of
- * `models/README.md` describes it. The Alloy Analyzer finds the multiplicity at the tail of an arrow within
- * [REFERRER_SCOPE].
+ * `models/README.md` describes it. The title is the start of the header comment of the model and the file name.
  *
  * @param name the name of the model, such as `DomainModel`
  * @param text the source of the model
@@ -72,7 +74,7 @@ fun toClassDiagram(
         appendLine("!pragma layout smetana")
         appendLine("hide methods")
         appendLine("skinparam classAttributeIconSize 0")
-        appendLine("title Classes of the Alloy model $name")
+        appendLine("title ${title(name, text)}")
         model.classSigs.forEach { appendClass(it, classNames) }
         model.enumSigs.forEach { sig ->
             appendLine("enum ${sig.name} {")
@@ -82,12 +84,28 @@ fun toClassDiagram(
         references.forEach { appendLine(it.arrow(model)) }
         appendRules(model)
         appendLine(
-            "caption The multiplicity at the head of an arrow comes from the field.\\n" +
-                "The multiplicity at its tail is the number of objects that can refer to one object in the instances " +
-                "that the Alloy Analyzer finds within a scope of $REFERRER_SCOPE."
+            "caption Multiplicities at the source ends of the arrows were derived with the Alloy Analyzer " +
+                "(scope $REFERRER_SCOPE)."
         )
         appendLine("@enduml")
     }
+}
+
+private fun title(
+    name: String,
+    text: String
+): String {
+    val comment = Regex("""/\*(.*?)\*/""", RegexOption.DOT_MATCHES_ALL).find(text)?.groupValues?.get(1)
+    val subject =
+        comment
+            ?.lines()
+            ?.joinToString(" ") { it.trim().removePrefix("*").trim() }
+            ?.trim()
+            ?.substringBefore(" (")
+            ?.substringBefore(".")
+            ?.removePrefix("The ")
+            ?.replaceFirstChar { it.uppercase() }
+    return if (subject.isNullOrBlank()) "Classes of $name.als" else "$subject ($name.als)"
 }
 
 private fun StringBuilder.appendClass(

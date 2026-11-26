@@ -2,7 +2,7 @@
 !pragma layout smetana
 hide methods
 skinparam classAttributeIconSize 0
-title Classes of the Alloy model DomainModel
+title Domain model of Coffee Kitty (DomainModel.als)
 class User {
   loginName : Text
   emailAddress : Text
@@ -48,7 +48,7 @@ legend right
 |= Rule |= Kind |= Result |
 | OneConsumptionPerUser | fact | assumed |
 | AsManyConsumptionsAsUsers | assertion | holds |
-| NoTextPropertyAcceptsNul | assertion | holds |
+| NoTextPropertyAcceptsNUL | assertion | holds |
 endlegend
-caption The multiplicity at the head of an arrow comes from the field.\nThe multiplicity at its tail is the number of objects that can refer to one object in the instances that the Alloy Analyzer finds within a scope of 4.
+caption Multiplicities at the source ends of the arrows were derived with the Alloy Analyzer (scope 4).
 @enduml

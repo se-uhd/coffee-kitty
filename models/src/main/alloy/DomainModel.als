@@ -108,7 +108,7 @@ check AsManyConsumptionsAsUsers for 5
  * No text property accepts the NUL character (TextPatterns.NO_NUL_CHARACTER or a stricter pattern). The assertion
  * names the predicate of each Text field.
  */
-assert NoTextPropertyAcceptsNul {
+assert NoTextPropertyAcceptsNUL {
     not validUserLoginName[TextWithNul]
     not validUserEmailAddress[TextWithNul]
     not validUserFirstName[TextWithNul]
@@ -118,6 +118,6 @@ assert NoTextPropertyAcceptsNul {
     not validPaymentNote[TextWithNul]
 }
 
-check NoTextPropertyAcceptsNul
+check NoTextPropertyAcceptsNUL
 
 run CorrectionOfAUser { some CountCorrection } for 3
