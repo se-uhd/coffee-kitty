@@ -71,7 +71,8 @@ mutation score and the test strength have the same value, because the tests exec
 mutant is 3.0 points, so a minimum of 90% lets the task pass with up to three undetected mutants and fail at the fourth.
 The task fails when the mutation score or the test strength is below 90%. The mutation score also counts the mutants in
 code that no unit test executes, so a domain function without a unit test lowers it. The test strength counts only the
-mutants that a test executes and cannot detect such a function.
+mutants that a test executes and cannot detect such a function. On 2026-11-27, after the check of a stale count of a
+correction (ADR 025), the unit tests detected 36 of 37 mutants (97.3%), and the same mutant survived.
 
 Two settings from the coffee app of SE@UHD are gone, because they showed no effect in 15 runs:
 
@@ -86,7 +87,10 @@ first measurement. 8 of the 24 missed branches belong to the three functions of 
 until 2026-12-08. With these tests, the tests cover 150 of 166 branches (90.4%). A second measurement on 2026-11-25,
 after the commits that declared the constraints on the domain models of the later features and required an acting user
 for every endpoint, gave 700 of 721 lines (97.1%) and 148 of 174 branches (85.1%). A third measurement on 2026-11-26,
-after the error responses of the OpenAPI definition, gave 754 of 774 lines (97.4%) and 180 of 212 branches (84.9%).
+after the error responses of the OpenAPI definition, gave 754 of 774 lines (97.4%) and 180 of 212 branches (84.9%). A
+fourth measurement on 2026-11-27, after the fixes and the rules of ADRs 023 to 025, gave 785 of 808 lines (97.2%) and
+205 of 248 branches (82.7%). Most of the new branches that no test covers answer an error that a test cannot cause
+through the REST API, such as a client that disconnects.
 
 The minimums are on purpose about 7 and 5 points below the measured values. A minimum close to the measured value makes
 developers write tests only to reach the number. Such tests check implementation details and are more than the code
