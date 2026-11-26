@@ -27,5 +27,9 @@ tasks.register<JavaExec>("cpd") {
 }
 
 tasks.named("check") {
-    dependsOn(gradle.includedBuild("build-logic").task(":ktlintCheck"), "cpd")
+    dependsOn(
+        gradle.includedBuild("build-logic").task(":ktlintCheck"),
+        gradle.includedBuild("build-logic").task(":test"),
+        "cpd"
+    )
 }

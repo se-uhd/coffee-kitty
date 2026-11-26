@@ -20,6 +20,14 @@ dependencies {
     implementation(libs.detekt.gradle.plugin)
     implementation(libs.pitest.gradle.plugin)
     implementation(libs.snakeyaml)
+
+    testImplementation(enforcedPlatform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 ktlint {

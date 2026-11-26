@@ -35,6 +35,8 @@ paths:
   independently of the entry `kotlin`. When you update detekt, set `detekt-kotlin` to the Kotlin version with which the
   new detekt release was built. On a mismatch, detekt reports "detekt was compiled with Kotlin X".
 - `gradle :detekt-rules:test` runs the tests of the custom detekt rules. `config/detekt/detekt.yml` enables them.
+  `gradle :build-logic:test` runs the tests of the checks of the Markdown files, the ADRs, the changelog, and the rule
+  index. `gradle check` runs both.
 - The Kotlin compiler fails on a warning, also in a Gradle script (ADR-023). The task `detekt` of each module applies
   all rules of detekt to `src/main`, `src/test`, and `src/testFixtures`, and `detektMain`, `detektTest`, and
   `detektTestFixtures` apply the rules of `config/detekt/type-resolution.yml` with type resolution. The root task

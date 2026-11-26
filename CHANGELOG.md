@@ -40,6 +40,8 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
 - The detekt rule `OpenApiTextLength` limits the summaries and descriptions of the OpenAPI annotations (ADR 018).
 - `gradle ruleIndex` writes the lists of the rule files in CLAUDE.md and AGENTS.md from the front matter of the rules,
   and `gradle check` fails when a list differs from the rules.
+- Tests of the checks of the Markdown files, the ADRs, the changelog, and the rule index in `build-logic/src/test`,
+  which `gradle check` runs. The status of an ADR may span several lines.
 - Claude Code hooks in `.claude/settings.json` check a commit message and the Markdown limits right after an edit.
 - Path-scoped rules for agents in `.claude/rules/`, which Claude Code loads for the files that they name.
 - ADR 014 records the reasons of the build settings, and ADR 015 what the server log records about a request.
