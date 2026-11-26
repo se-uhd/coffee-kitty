@@ -37,9 +37,11 @@ Each setting below has the comment `// ADR-014`, and this ADR gives its reason (
   parameters with `@PathVariable` and `@RequestParam`.
 * `kotlin("plugin.spring")` (`kotlin-conventions`): The plugin opens the classes with `@Component` or `@Transactional`,
   so that Spring can create proxies of them.
-* The Kotlin version of ktlint (`kotlin-conventions`, `detekt-rules-conventions`): Without the block, the Spring
-  dependency management resolves the Kotlin artifacts of ktlint to the `kotlin` version of the build, on which ktlint
-  1.8.0 fails. Delete the block when `gradle ktlintCheck` passes without it.
+* The Kotlin version of ktlint (`kotlin-conventions`, `detekt-rules-conventions`, `checks-conventions`,
+  `build-logic/build.gradle.kts`): Without the block in `kotlin-conventions`, the Spring dependency management resolves
+  the Kotlin artifacts of ktlint to the `kotlin` version of the build, on which ktlint 1.8.0 fails. Without the other
+  blocks, ktlint runs on the Kotlin 2.2.21 that it ships, which prints sun.misc.Unsafe warnings on JDK 25. Delete a
+  block when `gradle ktlintCheck` passes without it and prints no such warning.
 * `mapstruct.unmappedTargetPolicy` `ERROR` (`kotlin-kapt-conventions`): A mapper fails to compile when a target
   property has neither a source nor `ignore = true`. With the default warning, a mapper would set a new property of a
   domain model to null without notice, and an update would store the null.

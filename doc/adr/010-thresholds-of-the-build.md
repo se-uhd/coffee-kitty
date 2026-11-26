@@ -113,6 +113,10 @@ uses about 300 MB, which is 78% of the default. With the default, the daemon pri
 build after running out of JVM Metaspace" in the third build in a row. With 768m, ten builds in a row printed no
 warning, and the metaspace grew by about 16 MB per build.
 
+`org.gradle.jvmargs` replaces the default flags of the daemon, so the line repeats the default
+`-XX:+HeapDumpOnOutOfMemoryError` to keep it. The Kotlin daemon, which compiles the modules, takes `-Xmx` and
+`-XX:MaxMetaspaceSize` from `org.gradle.jvmargs`, so `kotlin.daemon.jvmargs` sets neither.
+
 ### Line length: 120 characters (`.editorconfig`)
 
 120 is the default right margin of IntelliJ IDEA. Without the setting, the code style `ktlint_official` allows 140.

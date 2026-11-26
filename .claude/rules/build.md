@@ -20,12 +20,15 @@ paths:
 - A subproject applies a convention plugin of `build-logic/` by its id `de.seuhd.campuscoffee.<name>` (ADR-001). The
   root build and `build-logic/` read the same version catalog, `gradle/libs.versions.toml`.
 - Declare every Maven repository in `settings.gradle.kts` or `build-logic/settings.gradle.kts`. `FAIL_ON_PROJECT_REPOS`
-  fails the build when a build script declares a repository.
+  fails the build when a build script declares a repository. IntelliJ IDEA marks `repositoriesMode` and `repositories`
+  as unstable, because Gradle annotates them with `@Incubating`, and Gradle has no stable alternative.
 - The `java` entry of the version catalog sets the Java toolchain and the Kotlin `jvmTarget`, and `mise.toml` pins the
   same major version. No tool copies the version from one file to the other, so change both files together.
 - The root `gradle.properties` turns on the configuration cache. A task action must not reference a top-level value of
   its build script or a `Configuration`. Copy such a value into a local `val` first, and wrap a `Configuration` in
   `files(...)`.
+- `org.gradle.warning.mode=none` in `gradle.properties` hides every deprecation warning of Gradle, also the warnings
+  about the build scripts of this project. `gradle build --warning-mode all` shows them.
 - `application` depends on `data` at compile scope, not `runtimeOnly`, so that the IDE resolves the configuration keys
   of the `*Properties` classes in the data module.
 - detekt and ktlint run on their own Kotlin compilers, which the catalog entries `detekt-kotlin` and `ktlint-kotlin` set

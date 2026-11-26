@@ -22,6 +22,7 @@ ktlint {
     }
 }
 
+// ADR-014
 configurations.matching { it.name.startsWith("ktlint") }.configureEach {
     val ktlintKotlin =
         libs.versions.ktlint.kotlin
