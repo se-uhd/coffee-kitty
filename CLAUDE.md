@@ -20,7 +20,8 @@ holds their tables. Every user has the role `USER` or `ADMIN`. The app has no au
 - The tests of the undo status (FR-9) are the reference solution of assignment 7, which students submit by 2026-12-08.
   Never commit these tests to a pushed branch before that date. On that date, add the tests and delete the exemptions
   of the undo status in `coverage/build.gradle.kts` and `pitest-conventions.gradle.kts`. On the same date, add the undo
-  status to `models/src/main/tla/Consumption.tla` and replay `undoableUntil` in `ConsumptionConformanceTest`.
+  status to `models/src/main/tla/Consumption.tla`, replay `undoableUntil` in `ConsumptionConformanceTest`, and empty
+  `NOT_YET_TESTED` in `OpenApiDefinitionSystemTests` (ADR 019).
 - Never edit an accepted ADR except for its status. A correction of the wording that does not change the decision is
   allowed, and ADR-010 takes new measurements. Record a changed decision in a new ADR that refers to the old one, and
   set the status of the old ADR to superseded, or to "Accepted, amended by [ADR-NNN](NNN-name.md)" when the new ADR

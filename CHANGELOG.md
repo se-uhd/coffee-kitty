@@ -27,6 +27,8 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
   `mise install` enables it as a Git hook (`mise.toml`).
 - `gradle markdownLimits` checks the structure and the section lengths of each ADR against `doc/adr/template.md`
   (ADR 016).
+- The OpenAPI definition documents the error responses of every endpoint, and a system test checks them against the
+  statuses that the tests receive (ADR 019).
 - The detekt rule `OpenApiTextLength` limits the summaries and descriptions of the OpenAPI annotations (ADR 018).
 - `gradle ruleIndex` writes the lists of the rule files in CLAUDE.md and AGENTS.md from the front matter of the rules,
   and `gradle check` fails when a list differs from the rules.
