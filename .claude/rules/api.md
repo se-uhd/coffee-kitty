@@ -17,7 +17,8 @@ paths:
   `CurrentUserProvider.currentUser`, which an architecture test checks.
 - Pass the acting user from `CurrentUserProvider` to the domain, which checks the role (ADR-003).
 - Write every message of the API in English.
-- Describe each new endpoint with `@Operation` and the fields of its DTOs with `@Schema`, which Swagger UI shows.
+- Describe each new endpoint with `@Operation` and the fields of its DTOs with `@Schema`, which Swagger UI shows. The
+  detekt rule `OpenApiTextLength` limits a summary to one sentence of 60 characters and a description to 120.
 
 ## DTOs
 

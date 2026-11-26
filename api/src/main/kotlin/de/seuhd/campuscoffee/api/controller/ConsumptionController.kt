@@ -35,8 +35,8 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as ApiRequestBody
 @Tag(
     name = "Consumption",
     description =
-        "Reading a user's coffee count, adding a coffee, undoing a coffee, reading the undo status, correcting a " +
-            "coffee count (admin), and listing the corrections (admin)."
+        "Reading and correcting a coffee count, adding and undoing coffees, and reading the undo status and the " +
+            "corrections."
 )
 @RestController
 @RequestMapping("/users/{userId}/consumption")
@@ -89,7 +89,7 @@ class ConsumptionController(
      *
      * @param userId the id of the user
      */
-    @Operation(summary = "Undo the most recent coffee of a user within its grace period.")
+    @Operation(summary = "Undo a user's most recent coffee within its grace period.")
     @OpenEndpoint
     @PostMapping("/undo")
     fun undo(
@@ -124,7 +124,7 @@ class ConsumptionController(
      * @param userId the id of the user whose coffee count the admin corrects
      * @param dto    the request body with the corrected coffee count and the note with the reason for the correction
      */
-    @Operation(summary = "Correct a user's coffee count and add a note with the reason (admin).")
+    @Operation(summary = "Correct a user's coffee count with a note (admin).")
     @Parameter(
         `in` = ParameterIn.HEADER,
         name = CurrentUserProvider.ACTING_USER_HEADER,
@@ -158,7 +158,7 @@ class ConsumptionController(
      *
      * @param userId the id of the user whose corrections to return
      */
-    @Operation(summary = "List the corrections of a user's coffee count, newest first (admin).")
+    @Operation(summary = "List the corrections of a user, newest first (admin).")
     @Parameter(
         `in` = ParameterIn.HEADER,
         name = CurrentUserProvider.ACTING_USER_HEADER,

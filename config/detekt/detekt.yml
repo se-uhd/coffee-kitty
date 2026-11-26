@@ -10,6 +10,11 @@ campus-coffee-comments:
     active: true
   LineComment:
     active: true
+  OpenApiTextLength:
+    active: true
+    maxSummaryLength: 60
+    maxDescriptionLength: 120
+    maxLongDescriptionLength: 360
 comments:
   active: true
   DocumentationOverPrivateFunction:
