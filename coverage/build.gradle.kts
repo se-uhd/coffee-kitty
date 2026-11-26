@@ -35,6 +35,9 @@ val aggregateReport = tasks.named<JacocoReport>("testCodeCoverageReport") {
     reports {
         xml.required.set(true)
     }
+    // External: https://docs.gradle.org/current/userguide/validation_problems.html#implicit_dependency The source
+    // directories of the application include application/build/bootBuildInfo, which bootBuildInfo writes.
+    dependsOn(":application:bootBuildInfo")
 }
 
 // ADR-010

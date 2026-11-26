@@ -62,6 +62,8 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
   correction.
 - The message of a `DataConstraintException` for a value that its column cannot store, such as a text with the NUL
   character, names the SQL state instead of "the constraint (unnamed)".
+- `gradle build -x :application:test` no longer fails because the coverage report reads the output of
+  `:application:bootBuildInfo` without depending on it.
 
 ## [0.3.1] - 2026-11-25
 
