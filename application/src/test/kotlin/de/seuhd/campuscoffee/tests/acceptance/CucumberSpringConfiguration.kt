@@ -58,7 +58,7 @@ class CucumberSpringConfiguration(
         @Bean
         @Lazy
         fun consumptionRequests(
-            @Value("\${local.server.port}") port: Int
+            @Value($$"${local.server.port}") port: Int
         ): ConsumptionRequests = ConsumptionRequests(SystemTestUtils.clientFor(port))
     }
 

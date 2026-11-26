@@ -28,6 +28,7 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
 - The Kotlin compiler fails on a warning in every compilation and Gradle script (ADR 023).
 - `detektMain`, `detektTest`, and `detektTestFixtures` apply the rules of `config/detekt/type-resolution.yml` with
   type resolution, such as `UnusedImport`, and `gradle check` runs them (ADR 023).
+- CI runs Qodana in se-uhd/coffee-kitty (`qodana.yml`), and the optional `scripts/run-qodana.sh` runs it with Docker.
 - `config/markdown/limits.yml` with a limit for each Markdown file, which `gradle markdownLimits` checks (ADR 013).
 - `scripts/check-commit-message.sh` checks Conventional Commits with a body of 1 to 5 bullets (ADR 013). CI runs it, and
   `mise install` enables it as a Git hook (`mise.toml`).

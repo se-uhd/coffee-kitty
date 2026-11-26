@@ -47,7 +47,7 @@ class RuleIndex(
     }
 
     private fun wrap(text: String): List<String> =
-        text.split(" ").fold(listOf<String>()) { lines, word ->
+        text.split(" ").fold(listOf()) { lines, word ->
             val last = lines.lastOrNull()
             when {
                 last == null -> listOf(word)

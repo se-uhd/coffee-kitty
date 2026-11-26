@@ -46,6 +46,8 @@ paths:
 
 - `.github/workflows/build.yml` checks the commit messages, runs `scripts/check-version-sync.sh`, `gradle build`, and
   then `gradle :domain:pitest` on every push to `main` and on every pull request.
+- `.github/workflows/qodana.yml` runs Qodana with `qodana.yaml` only in se-uhd/coffee-kitty (ADR-023). To find its
+  problems before a push, run `scripts/run-qodana.sh`, which needs Docker.
 - Pin every action of a workflow (`uses:`) to a full commit SHA with a trailing `# vX.Y.Z` comment.
 
 ## Thresholds

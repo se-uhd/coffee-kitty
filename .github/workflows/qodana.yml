@@ -1,0 +1,47 @@
+# Qodana, the scanner of JetBrains that runs the inspections of IntelliJ IDEA without the IDE, with the settings of
+# qodana.yaml (doc/adr/023-static-analysis-in-the-build.md). It finds problems for which detekt has no rule. The job
+# runs only in se-uhd/coffee-kitty, as the models do in build.yml, so that a fork, such as the fork of a student, needs
+# no Qodana. scripts/run-qodana.sh runs the same scan on a developer machine with Docker.
+name: Code quality (Qodana)
+
+# The scan runs once per change: on each pull request, whatever its base branch, and on a push to main. With the
+# default `pr-mode`, the action would scan only the files of a pull request, which cannot find a problem that the change
+# causes in another file, so the step turns it off.
+on:
+  pull_request:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: {} # allows a manual run
+
+permissions:
+  contents: read
+
+jobs:
+  code-quality:
+    if: github.repository == 'se-uhd/coffee-kitty'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # the summary as a comment of the pull request
+      checks: write # the findings as annotations of the check run
+      actions: read # the action reads the status of this workflow run
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # Qodana compares the change with its base
+          persist-credentials: false # no step pushes back to the repository
+
+      # The free linter of qodana.yaml needs no token of Qodana Cloud. qodana.yaml sets the fail threshold to 0.
+      - name: Qodana Scan
+        uses: JetBrains/qodana-action@3e8d76ff0e0241618abd808682f426afe84bab3f # v2026.2.2
+        with:
+          pr-mode: false
+
+      # The SARIF report of the scan, also of a failed scan.
+      - name: Upload the Qodana report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: qodana-sarif
+          path: ${{ runner.temp }}/qodana/results/qodana.sarif.json
+          if-no-files-found: warn

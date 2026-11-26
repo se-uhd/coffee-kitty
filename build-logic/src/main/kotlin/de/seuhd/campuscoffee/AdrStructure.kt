@@ -64,7 +64,7 @@ class AdrStructure(
         status: String,
         allAdrPaths: Set<String>
     ): Boolean {
-        val amendable = statuses.filter { it != SUPERSEDED_STATUS }.map { Regex.escape(it) }.joinToString("|")
+        val amendable = statuses.filter { it != SUPERSEDED_STATUS }.joinToString("|") { Regex.escape(it) }
         val form =
             Regex("($amendable)(, amended by $LINK_PATTERN)*").matches(status) ||
                 Regex("$SUPERSEDED_STATUS by $LINK_PATTERN").matches(status)

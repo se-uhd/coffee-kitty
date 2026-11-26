@@ -1,0 +1,35 @@
+# The configuration of Qodana, the scanner of JetBrains that runs the inspections of IntelliJ IDEA without the IDE
+# (doc/adr/023-static-analysis-in-the-build.md). It finds problems for which detekt has no rule, such as a redundant
+# escape in a regular expression. CI runs it only in se-uhd/coffee-kitty (.github/workflows/qodana.yml), and
+# scripts/run-qodana.sh runs it on a developer machine with Docker. `gradle build` does not run it.
+version: "1.0"
+
+# The free linter for Java and Kotlin. The tag pins a release line of the linter, so that a new release does not change
+# the findings of an unrelated commit. The tag still moves with the bug-fix builds of the release line.
+linter: jetbrains/qodana-jvm-community:2026.2
+
+# The profile `recommended` has the inspections of the default profile of IntelliJ IDEA. The default profile of Qodana,
+# `starter`, leaves out the style inspections. `recommended` leaves out the test sources, and the negated test scope
+# takes them back in, because the first entry that matches a file applies. The build output stays out.
+profile:
+  name: qodana.recommended
+  inspections:
+    - group: ALL
+      ignore:
+        - "**/build/**"
+        - "!scope#test:*..*"
+    - inspection: RedundantSuppression
+      enabled: true
+
+# The JDK of gradle/libs.versions.toml and mise.toml, so that the inspections that need the types of the code run.
+projectJDK: "25"
+
+# The scan fails at the first problem, and the repository has no baseline.
+failThreshold: 0
+
+# Two inspections report only false positives in this project. UnusedSymbol does not know Spring, so it reports every
+# controller function, @Bean function, and JPA callback as unused. UnstableApiUsage reports the incubating API of the
+# Gradle Kotlin DSL in the build scripts, which Gradle offers no stable alternative for (.claude/rules/build.md).
+exclude:
+  - name: UnusedSymbol
+  - name: UnstableApiUsage

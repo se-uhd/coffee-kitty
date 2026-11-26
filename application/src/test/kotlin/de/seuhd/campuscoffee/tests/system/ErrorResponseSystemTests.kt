@@ -9,6 +9,7 @@ import de.seuhd.campuscoffee.tests.parseUtc
 import de.seuhd.campuscoffee.tests.toResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
+import org.assertj.core.data.TemporalUnitOffset
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -249,6 +250,6 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
         val YAML: MediaType = MediaType.parseMediaType("application/yaml")
 
         /** The tolerance for comparing the UTC timestamp of an error response with the current UTC time. */
-        val byLessThanOneMinute = within(1, ChronoUnit.MINUTES)
+        val byLessThanOneMinute: TemporalUnitOffset = within(1, ChronoUnit.MINUTES)
     }
 }
