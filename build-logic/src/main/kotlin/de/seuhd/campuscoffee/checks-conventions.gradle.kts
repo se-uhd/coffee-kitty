@@ -16,7 +16,7 @@ configure<KtlintExtension> {
     version.set(libs.findVersion("ktlint-tool").get().requiredVersion)
 }
 
-// ADR-014
+// ADR-014 ktlint runs on the Kotlin of ktlint-kotlin
 configurations.matching { it.name.startsWith("ktlint") }.configureEach {
     resolutionStrategy.eachDependency {
         if (requested.group == "org.jetbrains.kotlin") {
@@ -68,6 +68,11 @@ val detektBuildLogic =
         )
         config.setFrom(repository.file("config/detekt/detekt.yml"))
         buildUponDefaultConfig.set(true)
+        // ADR-023 LineComment looks up the number of each pointer in the file names of doc/adr
+        inputs
+            .files(fileTree(repository.dir("doc/adr")) { include("*.md") })
+            .withPropertyName("adrs")
+            .withPathSensitivity(PathSensitivity.NAME_ONLY)
     }
 
 val rules = fileTree(repository) { include(".claude/rules/*.md") }

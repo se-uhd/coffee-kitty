@@ -69,7 +69,6 @@ val TlaValue.items: List<TlaValue>
 fun parseTlaValue(text: String): TlaValue =
     runCatching { TlaValueParser(text).parseComplete() }.getOrElse { TlaValue.NameValue(text.trim()) }
 
-/** Reads one TLA+ value from [text]. */
 private class TlaValueParser(
     private val text: String
 ) {

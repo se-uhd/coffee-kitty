@@ -67,7 +67,7 @@ class CorrectionSystemTests : AbstractSystemTest() {
 
     @Test
     fun `correcting a coffee count without a total and without the acting user header returns 401 Unauthorized`() {
-        // ADR-003
+        // ADR-003 the api module identifies the acting user before the domain reads the body
         val response = consumptionRequests.correctCount(userId(), mapOf("note" to note), actingUser = null)
 
         assertThat(response.status).isEqualTo(401)

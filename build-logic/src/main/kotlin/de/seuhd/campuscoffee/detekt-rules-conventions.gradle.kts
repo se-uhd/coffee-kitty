@@ -5,7 +5,7 @@ import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
-// ADR-001, ADR-014
+// ADR-001 a convention plugin, ADR-014 kotlin-conventions would make detekt-rules depend on itself
 plugins {
     kotlin("jvm")
     id("org.jlleitschuh.gradle.ktlint")
@@ -28,7 +28,7 @@ configure<KtlintExtension> {
     version.set(libs.findVersion("ktlint-tool").get().requiredVersion)
 }
 
-// ADR-014
+// ADR-014 ktlint runs on the Kotlin of ktlint-kotlin
 configurations.matching { it.name.startsWith("ktlint") }.configureEach {
     resolutionStrategy.eachDependency {
         if (requested.group == "org.jetbrains.kotlin") {
@@ -70,6 +70,14 @@ typeResolved.configureEach {
     buildUponDefaultConfig.set(false)
 }
 tasks.named("check") { dependsOn(typeResolved) }
+
+// ADR-023 LineComment looks up the number of each pointer in the file names of doc/adr
+tasks.withType<Detekt>().configureEach {
+    inputs
+        .files(rootProject.fileTree("doc/adr") { include("*.md") })
+        .withPropertyName("adrs")
+        .withPathSensitivity(PathSensitivity.NAME_ONLY)
+}
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()

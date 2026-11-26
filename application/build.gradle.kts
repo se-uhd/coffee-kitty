@@ -10,19 +10,19 @@ plugins {
 dependencies {
     implementation(project(":domain"))
     implementation(project(":api"))
-    // ADR-014
+    // ADR-014 a compile dependency, so that the IDE resolves the keys of application.yaml
     implementation(project(":data"))
 
     implementation(libs.spring.boot.starter.webmvc)
     implementation(libs.kotlin.logging)
 
-    // ADR-014
+    // ADR-014 a compile dependency, so that the IDE resolves driver-class-name
     implementation(libs.postgresql)
 
-    // ADR-005
+    // ADR-005 the test fixtures and the database cleaner are test code
     testImplementation(testFixtures(project(":domain")))
     testImplementation(testFixtures(project(":data")))
-    // ADR-007
+    // ADR-007 the tests read the JSON of a response into their own classes
     testImplementation(libs.jackson3.module.kotlin)
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.junit.platform.suite)

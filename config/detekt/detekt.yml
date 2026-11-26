@@ -12,17 +12,13 @@ campus-coffee-comments:
     active: true
   LineComment:
     active: true
+  PrivateKDoc:
+    active: true
   OpenApiTextLength:
     active: true
     maxSummaryLength: 60
     maxDescriptionLength: 120
     maxLongDescriptionLength: 360
-comments:
-  active: true
-  DocumentationOverPrivateFunction:
-    active: true
-  DocumentationOverPrivateProperty:
-    active: true
 style:
   active: true
   # ADR-023 a rule that matches an inspection of Qodana, needs no type resolution, and is inactive by default

@@ -74,9 +74,9 @@ build `build-logic/` holds the convention plugins.
 - Declare every custom configuration key in a `*Properties` class, from which the IDE resolves the key.
 - KDoc is required on contracts: the interfaces in a package `ports`, their functions, and the `*Properties` classes.
   Elsewhere, write KDoc only for what the code cannot say. A KDoc has at most 6 lines on a type and 3 elsewhere, and
-  one line per tag. Private members have no KDoc. Other comments are only `// ADR-NNN` or
-  `// External: <url> <reason>`. detekt applies all its rules to every Kotlin file, and the compiler fails on a warning
-  (ADR-023).
+  one line per tag. A private declaration has no KDoc. Other comments are only `// ADR-NNN <text>`, which names an ADR
+  of `doc/adr/` and the part of it that applies, or `// External: <url> <reason>`. detekt applies all its rules to
+  every Kotlin file, and the compiler fails on a warning (ADR-023).
 - `config/markdown/limits.yml` lists every Markdown file with its limits, and `gradle markdownLimits` fails for an
   unlisted file or a broken limit. `CHANGELOG.md` follows Keep a Changelog with bullets of at most 2 lines.
 
@@ -117,7 +117,7 @@ Scale the depth of each review to the change. A substantial change goes through 
 5. Release the change.
 
 Record each decision worth recording as a short ADR in `doc/adr/`, named `NNN-meaningful-name.md` and based on
-`doc/adr/template.md`. Refer to it in code with `// ADR-NNN`.
+`doc/adr/template.md`. Refer to it in code with `// ADR-NNN <text>`.
 
 ## Releases
 

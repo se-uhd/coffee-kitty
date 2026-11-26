@@ -92,7 +92,7 @@ class ArchitectureTests {
 
     @Test
     fun `api and application depend on neither the data ports nor the implementation classes of the domain`() {
-        // ADR-001
+        // ADR-001 only application wires the modules together
         noClasses()
             .that()
             .resideInAnyPackage("de.seuhd.campuscoffee.api..", *APPLICATION_PRODUCTION_PACKAGES)
@@ -126,7 +126,7 @@ class ArchitectureTests {
 
     @Test
     fun `no api class depends on the internal ports`() {
-        // ADR-003
+        // ADR-003 the api module passes the acting user to an API port
         noClasses()
             .that()
             .resideInAPackage("de.seuhd.campuscoffee.api..")
@@ -138,7 +138,7 @@ class ArchitectureTests {
 
     @Test
     fun `a controller function that reads the acting user is not an open endpoint`() {
-        // ADR-011
+        // ADR-011 an open endpoint has no acting user
         val readsTheActingUser =
             object : DescribedPredicate<JavaMethod>("call CurrentUserProvider.currentUser") {
                 override fun test(method: JavaMethod): Boolean =
@@ -159,7 +159,7 @@ class ArchitectureTests {
 
     @Test
     fun `the system and acceptance tests use no class of the api module`() {
-        // ADR-007
+        // ADR-007 the tests pin the JSON field names
         noClasses()
             .that()
             .resideInAPackage("de.seuhd.campuscoffee.tests..")
@@ -171,7 +171,7 @@ class ArchitectureTests {
 
     @Test
     fun `the production classes contain no test fixtures`() {
-        // ADR-005
+        // ADR-005 the test fixtures are outside the production code
         noClasses()
             .should()
             .resideInAnyPackage("de.seuhd.campuscoffee.domain.tests..", "de.seuhd.campuscoffee.data.tests..")
@@ -214,12 +214,8 @@ class ArchitectureTests {
         }
     }
 
-    /**
-     * Assigns each class to a slice named after its package relative to `de.seuhd.campuscoffee`. A class directly in
-     * `de.seuhd.campuscoffee` goes to the slice `(root)`, so that the cycle check includes the root package.
-     * `slices().matching("de.seuhd.campuscoffee.(**)")` would leave the root package out. A class outside
-     * `de.seuhd.campuscoffee` belongs to no slice.
-     */
+    // External: https://www.archunit.org/userguide/html/000_Index.html#_slices matching("de.seuhd.campuscoffee.(**)")
+    // assigns no slice to a class of the root package, so the cycle check would leave such a class out.
     private object RootInclusiveSliceAssignment : SliceAssignment {
         private const val BASE_PACKAGE = "de.seuhd.campuscoffee"
 

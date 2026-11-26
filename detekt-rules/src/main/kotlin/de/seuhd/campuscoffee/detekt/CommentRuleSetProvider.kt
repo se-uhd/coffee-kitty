@@ -6,7 +6,8 @@ import dev.detekt.api.RuleSetProvider
 
 /**
  * Provides the rule set `campus-coffee-comments`, which detekt finds through `META-INF/services`. The text rules of
- * doc/adr/013-limits-for-text.md: KDoc only on contracts, short KDoc, no other comments, and short OpenAPI texts.
+ * doc/adr/013-limits-for-text.md: KDoc only on contracts, short KDoc, none on a private declaration, no other
+ * comments, and short OpenAPI texts.
  */
 class CommentRuleSetProvider : RuleSetProvider {
     override val ruleSetId = RuleSetId("campus-coffee-comments")
@@ -19,6 +20,7 @@ class CommentRuleSetProvider : RuleSetProvider {
                 ::UndocumentedFunctionParameter,
                 ::KDocLength,
                 ::LineComment,
+                ::PrivateKDoc,
                 ::OpenApiTextLength
             )
         )

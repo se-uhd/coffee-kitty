@@ -1,10 +1,10 @@
-// ADR-001, ADR-013
+// ADR-001 the root build checks the repository, ADR-013 the limits for text
 plugins {
     base
     id("de.seuhd.campuscoffee.checks-conventions")
 }
 
-// ADR-010
+// ADR-010 CPD fails at a duplicate of 70 tokens
 val cpd =
     configurations.create("cpd") {
         isCanBeConsumed = false

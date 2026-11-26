@@ -18,7 +18,7 @@ class CoffeeBeanEntity : Entity() {
     @field:Column(name = "active")
     var active: Boolean? = null
 
-    // ADR-020, ADR-021 NO ACTION keeps a bean that a merged bean refers to, and an id avoids loading the chain
+    // ADR-020 NO ACTION keeps a bean that a merged bean refers to, ADR-021 an id avoids loading the chain
     @field:Column(name = "merged_into_id")
     var mergedIntoId: UUID? = null
 

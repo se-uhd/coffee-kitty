@@ -5,7 +5,7 @@ plugins {
     id("io.spring.dependency-management")
 }
 
-// ADR-014
+// ADR-014 the BOM gives the versions of the dependencies of the modules
 dependencyManagement {
     imports {
         mavenBom("org.springframework.boot:spring-boot-dependencies:${libs.versions.spring.boot.get()}")
@@ -40,7 +40,7 @@ val aggregateReport = tasks.named<JacocoReport>("testCodeCoverageReport") {
     dependsOn(":application:bootBuildInfo")
 }
 
-// ADR-010
+// ADR-010 the classes that the coverage gate leaves out
 val gateExclusions = listOf("**/Application*", "**/*MapperImpl.*")
 
 val coverageGate = tasks.register<JacocoCoverageVerification>("coverageGate") {
@@ -72,7 +72,7 @@ val coverageGate = tasks.register<JacocoCoverageVerification>("coverageGate") {
                     "de.seuhd.campuscoffee.domain.implementation.*",
                     "de.seuhd.campuscoffee.api.controller.*"
                 )
-            // ADR-010
+            // ADR-010 the functions that the second rule of the gate leaves out
             excludes = listOf("*lambda*", "*.undoableUntil(*", "*.closesAt(*", "*.undoStatus(*")
             limit {
                 counter = "LINE"

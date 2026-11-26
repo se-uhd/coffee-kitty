@@ -1,4 +1,4 @@
-// ADR-012
+// ADR-012 the models are checked against the code
 plugins {
     id("de.seuhd.campuscoffee.java-conventions")
     id("de.seuhd.campuscoffee.kotlin-conventions")

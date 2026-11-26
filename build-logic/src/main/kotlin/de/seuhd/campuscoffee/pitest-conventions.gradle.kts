@@ -16,12 +16,12 @@ configure<PitestPluginExtension> {
     outputFormats.set(listOf("HTML", "XML"))
     timestampedReports.set(false)
     failWhenNoMutations.set(false)
-    // ADR-010
+    // ADR-010 the classes and the minimums of the mutation tests
     targetClasses.set(listOf("de.seuhd.campuscoffee.domain.implementation.*"))
     excludedMethods.set(listOf("undoableUntil", "closesAt"))
     avoidCallsTo.set(setOf("kotlin.jvm.internal"))
     mutationThreshold.set(90)
     testStrengthThreshold.set(90)
-    // ADR-014
+    // ADR-014 class data sharing off for the Mockito agent
     jvmArgs.set(listOf("-XX:+EnableDynamicAgentLoading", "-Xshare:off", "--sun-misc-unsafe-memory-access=allow"))
 }

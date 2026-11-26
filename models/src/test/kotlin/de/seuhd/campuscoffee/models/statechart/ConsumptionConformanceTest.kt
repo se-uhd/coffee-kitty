@@ -170,7 +170,6 @@ class ConsumptionConformanceTest {
         counts: Counts
     ): Int = modelCount.toInt() + if (counts == Counts.HIGH) Int.MAX_VALUE - MAX_COUNT else 0
 
-    /** The inputs of a step: the count and the note of a correction, the delta of a coffee, and the acting role. */
     private data class Input(
         val count: Int = 0,
         val note: String = "",
@@ -198,7 +197,6 @@ class ConsumptionConformanceTest {
         }
     }
 
-    /** The ranges of counts with which the test builds a state of the model. */
     private enum class Counts {
         /**
          * The counts of the model. The service refuses a coffee only at the largest count that it stores, so the test
@@ -210,7 +208,6 @@ class ConsumptionConformanceTest {
         HIGH
     }
 
-    /** The coffee times with which the test builds a state of the model. */
     private enum class Timing(
         val distinctTimes: Boolean
     ) {
@@ -230,7 +227,6 @@ class ConsumptionConformanceTest {
         NANOS(true)
     }
 
-    /** The service in one state of the model, with a data port that holds one consumption and a clock to move. */
     private inner class App(
         state: ModelState,
         timing: Timing,
@@ -369,7 +365,6 @@ class ConsumptionConformanceTest {
         List(old) { end.minusNanos(MICROSECOND).minusMinutes((old - 1 - it).toLong()) } +
             List(recent) { end.plusSeconds(SPACING_SECONDS * it) }
 
-    /** A clock that a test can move. */
     private class MutableClock(
         var now: LocalDateTime
     ) : Clock() {

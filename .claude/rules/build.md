@@ -49,7 +49,7 @@ paths:
 ## Thresholds
 
 `doc/adr/010-thresholds-of-the-build.md` records the measurement of each threshold with its date. `CLAUDE.md` states
-how to change a threshold. Mark a threshold in a build script with `// ADR-010`.
+how to change a threshold. Mark a threshold in a build script with `// ADR-010 <text>`.
 
 - Coverage (`coverage/build.gradle.kts`): The task `coverageGate`, which `check` runs, fails when the tests cover less
   than 90% of the lines or 80% of the branches of all modules together. A ratio over all modules cannot detect a single

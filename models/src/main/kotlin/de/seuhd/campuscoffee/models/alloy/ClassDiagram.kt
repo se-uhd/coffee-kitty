@@ -146,13 +146,6 @@ private fun uml(keyword: String): String =
         else -> "*"
     }
 
-/**
- * The field [field] of the class sig [source], which refers to the class sig [target].
- *
- * @property source the name of the sig with the field
- * @property field the name of the field
- * @property target the name of the sig that the field refers to
- */
 private class Reference(
     val source: String,
     val field: String,

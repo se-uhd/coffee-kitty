@@ -1,4 +1,4 @@
-// ADR-001
+// ADR-001 the Gradle Plugin Portal and the version catalog of the root build
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {

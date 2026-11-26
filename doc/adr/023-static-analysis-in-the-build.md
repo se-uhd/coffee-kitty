@@ -22,14 +22,15 @@ modules. `gradle detektComments` applied only the comment rules of ADR 013 to th
 `build-logic`, and the Gradle scripts, and a warning of the Kotlin compiler did not fail the build. The coffee app of
 SE@UHD had the same gaps until its Qodana scan found 28 problems in code that had passed its build, such as a redundant
 `Unit`, an unused import, and a redundant escape in a regular expression. Coffee Kitty shares some of these files, such
-as the Markdown checks of `build-logic` and the models. Students run `gradle build` on their own machines, and their
-tests and the changes of an agent get the same checks as the code of `main`.
+as the Markdown checks of `build-logic` and the models. A pointer such as `// ADR-014` named an ADR but not which of
+its reasons applies, a pointer to a missing ADR passed, and KDoc on a private class passed. Students run `gradle build`
+on their own machines, and their tests and the changes of an agent get the same checks as the code of `main`.
 
 ## Considered Options
 
 * Keep detekt on `src/main` and the comment rules on the other files.
-* Fail on compiler warnings, apply all detekt rules to every Kotlin file, and add the detekt rules with type resolution
-  that match an inspection of Qodana.
+* Fail on compiler warnings, apply all detekt rules to every Kotlin file, add the detekt rules with type resolution
+  that match an inspection of Qodana, and make the comment rules stricter.
 
 ## Decision(s)
 
@@ -48,12 +49,17 @@ tests and the changes of an agent get the same checks as the code of `main`.
   `@LocalServerPort`, because Spring sets both after the construction.
 * `application` builds no plain jar, which the Kotlin plugin names as a friend path of the tests, so its `detektTest`
   takes the classes of the main source set instead and prints no warning about the missing jar.
+* The detekt rule `LineComment` accepts a pointer only as `// ADR-NNN <text>`, in which each number names a file of
+  `doc/adr/` and the text states the part of the ADR that applies. Each detekt task reruns when `doc/adr/` changes.
+* The detekt rule `PrivateKDoc` reports KDoc on a private declaration, also on a class or an object, and replaces
+  `DocumentationOverPrivateFunction` and `DocumentationOverPrivateProperty`, which leave out classes and objects.
 
 ## Consequences
 
 * On 2026-11-26, the compiler found 2 warnings, an unused `Unit` in `ChangelogStructure`. detekt found 5 problems in the
   tests and `build-logic`, 3 of them in `ChangelogStructure.check`, which is now split into functions, and with type
   resolution 10 more, 7 of them unused imports. The fixes of the coffee app of SE@UHD for the shared files are applied.
+* 44 pointers got a text, one pointer to two ADRs got a text for each, and 13 private classes lost their KDoc.
 * The tests and the solutions of the assignments get the same rules as the production code, with the defaults of detekt
   for tests, such as no `MagicNumber` and no `TooManyFunctions` in `src/test`.
 * The other rules that need type resolution stay inactive.

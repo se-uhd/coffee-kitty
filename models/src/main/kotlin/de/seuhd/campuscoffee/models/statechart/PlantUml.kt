@@ -81,12 +81,6 @@ private fun downward(
 ): Pair<List<String>, List<String>> =
     if (rank.getValue(arrow.to) < rank.getValue(arrow.from)) arrow.to to arrow.from else arrow.from to arrow.to
 
-/**
- * The ids of the parent states of one diagram.
- *
- * @property prefix the prefix of the ids, such as the id of a panel
- * @property numbers the numbers of the parent states, in the order in which they are written
- */
 private class StateIds(
     val prefix: String,
     val numbers: Iterator<Int>

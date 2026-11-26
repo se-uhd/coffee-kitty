@@ -10,7 +10,7 @@ kotlin {
     }
 }
 
-// ADR-001
+// ADR-001 a convention plugin applies a plugin by its id only from this classpath
 dependencies {
     implementation(libs.dependency.management.plugin)
     implementation(libs.kotlin.gradle.plugin)
@@ -29,7 +29,7 @@ ktlint {
     }
 }
 
-// ADR-014
+// ADR-014 ktlint runs on the Kotlin of ktlint-kotlin
 configurations.matching { it.name.startsWith("ktlint") }.configureEach {
     val ktlintKotlin =
         libs.versions.ktlint.kotlin

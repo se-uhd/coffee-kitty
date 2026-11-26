@@ -49,7 +49,7 @@ The included build `build-logic/` holds the convention plugins, which configure 
 same way for every module (ADR 001 in `doc/adr/`). The other subprojects hold no app code:
 
 - `detekt-rules`: the custom detekt rules for the comments of ADR 013, which require KDoc only on contracts such as the
-  ports, limit its length, and allow no other comments except `// ADR-NNN` and `// External: <link> <reason>`.
+  ports, limit its length, and allow no other comments except `// ADR-NNN <text>` and `// External: <link> <reason>`.
 - `coverage`: the coverage report of all modules.
 - `models`: TLA+ and Alloy models of the domain, the tests that check them against the code, and the code that draws
   the models as diagrams in `doc/` (`models/README.md`). Gradle includes it only with `-Pmodels`.

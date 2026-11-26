@@ -4,7 +4,7 @@ plugins {
     id("de.seuhd.campuscoffee.jacoco-conventions")
     id("de.seuhd.campuscoffee.kotlin-jpa-conventions")
     id("de.seuhd.campuscoffee.kotlin-kapt-conventions")
-    // ADR-005
+    // ADR-005 the database cleaner is test code
     `java-test-fixtures`
 }
 

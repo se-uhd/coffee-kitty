@@ -145,7 +145,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             path = request.servletRequest().requestURI
         )
 
-    // ADR-008
+    // ADR-008 the message names the field at which Jackson failed
     private fun unreadableField(exception: HttpMessageNotReadableException): String? {
         val cause = exception.cause
         if (cause !is MismatchedInputException || cause is PropertyBindingException) {
@@ -167,7 +167,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             is ValidationException -> HttpStatus.BAD_REQUEST
         }
 
-    // ADR-015
+    // ADR-015 a client can neither forge a log line nor fill the log
     private fun loggableText(text: String): String =
         text.replace(CONTROL_AND_LINE_SEPARATOR_CHARACTERS, " ").take(MAX_LOGGED_LENGTH)
 
@@ -178,7 +178,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
 
         private val CONTROL_AND_LINE_SEPARATOR_CHARACTERS = Regex("[\\p{Cc}\\u2028\\u2029]")
 
-        // ADR-010
+        // ADR-010 the length of a logged text
         private const val MAX_LOGGED_LENGTH = 500
     }
 }

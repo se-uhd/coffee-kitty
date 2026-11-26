@@ -61,7 +61,7 @@ class SecurityConfig {
             ).build()
     }
 
-    // ADR-011
+    // ADR-011 every endpoint without OpenEndpoint needs an acting user, also for HEAD
     private fun actingUserEndpoints(handlerMapping: RequestMappingHandlerMapping): List<Pair<HttpMethod, String>> {
         val controllerFunctions =
             handlerMapping.handlerMethods.filterValues {

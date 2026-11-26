@@ -288,7 +288,7 @@ class UserSystemTests : AbstractSystemTest() {
 
     @Test
     fun `creating a user without a required field and without the acting user header returns 401 Unauthorized`() {
-        // ADR-003
+        // ADR-003 the api module identifies the acting user before the domain reads the body
         val response = userRequests.create(newUser() - "emailAddress", actingUser = null)
 
         assertThat(response.status).isEqualTo(401)

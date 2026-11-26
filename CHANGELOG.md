@@ -20,7 +20,9 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
   multiplicities that the Alloy Analyzer finds. `gradle check` fails when the diagram differs from the model.
 - `models/README.md` describes the models and the diagrams.
 - Rules for comments, enforced by detekt (ADR 013): KDoc is required only on contracts and has at most 6 lines on a
-  type and 3 elsewhere, and other comments are only `// ADR-NNN` or `// External: <link> <reason>`.
+  type and 3 elsewhere, and other comments are only `// ADR-NNN <text>` or `// External: <link> <reason>`.
+- A pointer `// ADR-NNN <text>` needs a text and an ADR of `doc/adr/`, and the detekt rule `PrivateKDoc` refuses KDoc
+  on a private class or object (ADR 023).
 - detekt applies all its rules to the tests and the test fixtures of each module, and `gradle detektBuildLogic` to
   `build-logic` and the Gradle scripts (ADR 023).
 - The Kotlin compiler fails on a warning in every compilation and Gradle script (ADR 023).

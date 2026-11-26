@@ -4,7 +4,7 @@ import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.process.CommandLineArgumentProvider
 
-// ADR-001
+// ADR-001 the Java toolchain and the Spring Boot BOM of every module
 plugins {
     `java-library`
     id("io.spring.dependency-management")
@@ -50,12 +50,12 @@ dependencies {
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     testLogging {
-        // ADR-014
+        // ADR-014 the assertion and a stack trace that IntelliJ IDEA links
         exceptionFormat = TestExceptionFormat.FULL
     }
     jvmArgs(
         "-Duser.timezone=Asia/Tokyo",
-        // ADR-014
+        // ADR-014 class data sharing off for the Mockito agent
         "-Xshare:off",
         // External: https://openjdk.org/jeps/498 JDK 25 warns about calls to sun.misc.Unsafe, and about native access
         // (JEP 472) such as when Testcontainers loads JNA. A forked test JVM does not inherit the flags of the daemon.

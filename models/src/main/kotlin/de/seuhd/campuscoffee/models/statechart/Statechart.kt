@@ -12,13 +12,6 @@ val VIEWS: Map<String, ChartView> = mapOf("Consumption" to ConsumptionView)
 
 private const val ARGUMENTS = 4
 
-/**
- * The directories of the command.
- *
- * @property models the directory of the TLA+ modules and their configurations
- * @property charts the directory of the charts
- * @property work the directory for the files of TLC and the reports
- */
 private class Directories(
     val models: Path,
     val charts: Path,

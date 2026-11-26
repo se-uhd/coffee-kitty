@@ -12,7 +12,7 @@ dependencies {
     implementation(libs.kotlin.logging)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
     implementation(libs.spring.boot.starter.security)
-    // ADR-008
+    // ADR-008 the Kotlin module of Jackson rejects a body without a required field
     implementation(libs.jackson3.module.kotlin)
 
     compileOnly(libs.mapstruct)

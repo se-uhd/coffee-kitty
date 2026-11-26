@@ -34,10 +34,6 @@ class StartupTest {
             }
     }
 
-    /**
-     * Registers the classes of the startup task in the root package and the `*Properties` classes. The scan leaves out
-     * the subpackages and [Application], which would start the whole app.
-     */
     @ComponentScan(
         basePackageClasses = [Application::class],
         resourcePattern = "*.class",

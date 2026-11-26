@@ -57,7 +57,7 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
 
     @Test
     fun `a HEAD request for the corrections without the acting user header returns 401 Unauthorized`() {
-        // ADR-011
+        // ADR-011 HEAD needs an acting user wherever GET needs one
         client
             .head()
             .uri("/api/users/{userId}/consumption/corrections", userFixture("maxmustermann").persistedId)

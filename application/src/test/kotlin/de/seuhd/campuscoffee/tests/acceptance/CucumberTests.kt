@@ -22,7 +22,7 @@ import org.junit.platform.suite.api.Suite
     key = Constants.GLUE_PROPERTY_NAME,
     value = "de.seuhd.campuscoffee.tests.acceptance"
 )
-// ADR-014
+// ADR-014 the glue hint fails on a class of an inlined reified call
 @ConfigurationParameter(
     key = Constants.GLUE_HINT_ENABLED_PROPERTY_NAME,
     value = "false"

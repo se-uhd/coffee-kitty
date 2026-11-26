@@ -214,7 +214,6 @@ class DomainModelConformanceTest {
         return NUMBERS[key]?.value(valueClass) ?: if (key in NUMBERS) null else fail("No concrete values for $key.")
     }
 
-    /** The concrete values of a String property: a typical value and the largest length. */
     private data class TextValues(
         val typical: String,
         val maxLength: Int
@@ -233,7 +232,6 @@ class DomainModelConformanceTest {
             }
     }
 
-    /** The concrete values of an Int property: the smallest and the largest value, or null without a limit. */
     private data class NumberValues(
         val min: Int?,
         val max: Int?
