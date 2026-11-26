@@ -3,6 +3,8 @@ package de.seuhd.campuscoffee.api.exceptions
 import io.swagger.v3.oas.annotations.media.Schema
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
+import org.springframework.http.MediaType
+import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
 
 /**
@@ -34,6 +36,9 @@ data class ErrorResponse(
     @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     val path: String
 )
+
+/** The content type of every error response, with the charset of the JSON responses (ADR-022). */
+internal val JSON_UTF8: MediaType = MediaType(MediaType.APPLICATION_JSON, StandardCharsets.UTF_8)
 
 /**
  * Returns the error code for an error that is not a domain exception: the reason phrase of [status] without spaces,

@@ -1,11 +1,17 @@
 package de.seuhd.campuscoffee.api.exceptions
 
+import org.apache.catalina.connector.ClientAbortException
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.boot.test.system.CapturedOutput
+import org.springframework.boot.test.system.OutputCaptureExtension
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
+import java.io.IOException
 
 /**
  * The unit test for the responses of [GlobalExceptionHandler] that no endpoint of Coffee Kitty causes on purpose, such
@@ -17,6 +23,9 @@ class GlobalExceptionHandlerTest {
     private class ExampleController {
         @GetMapping("/api/failing")
         fun failing(): String = throw IllegalArgumentException("Required value was null.")
+
+        @GetMapping("/api/disconnected")
+        fun disconnected(): String = throw ClientAbortException(IOException("Broken pipe"))
     }
 
     private val mockMvc =
@@ -34,5 +43,15 @@ class GlobalExceptionHandlerTest {
                 status { isInternalServerError() }
                 jsonPath("$.errorCode") { value("InternalServerError") }
             }
+    }
+
+    @Test
+    @ExtendWith(OutputCaptureExtension::class)
+    fun `an exception of a client that disconnected gets no error body and no log at ERROR`(output: CapturedOutput) {
+        mockMvc.get("/api/disconnected").andExpect {
+            content { string("") }
+        }
+
+        assertThat(output.all).doesNotContain("ERROR", "Unexpected error")
     }
 }

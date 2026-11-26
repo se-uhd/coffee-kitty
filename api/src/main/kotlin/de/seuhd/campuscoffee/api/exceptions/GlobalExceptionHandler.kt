@@ -1,5 +1,6 @@
 package de.seuhd.campuscoffee.api.exceptions
 
+import de.seuhd.campuscoffee.api.security.UNREADABLE_REQUEST_MESSAGE
 import de.seuhd.campuscoffee.domain.exceptions.ConflictException
 import de.seuhd.campuscoffee.domain.exceptions.DomainException
 import de.seuhd.campuscoffee.domain.exceptions.DuplicationException
@@ -8,10 +9,10 @@ import de.seuhd.campuscoffee.domain.exceptions.NotFoundException
 import de.seuhd.campuscoffee.domain.exceptions.ValidationException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.servlet.http.HttpServletRequest
+import org.apache.tomcat.util.http.InvalidParameterException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
-import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.annotation.ControllerAdvice
@@ -19,9 +20,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.context.request.ServletWebRequest
 import org.springframework.web.context.request.WebRequest
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
+import org.springframework.web.util.DisconnectedClientHelper
 import tools.jackson.databind.exc.MismatchedInputException
 import tools.jackson.databind.exc.PropertyBindingException
-import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
@@ -54,9 +55,9 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     /**
-     * Returns a 500 with a fixed message for every exception that no other handler maps. For a wildcard `Content-Type`,
-     * Spring throws an `IllegalArgumentException` in `HttpHeaders.setContentType`, which gets 415, as for any other
-     * media type that the API does not read. Any other `IllegalArgumentException` stays a 500.
+     * Returns a 500 with a fixed message for every exception that no other handler maps, and nothing to a client that
+     * disconnected. Spring throws an `IllegalArgumentException` in `HttpHeaders.setContentType` for a wildcard
+     * `Content-Type`, which gets 415, as any media type that the API does not read. Any other one gets 500.
      *
      * @param exception the exception that no other handler maps
      * @param request   the current web request
@@ -65,17 +66,43 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleGenericException(
         exception: Exception,
         request: WebRequest
-    ): ResponseEntity<ErrorResponse> {
-        if (exception is IllegalArgumentException && isRefusedWildcardContentType(exception, request)) {
-            val status = HttpStatus.UNSUPPORTED_MEDIA_TYPE
-            log.info { "Wildcard Content-Type -> $status on ${describe(request)}" }
-            return respond(status, errorBody(status, request, status.reasonPhrase))
+    ): ResponseEntity<ErrorResponse>? =
+        when {
+            DisconnectedClientHelper.isClientDisconnectedException(exception) -> {
+                log.debug { "The client disconnected on ${describe(request)}: ${exception.javaClass.simpleName}" }
+                null
+            }
+
+            exception is IllegalArgumentException && isRefusedWildcardContentType(exception, request) -> {
+                val status = HttpStatus.UNSUPPORTED_MEDIA_TYPE
+                log.info { "Wildcard Content-Type -> $status on ${describe(request)}" }
+                respond(status, errorBody(status, request, status.reasonPhrase))
+            }
+
+            else -> {
+                log.error(exception) { "Unexpected error on ${describe(request)}" }
+                respond(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    errorBody(HttpStatus.INTERNAL_SERVER_ERROR, request, "An unexpected error occurred.")
+                )
+            }
         }
-        log.error(exception) { "Unexpected error on ${describe(request)}" }
-        return respond(
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            errorBody(HttpStatus.INTERNAL_SERVER_ERROR, request, "An unexpected error occurred.")
-        )
+
+    /**
+     * Returns a 400, or the status of Tomcat such as 413, for a form body that Tomcat cannot decode or read. The log
+     * names only the type of the exception, because its message quotes the request.
+     *
+     * @param exception the exception of Tomcat
+     * @param request   the current web request
+     */
+    @ExceptionHandler(InvalidParameterException::class)
+    fun handleUndecodableParameters(
+        exception: InvalidParameterException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
+        val status = HttpStatus.resolve(exception.errorCode) ?: HttpStatus.BAD_REQUEST
+        log.info { "${exception.javaClass.simpleName} -> $status on ${describe(request)}" }
+        return respond(status, errorBody(status, request, UNREADABLE_REQUEST_MESSAGE))
     }
 
     /**
@@ -108,6 +135,10 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         statusCode: HttpStatusCode,
         request: WebRequest
     ): ResponseEntity<Any>? {
+        if (statusCode.is5xxServerError && DisconnectedClientHelper.isClientDisconnectedException(exception)) {
+            log.debug { "The client disconnected on ${describe(request)}: ${exception.javaClass.simpleName}" }
+            return null
+        }
         if (statusCode.is5xxServerError) {
             log.error(exception) { "${exception.javaClass.simpleName} -> $statusCode on ${describe(request)}" }
         } else {
@@ -157,8 +188,6 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     private fun describe(request: WebRequest): String =
         request.servletRequest().let { "${it.method} ${loggableText(it.requestURI)}" }
 
-    private fun WebRequest.servletRequest(): HttpServletRequest = (this as ServletWebRequest).request
-
     private fun statusOf(exception: DomainException): HttpStatus =
         when (exception) {
             is NotFoundException -> HttpStatus.NOT_FOUND
@@ -174,8 +203,6 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     private companion object {
         private val log = KotlinLogging.logger {}
 
-        private val JSON_UTF8 = MediaType(MediaType.APPLICATION_JSON, StandardCharsets.UTF_8)
-
         private val CONTROL_AND_LINE_SEPARATOR_CHARACTERS = Regex("[\\p{Cc}\\u2028\\u2029]")
 
         // ADR-010 the length of a logged text
@@ -189,3 +216,5 @@ private fun isRefusedWildcardContentType(
 ): Boolean =
     '*' in request.getHeader(HttpHeaders.CONTENT_TYPE).orEmpty().substringBefore(';') &&
         exception.stackTrace.any { it.className == HttpHeaders::class.java.name && it.methodName == "setContentType" }
+
+private fun WebRequest.servletRequest(): HttpServletRequest = (this as ServletWebRequest).request

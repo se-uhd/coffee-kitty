@@ -12,6 +12,17 @@ spring:
         # Removes the values of the affected row, such as an email address, from the message of a database error. The
         # message still names the violated constraint.
         logServerErrorDetail: false
+  servlet:
+    multipart:
+      # The API reads only JSON. With the multipart resolver, Spring MVC parses a multipart body before it looks up the
+      # controller function, so a malformed multipart body ended in a 500 and an error in the log.
+      enabled: false
+  mvc:
+    formcontent:
+      filter:
+        # The API reads only JSON. The form content filter parses the form body of a PUT, PATCH, or DELETE before the
+        # security filters, so a malformed form body of any client ended in a 500 and an error in the log.
+        enabled: false
   jpa:
     # Turns off Open Session in View, which holds a database connection for the whole request. Without Open Session
     # in View, a lazy association can load only inside a transaction. No JPA entity has a lazy association yet. The

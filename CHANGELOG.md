@@ -97,6 +97,10 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
 
 - A request whose `Accept` header excludes JSON returns 406 before it changes data (ADR 024). Until now, a coffee, a
   new user, an undo, or a correction was stored before the 406.
+- A form body that the server cannot decode returns 400, and a form body on a PUT and a multipart body no longer cause
+  a 500, because the API no longer parses them.
+- The error page `/error` answers with the JSON `ErrorResponse`, and with 404 for a direct request.
+- A client that disconnects while the server writes the response no longer causes an error in the log.
 - Only the refusal of Spring for a wildcard `Content-Type` returns 415. Until now, an `IllegalArgumentException` of
   any endpoint returned 415 instead of 500 on a request with such a header.
 

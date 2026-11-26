@@ -1,6 +1,7 @@
 package de.seuhd.campuscoffee.tests.system
 
 import de.seuhd.campuscoffee.domain.model.persistedId
+import de.seuhd.campuscoffee.tests.ConsumptionJson
 import de.seuhd.campuscoffee.tests.ErrorJson
 import de.seuhd.campuscoffee.tests.Response
 import de.seuhd.campuscoffee.tests.SystemTestUtils.ACTING_USER_HEADER
@@ -240,6 +241,69 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
 
         assertThat(response.status).isEqualTo(406)
         assertThat(consumptionRequests.retrieveConsumption(userId).body.count).isZero()
+    }
+
+    private fun sendForm(
+        method: HttpMethod,
+        userId: UUID,
+        actingUser: String?
+    ): Response<ErrorJson> =
+        client
+            .method(method)
+            .uri("/api/users/{userId}/consumption", userId)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .headers { headers -> actingUser?.let { headers.set(ACTING_USER_HEADER, it) } }
+            .body("a=%ZZ")
+            .exchange()
+            .toResponse()
+
+    @Test
+    fun `posting a form body that the server cannot decode returns 400 Bad Request`() {
+        val response = sendForm(HttpMethod.POST, userFixture("maxmustermann").persistedId, ADMIN_LOGIN_NAME)
+
+        assertThat(response.status).isEqualTo(400)
+        assertThat(response.error.errorCode).isEqualTo("BadRequest")
+    }
+
+    @Test
+    fun `correcting a coffee count with a form body and without the acting user header returns 401 Unauthorized`() {
+        val response = sendForm(HttpMethod.PUT, userFixture("maxmustermann").persistedId, null)
+
+        assertThat(response.status).isEqualTo(401)
+        assertThat(response.error.errorCode).isEqualTo("Unauthorized")
+    }
+
+    @Test
+    fun `undoing a coffee with a multipart body without a boundary returns 200 OK`() {
+        val userId = userFixture("maxmustermann").persistedId
+        consumptionRequests.addCoffee(userId).requireStatus(200)
+
+        val response: Response<ConsumptionJson> =
+            client
+                .post()
+                .uri("/api/users/{userId}/consumption/undo", userId)
+                .header(HttpHeaders.CONTENT_TYPE, "multipart/form-data")
+                .body("x")
+                .exchange()
+                .toResponse()
+
+        assertThat(response.status).isEqualTo(200)
+        assertThat(response.body.count).isZero()
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["application/json", "text/html,application/xhtml+xml,*/*;q=0.8"])
+    fun `a direct request to the error page returns 404 Not Found with the error code NotFound`(accept: String) {
+        val response: Response<ErrorJson> =
+            client
+                .get()
+                .uri("/error")
+                .header(HttpHeaders.ACCEPT, accept)
+                .exchange()
+                .toResponse()
+
+        assertThat(response.status).isEqualTo(404)
+        assertThat(response.error.errorCode).isEqualTo("NotFound")
     }
 
     private companion object {

@@ -47,3 +47,6 @@ paths:
   for the endpoint, and when no test receives a documented status.
 - Code that runs before Spring MVC, such as the security filter chain, writes its `ErrorResponse` with
   `writeErrorResponse`, as `RequestRejectedExceptionHandler` and `JsonAuthenticationEntryPoint` do.
+  `ErrorPageController` answers the error page `/error` with an `ErrorResponse`, and a direct request with 404.
+- The API reads only JSON, so `application.yaml` turns off the form content filter and the multipart resolver, which
+  parsed a body before the security filters or the lookup of the controller function.
