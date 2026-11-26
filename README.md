@@ -180,7 +180,8 @@ push to `main`, the workflow `.github/workflows/dependency-submission.yml` submi
 
 Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/), with a subject such as
 `fix(data): name the SQL state of a refused value` and a body of bullets (`doc/adr/013-limits-for-text.md`).
-`scripts/check-commit-message.sh` checks a message. Enable it as a Git hook for every commit in your clone:
+`scripts/check-commit-message.sh` checks a message, and `mise install` enables it as a Git hook in your clone. Without
+mise, enable the hook with:
 
 ```shell
 git config core.hooksPath .githooks

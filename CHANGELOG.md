@@ -24,7 +24,7 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
 - `gradle detektComments` applies the comment rules to the tests and the build scripts.
 - `config/markdown/limits.yml` with a limit for each Markdown file, which `gradle markdownLimits` checks (ADR 013).
 - `scripts/check-commit-message.sh` checks Conventional Commits with a body of 1 to 5 bullets (ADR 013). CI runs it, and
-  `git config core.hooksPath .githooks` enables it as a Git hook.
+  `mise install` enables it as a Git hook (`mise.toml`).
 - `gradle markdownLimits` checks the structure and the section lengths of each ADR against `doc/adr/template.md`
   (ADR 016).
 - `gradle ruleIndex` writes the lists of the rule files in CLAUDE.md and AGENTS.md from the front matter of the rules,

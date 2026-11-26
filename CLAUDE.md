@@ -142,7 +142,7 @@ most recent `## [x.y.z]` header, which `scripts/check-version-sync.sh` checks in
   instructions.
 - Write for a reader of `git log` who cannot read your notes. Never cite a reference that is not in the repository,
   such as the id of a review finding. Group related work into a few cohesive commits.
-- `scripts/check-commit-message.sh` checks the format, `git config core.hooksPath .githooks` enables it as a hook, and
+- `scripts/check-commit-message.sh` checks the format, `mise install` enables it as a Git hook (`mise.toml`), and
   CI checks the commits of a pull request and of a push to `main`.
 
 ## Rules for parts of the repository
