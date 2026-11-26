@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -35,7 +36,8 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as ApiRequestBody
  */
 @Tag(name = "Users", description = "Listing, reading, and creating users.")
 @RestController
-@RequestMapping("/users")
+// ADR-024 Spring refuses an Accept header without JSON before the function runs
+@RequestMapping("/users", produces = [MediaType.APPLICATION_JSON_VALUE])
 class UserController(
     private val userService: UserService,
     private val userDtoMapper: UserDtoMapper,

@@ -1,7 +1,6 @@
 package de.seuhd.campuscoffee.api.configuration
 
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.MediaType
 import org.springframework.http.converter.AbstractHttpMessageConverter
 import org.springframework.http.converter.HttpMessageConverters
 import org.springframework.web.method.HandlerTypePredicate
@@ -25,8 +24,8 @@ class ApiWebConfig : WebMvcConfigurer {
 
     /**
      * Removes the XML and YAML message converters, which Spring registers because Hibernate and springdoc put JAXB and
-     * the YAML module of Jackson on the classpath. Adds the charset UTF-8 to the JSON media types, although RFC 8259
-     * does not define a charset parameter, because a client that assumes ISO-8859-1 decodes `Müller` as `MÃ¼ller`.
+     * the YAML module of Jackson on the classpath. Gives the JSON converters the default charset UTF-8, which Spring
+     * adds to the media type of `produces`, because a client that assumes ISO-8859-1 decodes `Müller` as `MÃ¼ller`.
      */
     override fun configureMessageConverters(builder: HttpMessageConverters.ServerBuilder) {
         builder.configureMessageConvertersList { converters ->
@@ -40,10 +39,7 @@ class ApiWebConfig : WebMvcConfigurer {
                         it.subtype == "json" ||
                             it.subtype.endsWith("+json")
                     }
-                }.forEach { converter ->
-                    converter.supportedMediaTypes =
-                        converter.supportedMediaTypes.map { MediaType(it.type, it.subtype, StandardCharsets.UTF_8) }
-                }
+                }.forEach { converter -> converter.defaultCharset = StandardCharsets.UTF_8 }
         }
     }
 

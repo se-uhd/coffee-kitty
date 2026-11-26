@@ -11,6 +11,8 @@ paths:
 - Keep a controller thin: It reads the request, calls an API port, and maps the result to a DTO. Controllers have no
   unit tests, and the system and acceptance tests check them.
 - `ApiWebConfig` adds the prefix `/api` to the path of every controller, so leave the prefix out of `@RequestMapping`.
+- Declare `produces = [MediaType.APPLICATION_JSON_VALUE]` on the `@RequestMapping` of a controller (ADR-024). Spring
+  then refuses a request whose `Accept` header excludes JSON before the controller function runs and changes data.
 - An endpoint that creates an object returns 201 Created with a `Location` header (see `UserController.create`).
 - Every endpoint needs an acting user (ADR-011). Put `OpenEndpoint` only on a function with an endpoint that every
   client may use, such as reading a coffee count. A function with `OpenEndpoint` must not call

@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
@@ -181,6 +182,63 @@ class ErrorResponseSystemTests : AbstractSystemTest() {
 
         assertThat(response.status).isEqualTo(406)
         assertThat(response.error.errorCode).isEqualTo("NotAcceptable")
+    }
+
+    private fun sendAcceptingText(
+        method: HttpMethod,
+        path: String,
+        body: String?
+    ): Response<ErrorJson> =
+        client
+            .method(method)
+            .uri(path)
+            .accept(MediaType.TEXT_PLAIN)
+            .header(ACTING_USER_HEADER, ADMIN_LOGIN_NAME)
+            .contentType(MediaType.APPLICATION_JSON)
+            .apply { body?.let { body(it) } }
+            .exchange()
+            .toResponse()
+
+    @Test
+    fun `creating a user with the Accept header for text returns 406 Not Acceptable`() {
+        val usersBefore = userRequests.retrieveAll().body
+
+        val response = sendAcceptingText(HttpMethod.POST, "/api/users", WILDCARD_USER)
+
+        assertThat(response.status).isEqualTo(406)
+        assertThat(userRequests.retrieveAll().body).isEqualTo(usersBefore)
+    }
+
+    @Test
+    fun `adding a coffee with the Accept header for text returns 406 Not Acceptable`() {
+        val userId = userFixture("maxmustermann").persistedId
+
+        val response = sendAcceptingText(HttpMethod.POST, "/api/users/$userId/consumption", """{"delta":1}""")
+
+        assertThat(response.status).isEqualTo(406)
+        assertThat(consumptionRequests.retrieveConsumption(userId).body.count).isZero()
+    }
+
+    @Test
+    fun `undoing a coffee with the Accept header for text returns 406 Not Acceptable`() {
+        val userId = userFixture("maxmustermann").persistedId
+        consumptionRequests.addCoffee(userId).requireStatus(200)
+
+        val response = sendAcceptingText(HttpMethod.POST, "/api/users/$userId/consumption/undo", null)
+
+        assertThat(response.status).isEqualTo(406)
+        assertThat(consumptionRequests.retrieveConsumption(userId).body.count).isEqualTo(1)
+    }
+
+    @Test
+    fun `correcting a coffee count with the Accept header for text returns 406 Not Acceptable`() {
+        val userId = userFixture("maxmustermann").persistedId
+
+        val response =
+            sendAcceptingText(HttpMethod.PUT, "/api/users/$userId/consumption", """{"total":2,"note":"Two coffees"}""")
+
+        assertThat(response.status).isEqualTo(406)
+        assertThat(consumptionRequests.retrieveConsumption(userId).body.count).isZero()
     }
 
     private companion object {

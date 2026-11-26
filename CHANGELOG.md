@@ -94,6 +94,8 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
 - The detekt rule `UndocumentedFunctionParameter` finds an `@param` tag after a tag whose text starts with a code span.
   The Kotlin PSI merged the two tags, so the rule reported the second parameter as undocumented.
 
+- A request whose `Accept` header excludes JSON returns 406 before it changes data (ADR 024). Until now, a coffee, a
+  new user, an undo, or a correction was stored before the 406.
 - Only the refusal of Spring for a wildcard `Content-Type` returns 415. Until now, an `IllegalArgumentException` of
   any endpoint returned 415 instead of 500 on a request with such a header.
 
