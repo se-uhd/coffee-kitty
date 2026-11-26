@@ -6,7 +6,7 @@ When an admin records an expense for a user, Coffee Kitty MUST raise the balance
 
 The user is the buyer of the expense. The rules of FR-6 for the kind of expense, the bean, the weight, the amount, and
 the note apply. Coffee Kitty MUST store the expense with the buyer, the admin who recorded it, and the data that FR-6
-lists. The daily limit of FR-6 MUST NOT refuse an expense that an admin records.
+lists. The daily limit of FR-6 MUST NOT refuse an expense that an admin records, also for the admin themselves.
 
 Coffee Kitty MUST refuse an expense that a user who is not an admin records for another user with 403 Forbidden, an
 expense for an unknown user with 404 Not Found, and an expense above 1,000.00 € with 400 Bad Request. A refused expense
@@ -14,7 +14,7 @@ MUST NOT change the balance. An expense MUST NOT change the kitty balance.
 
 ## Rationale
 
-A user who is not an admin records at most 50.00 € per day for themselves (FR-6). A user who paid more for the group,
+A user, also an admin, records at most 50.00 € per day for themselves (FR-6). A user who paid more for the group,
 for example for a spare part of the coffee machine, cannot record that expense and would not get the money back.
 
 ## Success Criteria
@@ -26,6 +26,8 @@ for example for a spare part of the coffee machine, cannot record that expense a
   on the same day raises the balance of maxmustermann by 10.00 €.
 - jane_doe has recorded an expense of 50.00 € for maxmustermann today. A request by maxmustermann to record an expense
   of 0.01 € for themselves on the same day returns 409 Conflict (FR-6).
+- jane_doe has recorded own expenses of 50.00 € today (FR-6). An expense of 10.00 € that jane_doe records for herself
+  through this requirement raises the balance of jane_doe by 10.00 €.
 - An expense of 1,000.00 € that jane_doe records for maxmustermann raises the balance by 1,000.00 €. A request by
   jane_doe to record an expense of 1,000.01 € or of 0.00 € for maxmustermann returns 400 Bad Request, and the balance
   stays the same.

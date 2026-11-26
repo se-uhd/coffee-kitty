@@ -52,10 +52,10 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
 - Every endpoint needs an acting user unless its controller function has the new annotation `OpenEndpoint` (ADR 011).
   The status codes of the existing endpoints stay the same.
 - A `HEAD` request needs an acting user wherever the `GET` request needs one.
-- FR-6 resolves its TBD on a daily limit: A user who is not an admin records at most 5 expenses and 50.00 € on one day,
-  configurable up to 100.00 €.
-- The daily limit replaces the limit of 100.00 € for a single expense of such a user. GLOSSARY.md defines the term daily
-  limit.
+- FR-6 resolves its TBD on a daily limit: A user records at most 5 own expenses and 50.00 € on one day, configurable up
+  to 100.00 €. The limit applies to an admin as well, as in the coffee app of SE@UHD, but never to FR-19.
+- The daily limit replaces the limit of 100.00 € for a single expense of a user who is not an admin. GLOSSARY.md
+  defines the term daily limit.
 - The upper limit of 1,000.00 € for a single amount is a rule (MUST) in FR-4, FR-6, and FR-17. Until now, these
   requirements stated it as a plausibility check (SHOULD). `CoffeePrice.amountCents` has the constraint for it.
 - PostgreSQL refuses to delete a user with a balance, because the foreign key of `user_balance` has `NO ACTION` instead
