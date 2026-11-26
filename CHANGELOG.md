@@ -86,6 +86,11 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
 - The detekt rule `UndocumentedFunctionParameter` finds an `@param` tag after a tag whose text starts with a code span.
   The Kotlin PSI merged the two tags, so the rule reported the second parameter as undocumented.
 
+### Security
+
+- The PostgreSQL driver 42.7.15 and Hibernate 7.4.17.Final replace the versions of Spring Boot 4.1.2, which have six
+  high advisories and an SQL injection in the `json_*` HQL functions (GHSA-v5mr-59hq-7mvm).
+
 ## [0.3.1] - 2026-11-25
 
 ### Fixed
