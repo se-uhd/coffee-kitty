@@ -28,8 +28,10 @@ class OpenApiDefinitionSystemTests : AbstractSystemTest() {
 
     @Test
     fun `the OpenAPI definition documents every status that the tests observe`() {
-        val undocumented = observed().filter { (endpoint, status) -> status !in definition.statuses.getValue(endpoint) }
+        val observed = observed()
+        val undocumented = observed.filter { (endpoint, status) -> status !in definition.statuses.getValue(endpoint) }
 
+        assertThat(observed).`as`("statuses of documented endpoints that the tests observed").isNotEmpty()
         assertThat(undocumented).`as`("observed statuses that the OpenAPI definition does not document").isEmpty()
     }
 

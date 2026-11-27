@@ -1,5 +1,6 @@
 package de.seuhd.campuscoffee.tests
 
+import org.assertj.core.api.Assertions.assertThat
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.client.RestTestClient
 import org.springframework.test.web.servlet.client.returnResult
@@ -44,7 +45,8 @@ class OpenApiDefinition(
         private val PATH_VARIABLE = Regex("\\{[^/]+}")
 
         /**
-         * Fetches the OpenAPI definition of the server of [client].
+         * Fetches the OpenAPI definition of the server of [client]. Fails the test unless the server returns 200 OK
+         * with at least one endpoint, because the error body of a 404 has no paths and reads as an empty definition.
          *
          * @param client the client of the server under test (see [SystemTestUtils.clientFor])
          */
@@ -55,10 +57,12 @@ class OpenApiDefinition(
                     .uri("/v3/api-docs")
                     .accept(MediaType.APPLICATION_JSON)
                     .exchange()
+                    .expectStatus()
+                    .isOk
                     .returnResult<ByteArray>()
                     .responseBody
             val paths = STRICT_JSON_MAPPER.readTree(checkNotNull(bytes)).path("paths").properties()
-            return OpenApiDefinition(
+            val statuses =
                 paths
                     .flatMap { (path, operations) ->
                         operations.properties().map { (method, operation) ->
@@ -70,7 +74,8 @@ class OpenApiDefinition(
                                     .toSet()
                         }
                     }.toMap()
-            )
+            assertThat(statuses).`as`("the endpoints of the OpenAPI definition").isNotEmpty()
+            return OpenApiDefinition(statuses)
         }
     }
 }

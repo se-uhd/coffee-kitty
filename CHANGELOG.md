@@ -105,6 +105,8 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
 - A client that disconnects while the server writes the response no longer causes an error in the log.
 - Only the refusal of Spring for a wildcard `Content-Type` returns 415. Until now, an `IllegalArgumentException` of
   any endpoint returned 415 instead of 500 on a request with such a header.
+- `OpenApiDefinitionSystemTests` fails when `/v3/api-docs` returns an error or a definition without endpoints. Until
+  now, the error body of a 404 read as an empty definition, and both tests passed.
 
 ### Security
 
