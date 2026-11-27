@@ -107,6 +107,8 @@ This file lists the notable changes of each release of Coffee Kitty in the forma
   any endpoint returned 415 instead of 500 on a request with such a header.
 - `OpenApiDefinitionSystemTests` fails when `/v3/api-docs` returns an error or a definition without endpoints. Until
   now, the error body of a 404 read as an empty definition, and both tests passed.
+- The tests of the value rules and of the challenge of a 401 write each limit and the challenge as a literal. Until now,
+  they read the constant of the production code, so a changed limit changed the test input with it.
 
 ### Security
 

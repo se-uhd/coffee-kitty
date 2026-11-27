@@ -243,7 +243,7 @@ class CoffeeConsumptionServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = [0, CountCorrection.MAX_CORRECTED_COUNT])
+    @ValueSource(ints = [0, 1_000_000])
     fun `correctCount stores a count of 0 or 1,000,000`(total: Int) {
         stubCorrection(consumption(3))
 
@@ -272,7 +272,7 @@ class CoffeeConsumptionServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = [-1, CountCorrection.MAX_CORRECTED_COUNT + 1])
+    @ValueSource(ints = [-1, 1_000_001])
     fun `correctCount throws ValidationException for a count of -1 or 1,000,001`(total: Int) {
         stubCorrection(consumption(3))
 

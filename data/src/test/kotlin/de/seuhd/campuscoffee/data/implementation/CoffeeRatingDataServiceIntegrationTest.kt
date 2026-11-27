@@ -100,7 +100,7 @@ class CoffeeRatingDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = [CoffeeRating.MIN_VALUE, CoffeeRating.MAX_VALUE])
+    @ValueSource(ints = [1, 5])
     fun `upsert stores a score of 1 or 5`(value: Int) {
         val created = coffeeRatingDataService.upsert(CoffeeRating(user = user, bean = bean, value = value))
 

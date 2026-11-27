@@ -74,7 +74,7 @@ class CoffeeBeanDataServiceIntegrationTest : AbstractDataIntegrationTest() {
 
     @Test
     fun `upsert stores a bean name of the maximum length`() {
-        val name = "a".repeat(CoffeeBean.MAX_NAME_LENGTH)
+        val name = "a".repeat(200)
 
         val created = coffeeBeanDataService.upsert(CoffeeBean(name = name))
 

@@ -32,7 +32,7 @@ class AuthenticationExceptionHandlerTest {
     fun `an endpoint that needs an acting user returns 401 Unauthorized for a request without an acting user`() {
         mockMvc.get("/api/example").andExpect {
             status { isUnauthorized() }
-            header { string("WWW-Authenticate", CurrentUserProvider.AUTHENTICATION_CHALLENGE) }
+            header { string("WWW-Authenticate", "X-Acting-User realm=\"Coffee Kitty\"") }
             jsonPath("$.errorCode") { value("Unauthorized") }
             jsonPath("$.path") { value("/api/example") }
         }

@@ -34,7 +34,7 @@ class PaymentDataServiceIntegrationTest : AbstractDataIntegrationTest() {
     @Test
     fun `upsert stores a deposit with a user and a kitty adjustment without a user`() {
         val user = storeUser("alice")
-        val longNote = "Cash".padEnd(Payment.MAX_NOTE_LENGTH, '.')
+        val longNote = "Cash".padEnd(500, '.')
 
         val deposit = paymentDataService.upsert(Payment(user = user, amountCents = 1000, note = longNote))
         val kittyAdjustment = paymentDataService.upsert(Payment(amountCents = -250))
