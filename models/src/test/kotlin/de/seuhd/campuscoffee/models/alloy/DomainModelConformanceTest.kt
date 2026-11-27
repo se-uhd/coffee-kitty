@@ -77,13 +77,17 @@ class DomainModelConformanceTest {
     }
 
     @Test
-    fun `each enum of the domain model has the one sigs of its abstract sig`() {
-        for (enum in domainClasses().filter { it.java.isEnum }) {
-            val constants = enum.java.enumConstants.map { (it as Enum<*>).name }
-            assertThat(
-                MODEL.children(enum.simpleName!!)
-            ).describedAs(enum.simpleName).containsExactlyInAnyOrderElementsOf(constants)
-        }
+    fun `the enums of the domain model are the enum sigs of the Alloy model with the same constants`() {
+        val enums =
+            domainClasses().filter { it.java.isEnum }.associate { enum ->
+                enum.java.simpleName to
+                    enum.java.enumConstants
+                        .map { (it as Enum<*>).name }
+                        .toSet()
+            }
+        val enumSigs = MODEL.enumSigs.associate { sig -> sig.name to MODEL.children(sig.name).toSet() }
+
+        assertThat(enums).describedAs("the constants of each enum").isEqualTo(enumSigs)
     }
 
     @TestFactory
